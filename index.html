@@ -18,6 +18,8 @@
     --ink:#3a2c1d;
     --gold:#f2b705;
     --leaf:#5a8f4f;
+    --twitch:#9146FF;
+    --twitch-dark:#5c2d99;
   }
 
   *{ box-sizing:border-box; }
@@ -25,51 +27,72 @@
   body{
     margin:0;
     min-height:100vh;
-    display:flex;
-    flex-direction:column;
-    align-items:center;
-    justify-content:center;
     background:
-      radial-gradient(circle at 20% 10%, #fff3d6 0%, transparent 40%),
-      linear-gradient(180deg, #bfe8e3 0%, var(--river) 45%, var(--sand) 45%, var(--sand-dark) 100%);
+      radial-gradient(circle at 15% 0%, #fff3d6 0%, transparent 45%),
+      linear-gradient(180deg, #d9efec 0%, #c5e7e3 100%);
     font-family:'Nunito', sans-serif;
     color:var(--ink);
-    padding:16px;
+    padding:24px 16px 48px;
   }
 
+  header{
+    text-align:center;
+    margin-bottom:22px;
+  }
   h1{
     font-family:'Press Start 2P', monospace;
-    font-size:18px;
+    font-size:22px;
     color:var(--capi-dark);
-    text-shadow: 2px 2px 0 #fff5;
-    margin:0 0 4px 0;
-    text-align:center;
+    text-shadow: 2px 2px 0 #ffffffaa;
+    margin:0 0 6px 0;
   }
   .subtitle{
     font-weight:700;
     color:var(--river-dark);
-    margin-bottom:12px;
     font-size:14px;
     letter-spacing:.5px;
   }
 
-  #gameWrap{
-    position:relative;
-    border:6px solid var(--capi-dark);
-    border-radius:14px;
-    overflow:hidden;
-    box-shadow:0 10px 0 var(--sand-dark), 0 14px 24px rgba(0,0,0,.25);
-    image-rendering:pixelated;
-    background:var(--river);
+  /* ---------- layout principal: juego + sidebar ---------- */
+  #layout{
+    display:grid;
+    grid-template-columns: minmax(0,1fr) 320px;
+    gap:24px;
+    max-width:1180px;
+    margin:0 auto;
+    align-items:start;
+  }
+  @media (max-width: 920px){
+    #layout{ grid-template-columns: 1fr; }
   }
 
-  canvas{ display:block; image-rendering: pixelated; }
+  /* ---------- panel del juego ---------- */
+  #gamePanel{
+    background:#fffaf0;
+    border:5px solid var(--capi-dark);
+    border-radius:16px;
+    padding:18px;
+    box-shadow:0 8px 0 var(--sand-dark), 0 12px 22px rgba(0,0,0,.18);
+  }
+
+  #gameWrap{
+    position:relative;
+    border:5px solid var(--capi-dark);
+    border-radius:12px;
+    overflow:hidden;
+    image-rendering:pixelated;
+    background:var(--river);
+    width:100%;
+    aspect-ratio: 16 / 7.2;
+  }
+
+  canvas{ display:block; image-rendering: pixelated; width:100%; height:100%; }
 
   #hud{
-    position:absolute; top:8px; left:8px; right:8px;
+    position:absolute; top:10px; left:10px; right:10px;
     display:flex; justify-content:space-between; align-items:flex-start;
     font-family:'Press Start 2P', monospace;
-    font-size:10px;
+    font-size:clamp(9px, 1.6vw, 13px);
     color:#fff;
     text-shadow:2px 2px 0 #00000055;
     pointer-events:none;
@@ -78,12 +101,12 @@
   #buffs{ display:flex; flex-direction:column; gap:4px; align-items:flex-end;}
   .buff-pill{
     background:#00000066; padding:4px 8px; border-radius:6px;
-    font-size:9px; display:flex; align-items:center; gap:4px;
+    font-size:clamp(8px, 1.3vw, 11px); display:flex; align-items:center; gap:4px;
   }
 
   #overlay{
     position:absolute; inset:0;
-    background:rgba(58,44,29,.82);
+    background:rgba(58,44,29,.85);
     display:flex; flex-direction:column; align-items:center; justify-content:center;
     color:#fff; text-align:center; padding:20px;
     font-family:'Nunito', sans-serif;
@@ -91,19 +114,19 @@
   #overlay.hidden{ display:none; }
   #overlay h2{
     font-family:'Press Start 2P', monospace;
-    font-size:16px; margin-bottom:10px; color:var(--gold);
+    font-size:clamp(14px, 2.4vw, 20px); margin-bottom:10px; color:var(--gold);
   }
-  #overlay p{ margin:6px 0; font-size:14px; }
-  .bigscore{ font-size:28px !important; font-weight:900; color:#fff; }
+  #overlay p{ margin:6px 0; font-size:clamp(12px, 1.6vw, 15px); max-width:420px; }
+  .bigscore{ font-size:clamp(22px, 4vw, 32px) !important; font-weight:900; color:#fff; }
 
   button{
     font-family:'Press Start 2P', monospace;
-    font-size:11px;
+    font-size:12px;
     background:var(--gold);
     color:var(--ink);
     border:none;
     border-bottom:4px solid #b88600;
-    padding:12px 18px;
+    padding:13px 20px;
     border-radius:10px;
     cursor:pointer;
     margin-top:14px;
@@ -112,8 +135,8 @@
   button:active{ transform:translateY(3px); border-bottom-width:1px; }
 
   #controlsHint{
-    margin-top:10px;
-    font-size:12px;
+    margin-top:14px;
+    font-size:13px;
     color:var(--capi-dark);
     text-align:center;
     font-weight:700;
@@ -124,69 +147,116 @@
     padding:1px 6px; font-family:monospace; font-weight:700;
   }
 
-  #leaderboardBox{
-    margin-top:18px;
+  /* ---------- sidebar: cuenta + leaderboard, separados del juego ---------- */
+  #sidebar{
+    display:flex;
+    flex-direction:column;
+    gap:18px;
+  }
+
+  .sideCard{
     background:#fffaf0;
     border:4px solid var(--capi-dark);
-    border-radius:12px;
-    padding:14px 18px;
-    width:100%;
-    max-width:420px;
+    border-radius:14px;
+    padding:16px 18px;
+    box-shadow:0 6px 0 var(--sand-dark);
   }
+
+  #authCard{
+    display:flex;
+    flex-direction:column;
+    gap:10px;
+    align-items:stretch;
+    text-align:center;
+  }
+  #authCard h3{
+    font-family:'Press Start 2P', monospace;
+    font-size:11px;
+    color:var(--capi-dark);
+    margin:0 0 6px 0;
+  }
+  #twitchLoginBtn{
+    background:var(--twitch);
+    border-bottom-color:var(--twitch-dark);
+    font-size:11px;
+    margin-top:0;
+  }
+  #userInfo{
+    font-weight:700; color:var(--capi-dark); font-size:13px;
+  }
+
   #leaderboardBox h3{
     font-family:'Press Start 2P', monospace;
     font-size:12px;
     color:var(--capi-dark);
-    margin:0 0 10px 0;
+    margin:0 0 4px 0;
     text-align:center;
+  }
+  .lb-period{
+    text-align:center; font-size:11px; color:var(--river-dark);
+    font-weight:700; margin-bottom:12px;
   }
   #leaderboardList{ list-style:none; margin:0; padding:0; font-size:14px; }
   #leaderboardList li{
     display:flex; justify-content:space-between;
-    padding:6px 4px; border-bottom:1px dashed var(--sand-dark);
+    padding:7px 4px; border-bottom:1px dashed var(--sand-dark);
     font-weight:700;
   }
-  #leaderboardList li:first-child{ color:var(--gold); text-shadow:0 0 1px var(--capi-dark);}
+  #leaderboardList li:first-child{ color:#c98e00; }
   .week-note{
-    text-align:center; font-size:11px; color:#8a7355; margin-top:8px;
+    text-align:center; font-size:11px; color:#8a7355; margin-top:10px; line-height:1.5;
   }
 </style>
 </head>
 <body>
 
-  <h1>🐹 CAPIBARA RUNNER</h1>
-  <div class="subtitle">comunidad yocapi_pr</div>
+  <header>
+    <h1>🐹 CAPIBARA RUNNER</h1>
+    <div class="subtitle">comunidad yocapi_pr</div>
+  </header>
 
-  <div id="gameWrap">
-    <canvas id="game" width="480" height="270"></canvas>
-    <div id="hud">
-      <div id="score">PUNTOS: 0</div>
-      <div id="buffs"></div>
+  <div id="layout">
+
+    <!-- ====== PANEL DEL JUEGO ====== -->
+    <div id="gamePanel">
+      <div id="gameWrap">
+        <canvas id="game" width="960" height="432"></canvas>
+        <div id="hud">
+          <div id="score">PUNTOS: 0</div>
+          <div id="buffs"></div>
+        </div>
+        <div id="overlay">
+          <h2>CAPIBARA RUNNER</h2>
+          <p>Esquiva obstáculos, agarra power-ups y consigue el puntaje más alto de la semana.</p>
+          <button id="startBtn">JUGAR</button>
+        </div>
+      </div>
+
+      <div id="controlsHint">
+        <kbd>ESPACIO</kbd> / <kbd>↑</kbd> saltar &nbsp;&nbsp; <kbd>↓</kbd> agacharse &nbsp;&nbsp; (en celular: toca la pantalla)
+      </div>
     </div>
-    <div id="overlay">
-      <h2>CAPIBARA RUNNER</h2>
-      <p>Esquiva obstáculos, agarra power-ups y consigue el puntaje más alto de la semana.</p>
-      <button id="startBtn">JUGAR</button>
+
+    <!-- ====== SIDEBAR: CUENTA + TOP SEMANAL (sección separada) ====== -->
+    <div id="sidebar">
+
+      <div class="sideCard" id="authCard">
+        <h3>TU CUENTA</h3>
+        <button id="twitchLoginBtn">CONECTAR CON TWITCH</button>
+        <span id="userInfo"></span>
+      </div>
+
+      <div class="sideCard" id="leaderboardBox">
+        <h3>🏆 TOP DE LA SEMANA</h3>
+        <div class="lb-period" id="weekRange"></div>
+        <ul id="leaderboardList">
+          <li><span>Conecta tu cuenta de Twitch para ver el top</span></li>
+        </ul>
+        <div class="week-note">El top se reinicia cada lunes — el ganador se lleva el premio que anuncia yocapi_pr en stream 🎁</div>
+      </div>
+
     </div>
-  </div>
 
-  <div id="controlsHint">
-    <kbd>ESPACIO</kbd> / <kbd>↑</kbd> saltar &nbsp;&nbsp; <kbd>↓</kbd> agacharse &nbsp;&nbsp; (en celular: toca la pantalla)
-  </div>
-
-  <div id="authBar" style="margin-top:14px; display:flex; align-items:center; gap:10px;">
-    <button id="twitchLoginBtn" style="background:#9146FF; border-bottom-color:#5c2d99; font-size:10px;">
-      CONECTAR CON TWITCH
-    </button>
-    <span id="userInfo" style="font-weight:700; color:var(--capi-dark); font-size:13px;"></span>
-  </div>
-
-  <div id="leaderboardBox">
-    <h3>🏆 TOP DE LA SEMANA</h3>
-    <ul id="leaderboardList">
-      <li><span>Conecta tu cuenta de Twitch para ver el top</span></li>
-    </ul>
-    <div class="week-note">El top se reinicia cada lunes — el ganador se lleva el premio que anuncia yocapi_pr en stream 🎁</div>
   </div>
 
 <script>
@@ -197,7 +267,7 @@
 const canvas = document.getElementById('game');
 const ctx = canvas.getContext('2d');
 const W = canvas.width, H = canvas.height;
-const GROUND_Y = H - 50;
+const GROUND_Y = H - 80;
 
 const PALETTE = {
   bg1: '#bfe8e3',
@@ -219,19 +289,22 @@ const PALETTE = {
 // ---------- estado del juego ----------
 let state = 'idle'; // idle | playing | dead
 let score = 0;
-let speed = 4.2;
-let baseSpeed = 4.2;
-let gravity = 0.62;
+let speed = 0;
 let frame = 0;
 let multiplier = 1;
 let scoreLog = []; // eventos para validar en backend
+
+// --- curva de dificultad: progresiva y suave ---
+const BASE_SPEED = 4.4;       // velocidad inicial
+const MAX_SPEED_ADD = 4.0;    // techo de velocidad extra ganada con el tiempo
+const RAMP_FRAMES = 3600;     // frames (a 60fps ≈ 60s) para llegar al techo de velocidad
 
 let player, obstacles, powerups, particles;
 let activeBuffs = {}; // {shield: framesLeft, multi: framesLeft, slow: framesLeft, magnet: framesLeft, doubleJump: framesLeft}
 
 function resetGame(){
   score = 0;
-  speed = baseSpeed;
+  speed = BASE_SPEED;
   frame = 0;
   multiplier = 1;
   scoreLog = [{t:0, ev:'start'}];
@@ -240,7 +313,7 @@ function resetGame(){
   powerups = [];
   particles = [];
   player = {
-    x: 60, y: GROUND_Y - 28, w: 30, h: 28,
+    x: W*0.08, y: GROUND_Y - 48, w: 52, h: 48,
     vy: 0, jumping:false, ducking:false,
     jumpsLeft: 1, baseJumps: 1,
     legFrame:0
@@ -251,7 +324,7 @@ function resetGame(){
 function jump(){
   if(state !== 'playing') return;
   if(player.jumpsLeft > 0){
-    player.vy = -10.5;
+    player.vy = -13.5;
     player.jumping = true;
     player.jumpsLeft--;
   }
@@ -281,7 +354,6 @@ function endGame(){
   state = 'dead';
   scoreLog.push({t: frame, ev:'end', score: Math.floor(score)});
   showGameOver();
-  // Aquí se envía scoreLog al backend (ver sendScoreToBackend más abajo)
   sendScoreToBackend(scoreLog, Math.floor(score));
 }
 
@@ -299,12 +371,13 @@ function showGameOver(){
 
 // ---------- spawns ----------
 function maybeSpawnObstacle(){
-  const minGap = Math.max(55, 110 - Math.floor(score/8));
-  if(frame % Math.max(40, 80 - Math.floor(speed*3)) === 0){
+  // intervalo entre obstáculos: empieza espacioso, se acorta lento y con piso alto (no agobia)
+  const interval = Math.max(62, 105 - Math.floor(speed*4));
+  if(frame % interval === 0){
     const type = Math.random() < 0.35 ? 'rock' : 'log';
-    const h = type === 'rock' ? 24 : 18;
+    const h = type === 'rock' ? 38 : 30;
     obstacles.push({
-      x: W + 20, y: GROUND_Y - h, w: type==='rock'?22:34, h,
+      x: W + 20, y: GROUND_Y - h, w: type==='rock'?36:56, h,
       type
     });
   }
@@ -316,8 +389,8 @@ function maybeSpawnPowerup(){
     const type = POWER_TYPES[Math.floor(Math.random()*POWER_TYPES.length)];
     powerups.push({
       x: W + 20,
-      y: GROUND_Y - 70 - Math.random()*40,
-      w: 18, h: 18,
+      y: GROUND_Y - 120 - Math.random()*70,
+      w: 30, h: 30,
       type
     });
   }
@@ -326,7 +399,12 @@ function maybeSpawnPowerup(){
 // ---------- update ----------
 function update(){
   frame++;
-  speed = baseSpeed + Math.min(5, score/250) * (activeBuffs.slow ? 0.4 : 1);
+
+  // velocidad: rampa progresiva y suave hasta un techo, sin picos bruscos
+  const ramp = Math.min(1, frame / RAMP_FRAMES);
+  const targetSpeed = BASE_SPEED + ramp * MAX_SPEED_ADD;
+  speed += (targetSpeed - speed) * 0.02; // suaviza el cambio frame a frame
+  if(activeBuffs.slow) speed *= 0.55;
 
   // score & multiplier
   multiplier = activeBuffs.multi ? 2 : 1;
@@ -340,7 +418,7 @@ function update(){
   player.jumpsLeft = activeBuffs.doubleJump ? 2 : (player.jumping ? player.jumpsLeft : 1);
 
   // player physics
-  player.vy += gravity;
+  player.vy += 1.0; // gravedad
   player.y += player.vy;
   if(player.y > GROUND_Y - player.h){
     player.y = GROUND_Y - player.h;
@@ -364,10 +442,10 @@ function update(){
     if(activeBuffs.magnet){
       const dx = (player.x - p.x), dy = (player.y - p.y);
       const dist = Math.hypot(dx,dy);
-      if(dist < 120){ p.x += dx*0.08; p.y += dy*0.08; }
+      if(dist < 200){ p.x += dx*0.08; p.y += dy*0.08; }
     }
   }
-  powerups = powerups.filter(p => p.x > -20);
+  powerups = powerups.filter(p => p.x > -30);
 
   // collisions: obstacles
   const hitboxH = player.ducking ? player.h*0.55 : player.h;
@@ -375,7 +453,6 @@ function update(){
   for(const o of obstacles){
     if(rectsOverlap(player.x, hitboxY, player.w, hitboxH, o.x, o.y, o.w, o.h)){
       if(activeBuffs.shield){
-        // protegido: destruye obstáculo, suma puntos chicos
         obstacles = obstacles.filter(x => x !== o);
         score += 5;
         spawnParticles(o.x, o.y, PALETTE.shield);
@@ -432,8 +509,8 @@ function colorForPower(type){
 function spawnParticles(x,y,color){
   for(let i=0;i<8;i++){
     particles.push({
-      x, y, vx:(Math.random()-0.5)*3, vy:-Math.random()*3,
-      life: 24, color
+      x, y, vx:(Math.random()-0.5)*4, vy:-Math.random()*4,
+      life: 26, color
     });
   }
 }
@@ -457,16 +534,18 @@ function drawBackground(){
   ctx.fillRect(0,0,W,GROUND_Y);
   // río con franjas
   ctx.fillStyle = PALETTE.bg2;
-  for(let i=0;i<6;i++){
-    const y = (i*22 + (frame*0.6)%22);
-    ctx.fillRect(0, y, W, 4);
+  const stripeH = 7;
+  for(let i=0;i<10;i++){
+    const y = (i*38 + (frame*speed*0.5)%38);
+    ctx.fillRect(0, y, W, stripeH);
   }
   // suelo
   ctx.fillStyle = PALETTE.ground;
   ctx.fillRect(0, GROUND_Y, W, H-GROUND_Y);
   ctx.fillStyle = PALETTE.groundLine;
-  for(let x = -((frame*speed)%24); x < W; x+=24){
-    ctx.fillRect(x, GROUND_Y, 14, 4);
+  const tileW = 40;
+  for(let x = -((frame*speed)%tileW); x < W; x+=tileW){
+    ctx.fillRect(x, GROUND_Y, 24, 7);
   }
 }
 
@@ -479,7 +558,7 @@ function drawCapibara(){
   // sombra
   ctx.fillStyle = 'rgba(0,0,0,0.18)';
   ctx.beginPath();
-  ctx.ellipse(x+w/2, GROUND_Y+4, w*0.55, 5, 0,0,Math.PI*2);
+  ctx.ellipse(x+w/2, GROUND_Y+6, w*0.55, 8, 0,0,Math.PI*2);
   ctx.fill();
 
   // cuerpo
@@ -487,31 +566,31 @@ function drawCapibara(){
   ctx.fillRect(x, by, w, bodyH);
   // panza
   ctx.fillStyle = PALETTE.capiBelly;
-  ctx.fillRect(x+4, by+bodyH*0.55, w-8, bodyH*0.4);
+  ctx.fillRect(x+7, by+bodyH*0.55, w-14, bodyH*0.4);
   // cabeza
   ctx.fillStyle = PALETTE.capiDark;
-  ctx.fillRect(x+w-12, by-6, 16, 14);
+  ctx.fillRect(x+w-20, by-10, 26, 24);
   // ojo
   ctx.fillStyle = '#fff';
-  ctx.fillRect(x+w-6, by-2, 4, 4);
+  ctx.fillRect(x+w-10, by-3, 7, 7);
   ctx.fillStyle = '#000';
-  ctx.fillRect(x+w-5, by-1, 2, 2);
+  ctx.fillRect(x+w-8, by-1, 3, 3);
   // orejas
   ctx.fillStyle = PALETTE.capiDark;
-  ctx.fillRect(x+w-10, by-9, 3, 4);
-  ctx.fillRect(x+w-2, by-9, 3, 4);
+  ctx.fillRect(x+w-17, by-16, 5, 7);
+  ctx.fillRect(x+w-4, by-16, 5, 7);
   // patas (animación simple)
   ctx.fillStyle = PALETTE.capiDark;
-  const legOff = Math.sin(player.legFrame)*4;
-  ctx.fillRect(x+4, by+bodyH-4, 5, 6+legOff*0.3);
-  ctx.fillRect(x+w-12, by+bodyH-4, 5, 6-legOff*0.3);
+  const legOff = Math.sin(player.legFrame)*6;
+  ctx.fillRect(x+7, by+bodyH-6, 9, 10+legOff*0.3);
+  ctx.fillRect(x+w-20, by+bodyH-6, 9, 10-legOff*0.3);
 
   // escudo visual
   if(activeBuffs.shield){
     ctx.strokeStyle = PALETTE.shield;
-    ctx.lineWidth = 2;
+    ctx.lineWidth = 3;
     ctx.beginPath();
-    ctx.arc(x+w/2, by+bodyH/2, w*0.9, 0, Math.PI*2);
+    ctx.arc(x+w/2, by+bodyH/2, w*0.85, 0, Math.PI*2);
     ctx.stroke();
   }
   ctx.restore();
@@ -522,7 +601,7 @@ function drawObstacles(){
     ctx.fillStyle = o.type === 'rock' ? PALETTE.obstacleRock : PALETTE.obstacle;
     ctx.fillRect(o.x, o.y, o.w, o.h);
     ctx.fillStyle = 'rgba(0,0,0,0.15)';
-    ctx.fillRect(o.x, o.y, o.w, 4);
+    ctx.fillRect(o.x, o.y, o.w, 6);
   }
 }
 
@@ -530,16 +609,16 @@ function drawPowerups(){
   const icons = { shield:'🛡', multi:'x2', slow:'🐢', magnet:'🧲', doubleJump:'⭐', coin:'●' };
   for(const p of powerups){
     ctx.save();
-    const bob = Math.sin(frame*0.1 + p.x*0.05)*3;
+    const bob = Math.sin(frame*0.1 + p.x*0.05)*5;
     ctx.fillStyle = colorForPower(p.type);
     ctx.beginPath();
     ctx.arc(p.x+p.w/2, p.y+p.h/2+bob, p.w/2, 0, Math.PI*2);
     ctx.fill();
     ctx.strokeStyle = '#fff';
-    ctx.lineWidth = 2;
+    ctx.lineWidth = 3;
     ctx.stroke();
     ctx.fillStyle = '#fff';
-    ctx.font = '10px sans-serif';
+    ctx.font = '16px sans-serif';
     ctx.textAlign='center'; ctx.textBaseline='middle';
     ctx.fillText(icons[p.type]||'?', p.x+p.w/2, p.y+p.h/2+bob);
     ctx.restore();
@@ -549,8 +628,8 @@ function drawPowerups(){
 function drawParticles(){
   for(const pt of particles){
     ctx.fillStyle = pt.color;
-    ctx.globalAlpha = pt.life/24;
-    ctx.fillRect(pt.x, pt.y, 4, 4);
+    ctx.globalAlpha = pt.life/26;
+    ctx.fillRect(pt.x, pt.y, 6, 6);
     ctx.globalAlpha = 1;
   }
 }
@@ -580,14 +659,6 @@ function loop(){
 resetGame();
 draw();
 loop();
-
-/* ============================================================
-   INTEGRACIÓN CON BACKEND (Supabase) - leaderboard semanal
-   ============================================================
-   1. Reemplaza SUPABASE_URL y SUPABASE_ANON_KEY con tus datos.
-   2. Habilita Twitch como proveedor en Authentication > Providers.
-   3. Crea las tablas con el script SQL que te paso aparte.
-   ============================================================ */
 
 /* ============================================================
    INTEGRACIÓN CON SUPABASE - leaderboard semanal + login Twitch
@@ -664,7 +735,17 @@ async function sendScoreToBackend(log, finalScore){
 }
 
 // ---------- Cargar leaderboard ----------
+function updateWeekRange(){
+  const now = new Date();
+  const day = (now.getDay() + 6) % 7; // lunes = 0
+  const monday = new Date(now); monday.setDate(now.getDate() - day);
+  const sunday = new Date(monday); sunday.setDate(monday.getDate() + 6);
+  const fmt = d => d.toLocaleDateString('es-MX', { day:'numeric', month:'short' });
+  document.getElementById('weekRange').textContent = `${fmt(monday)} – ${fmt(sunday)}`;
+}
+
 async function loadLeaderboard(){
+  updateWeekRange();
   const list = document.getElementById('leaderboardList');
   const { data, error } = await sb
     .from('current_week_leaderboard')
