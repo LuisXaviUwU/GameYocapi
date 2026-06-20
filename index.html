@@ -1,234 +1,157 @@
 <!DOCTYPE html>
 <html lang="es">
-
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Capibara Runner — yocapi_pr</title>
-  <style>
-    @import url('https://fonts.googleapis.com/css2?family=Press+Start+2P&family=Nunito:wght@400;700;900&display=swap');
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Capibara Runner — yocapi_pr</title>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Press+Start+2P&family=Nunito:wght@400;700;900&display=swap');
 
-    :root {
-      --sand: #f3d9a4;
-      --sand-dark: #d9b475;
-      --river: #7fc8c2;
-      --river-dark: #4f9b95;
-      --capi-brown: #9c6b3e;
-      --capi-dark: #6e4a28;
-      --ink: #3a2c1d;
-      --gold: #f2b705;
-      --leaf: #5a8f4f;
-    }
+  :root{
+    --sand:#f3d9a4;
+    --sand-dark:#d9b475;
+    --river:#7fc8c2;
+    --river-dark:#4f9b95;
+    --capi-brown:#9c6b3e;
+    --capi-dark:#6e4a28;
+    --ink:#3a2c1d;
+    --gold:#f2b705;
+    --leaf:#5a8f4f;
+  }
 
-    * {
-      box-sizing: border-box;
-    }
+  *{ box-sizing:border-box; }
 
-    body {
-      margin: 0;
-      min-height: 100vh;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: center;
-      background:
-        radial-gradient(circle at 20% 10%, #fff3d6 0%, transparent 40%),
-        linear-gradient(180deg, #bfe8e3 0%, var(--river) 45%, var(--sand) 45%, var(--sand-dark) 100%);
-      font-family: 'Nunito', sans-serif;
-      color: var(--ink);
-      padding: 16px;
-    }
+  body{
+    margin:0;
+    min-height:100vh;
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+    justify-content:center;
+    background:
+      radial-gradient(circle at 20% 10%, #fff3d6 0%, transparent 40%),
+      linear-gradient(180deg, #bfe8e3 0%, var(--river) 45%, var(--sand) 45%, var(--sand-dark) 100%);
+    font-family:'Nunito', sans-serif;
+    color:var(--ink);
+    padding:16px;
+  }
 
-    h1 {
-      font-family: 'Press Start 2P', monospace;
-      font-size: 18px;
-      color: var(--capi-dark);
-      text-shadow: 2px 2px 0 #fff5;
-      margin: 0 0 4px 0;
-      text-align: center;
-    }
+  h1{
+    font-family:'Press Start 2P', monospace;
+    font-size:18px;
+    color:var(--capi-dark);
+    text-shadow: 2px 2px 0 #fff5;
+    margin:0 0 4px 0;
+    text-align:center;
+  }
+  .subtitle{
+    font-weight:700;
+    color:var(--river-dark);
+    margin-bottom:12px;
+    font-size:14px;
+    letter-spacing:.5px;
+  }
 
-    .subtitle {
-      font-weight: 700;
-      color: var(--river-dark);
-      margin-bottom: 12px;
-      font-size: 14px;
-      letter-spacing: .5px;
-    }
+  #gameWrap{
+    position:relative;
+    border:6px solid var(--capi-dark);
+    border-radius:14px;
+    overflow:hidden;
+    box-shadow:0 10px 0 var(--sand-dark), 0 14px 24px rgba(0,0,0,.25);
+    image-rendering:pixelated;
+    background:var(--river);
+  }
 
-    #gameWrap {
-      position: relative;
-      border: 6px solid var(--capi-dark);
-      border-radius: 14px;
-      overflow: hidden;
-      box-shadow: 0 10px 0 var(--sand-dark), 0 14px 24px rgba(0, 0, 0, .25);
-      image-rendering: pixelated;
-      background: var(--river);
-    }
+  canvas{ display:block; image-rendering: pixelated; }
 
-    canvas {
-      display: block;
-      image-rendering: pixelated;
-    }
+  #hud{
+    position:absolute; top:8px; left:8px; right:8px;
+    display:flex; justify-content:space-between; align-items:flex-start;
+    font-family:'Press Start 2P', monospace;
+    font-size:10px;
+    color:#fff;
+    text-shadow:2px 2px 0 #00000055;
+    pointer-events:none;
+  }
+  #score{ background:#00000055; padding:6px 10px; border-radius:8px;}
+  #buffs{ display:flex; flex-direction:column; gap:4px; align-items:flex-end;}
+  .buff-pill{
+    background:#00000066; padding:4px 8px; border-radius:6px;
+    font-size:9px; display:flex; align-items:center; gap:4px;
+  }
 
-    #hud {
-      position: absolute;
-      top: 8px;
-      left: 8px;
-      right: 8px;
-      display: flex;
-      justify-content: space-between;
-      align-items: flex-start;
-      font-family: 'Press Start 2P', monospace;
-      font-size: 10px;
-      color: #fff;
-      text-shadow: 2px 2px 0 #00000055;
-      pointer-events: none;
-    }
+  #overlay{
+    position:absolute; inset:0;
+    background:rgba(58,44,29,.82);
+    display:flex; flex-direction:column; align-items:center; justify-content:center;
+    color:#fff; text-align:center; padding:20px;
+    font-family:'Nunito', sans-serif;
+  }
+  #overlay.hidden{ display:none; }
+  #overlay h2{
+    font-family:'Press Start 2P', monospace;
+    font-size:16px; margin-bottom:10px; color:var(--gold);
+  }
+  #overlay p{ margin:6px 0; font-size:14px; }
+  .bigscore{ font-size:28px !important; font-weight:900; color:#fff; }
 
-    #score {
-      background: #00000055;
-      padding: 6px 10px;
-      border-radius: 8px;
-    }
+  button{
+    font-family:'Press Start 2P', monospace;
+    font-size:11px;
+    background:var(--gold);
+    color:var(--ink);
+    border:none;
+    border-bottom:4px solid #b88600;
+    padding:12px 18px;
+    border-radius:10px;
+    cursor:pointer;
+    margin-top:14px;
+    transition:transform .05s ease;
+  }
+  button:active{ transform:translateY(3px); border-bottom-width:1px; }
 
-    #buffs {
-      display: flex;
-      flex-direction: column;
-      gap: 4px;
-      align-items: flex-end;
-    }
+  #controlsHint{
+    margin-top:10px;
+    font-size:12px;
+    color:var(--capi-dark);
+    text-align:center;
+    font-weight:700;
+  }
+  kbd{
+    background:#fff; border:1px solid var(--capi-dark);
+    border-bottom-width:3px; border-radius:4px;
+    padding:1px 6px; font-family:monospace; font-weight:700;
+  }
 
-    .buff-pill {
-      background: #00000066;
-      padding: 4px 8px;
-      border-radius: 6px;
-      font-size: 9px;
-      display: flex;
-      align-items: center;
-      gap: 4px;
-    }
-
-    #overlay {
-      position: absolute;
-      inset: 0;
-      background: rgba(58, 44, 29, .82);
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: center;
-      color: #fff;
-      text-align: center;
-      padding: 20px;
-      font-family: 'Nunito', sans-serif;
-    }
-
-    #overlay.hidden {
-      display: none;
-    }
-
-    #overlay h2 {
-      font-family: 'Press Start 2P', monospace;
-      font-size: 16px;
-      margin-bottom: 10px;
-      color: var(--gold);
-    }
-
-    #overlay p {
-      margin: 6px 0;
-      font-size: 14px;
-    }
-
-    .bigscore {
-      font-size: 28px !important;
-      font-weight: 900;
-      color: #fff;
-    }
-
-    button {
-      font-family: 'Press Start 2P', monospace;
-      font-size: 11px;
-      background: var(--gold);
-      color: var(--ink);
-      border: none;
-      border-bottom: 4px solid #b88600;
-      padding: 12px 18px;
-      border-radius: 10px;
-      cursor: pointer;
-      margin-top: 14px;
-      transition: transform .05s ease;
-    }
-
-    button:active {
-      transform: translateY(3px);
-      border-bottom-width: 1px;
-    }
-
-    #controlsHint {
-      margin-top: 10px;
-      font-size: 12px;
-      color: var(--capi-dark);
-      text-align: center;
-      font-weight: 700;
-    }
-
-    kbd {
-      background: #fff;
-      border: 1px solid var(--capi-dark);
-      border-bottom-width: 3px;
-      border-radius: 4px;
-      padding: 1px 6px;
-      font-family: monospace;
-      font-weight: 700;
-    }
-
-    #leaderboardBox {
-      margin-top: 18px;
-      background: #fffaf0;
-      border: 4px solid var(--capi-dark);
-      border-radius: 12px;
-      padding: 14px 18px;
-      width: 100%;
-      max-width: 420px;
-    }
-
-    #leaderboardBox h3 {
-      font-family: 'Press Start 2P', monospace;
-      font-size: 12px;
-      color: var(--capi-dark);
-      margin: 0 0 10px 0;
-      text-align: center;
-    }
-
-    #leaderboardList {
-      list-style: none;
-      margin: 0;
-      padding: 0;
-      font-size: 14px;
-    }
-
-    #leaderboardList li {
-      display: flex;
-      justify-content: space-between;
-      padding: 6px 4px;
-      border-bottom: 1px dashed var(--sand-dark);
-      font-weight: 700;
-    }
-
-    #leaderboardList li:first-child {
-      color: var(--gold);
-      text-shadow: 0 0 1px var(--capi-dark);
-    }
-
-    .week-note {
-      text-align: center;
-      font-size: 11px;
-      color: #8a7355;
-      margin-top: 8px;
-    }
-  </style>
+  #leaderboardBox{
+    margin-top:18px;
+    background:#fffaf0;
+    border:4px solid var(--capi-dark);
+    border-radius:12px;
+    padding:14px 18px;
+    width:100%;
+    max-width:420px;
+  }
+  #leaderboardBox h3{
+    font-family:'Press Start 2P', monospace;
+    font-size:12px;
+    color:var(--capi-dark);
+    margin:0 0 10px 0;
+    text-align:center;
+  }
+  #leaderboardList{ list-style:none; margin:0; padding:0; font-size:14px; }
+  #leaderboardList li{
+    display:flex; justify-content:space-between;
+    padding:6px 4px; border-bottom:1px dashed var(--sand-dark);
+    font-weight:700;
+  }
+  #leaderboardList li:first-child{ color:var(--gold); text-shadow:0 0 1px var(--capi-dark);}
+  .week-note{
+    text-align:center; font-size:11px; color:#8a7355; margin-top:8px;
+  }
+</style>
 </head>
-
 <body>
 
   <h1>🐹 CAPIBARA RUNNER</h1>
@@ -248,8 +171,14 @@
   </div>
 
   <div id="controlsHint">
-    <kbd>ESPACIO</kbd> / <kbd>↑</kbd> saltar &nbsp;&nbsp; <kbd>↓</kbd> agacharse &nbsp;&nbsp; (en celular: toca la
-    pantalla)
+    <kbd>ESPACIO</kbd> / <kbd>↑</kbd> saltar &nbsp;&nbsp; <kbd>↓</kbd> agacharse &nbsp;&nbsp; (en celular: toca la pantalla)
+  </div>
+
+  <div id="authBar" style="margin-top:14px; display:flex; align-items:center; gap:10px;">
+    <button id="twitchLoginBtn" style="background:#9146FF; border-bottom-color:#5c2d99; font-size:10px;">
+      CONECTAR CON TWITCH
+    </button>
+    <span id="userInfo" style="font-weight:700; color:var(--capi-dark); font-size:13px;"></span>
   </div>
 
   <div id="leaderboardBox">
@@ -257,459 +186,511 @@
     <ul id="leaderboardList">
       <li><span>Conecta tu cuenta de Twitch para ver el top</span></li>
     </ul>
-    <div class="week-note">El top se reinicia cada lunes — el ganador se lleva el premio que anuncia yocapi_pr en stream
-      🎁</div>
+    <div class="week-note">El top se reinicia cada lunes — el ganador se lleva el premio que anuncia yocapi_pr en stream 🎁</div>
   </div>
 
-  <script>
-    /* ============================================================
-       CAPIBARA RUNNER - lógica del juego
-       ============================================================ */
+<script>
+/* ============================================================
+   CAPIBARA RUNNER - lógica del juego
+   ============================================================ */
 
-    const canvas = document.getElementById('game');
-    const ctx = canvas.getContext('2d');
-    const W = canvas.width, H = canvas.height;
-    const GROUND_Y = H - 50;
+const canvas = document.getElementById('game');
+const ctx = canvas.getContext('2d');
+const W = canvas.width, H = canvas.height;
+const GROUND_Y = H - 50;
 
-    const PALETTE = {
-      bg1: '#bfe8e3',
-      bg2: '#7fc8c2',
-      ground: '#d9b475',
-      groundLine: '#b8895a',
-      capiBody: '#9c6b3e',
-      capiDark: '#6e4a28',
-      capiBelly: '#e8c79a',
-      obstacle: '#5a8f4f',
-      obstacleRock: '#7a7065',
-      shield: '#7fd6ff',
-      multi: '#f2b705',
-      slow: '#b07cf2',
-      magnet: '#ff6b6b',
-      coin: '#ffd93d'
-    };
+const PALETTE = {
+  bg1: '#bfe8e3',
+  bg2: '#7fc8c2',
+  ground: '#d9b475',
+  groundLine: '#b8895a',
+  capiBody: '#9c6b3e',
+  capiDark: '#6e4a28',
+  capiBelly: '#e8c79a',
+  obstacle: '#5a8f4f',
+  obstacleRock: '#7a7065',
+  shield: '#7fd6ff',
+  multi: '#f2b705',
+  slow: '#b07cf2',
+  magnet: '#ff6b6b',
+  coin: '#ffd93d'
+};
 
-    // ---------- estado del juego ----------
-    let state = 'idle'; // idle | playing | dead
-    let score = 0;
-    let speed = 4.2;
-    let baseSpeed = 4.2;
-    let gravity = 0.62;
-    let frame = 0;
-    let multiplier = 1;
-    let scoreLog = []; // eventos para validar en backend
+// ---------- estado del juego ----------
+let state = 'idle'; // idle | playing | dead
+let score = 0;
+let speed = 4.2;
+let baseSpeed = 4.2;
+let gravity = 0.62;
+let frame = 0;
+let multiplier = 1;
+let scoreLog = []; // eventos para validar en backend
 
-    let player, obstacles, powerups, particles;
-    let activeBuffs = {}; // {shield: framesLeft, multi: framesLeft, slow: framesLeft, magnet: framesLeft, doubleJump: framesLeft}
+let player, obstacles, powerups, particles;
+let activeBuffs = {}; // {shield: framesLeft, multi: framesLeft, slow: framesLeft, magnet: framesLeft, doubleJump: framesLeft}
 
-    function resetGame() {
-      score = 0;
-      speed = baseSpeed;
-      frame = 0;
-      multiplier = 1;
-      scoreLog = [{ t: 0, ev: 'start' }];
-      activeBuffs = {};
-      obstacles = [];
-      powerups = [];
-      particles = [];
-      player = {
-        x: 60, y: GROUND_Y - 28, w: 30, h: 28,
-        vy: 0, jumping: false, ducking: false,
-        jumpsLeft: 1, baseJumps: 1,
-        legFrame: 0
-      };
-    }
+function resetGame(){
+  score = 0;
+  speed = baseSpeed;
+  frame = 0;
+  multiplier = 1;
+  scoreLog = [{t:0, ev:'start'}];
+  activeBuffs = {};
+  obstacles = [];
+  powerups = [];
+  particles = [];
+  player = {
+    x: 60, y: GROUND_Y - 28, w: 30, h: 28,
+    vy: 0, jumping:false, ducking:false,
+    jumpsLeft: 1, baseJumps: 1,
+    legFrame:0
+  };
+}
 
-    // ---------- input ----------
-    function jump() {
-      if (state !== 'playing') return;
-      if (player.jumpsLeft > 0) {
-        player.vy = -10.5;
-        player.jumping = true;
-        player.jumpsLeft--;
-      }
-    }
-    function duckStart() { if (state === 'playing') player.ducking = true; }
-    function duckEnd() { player.ducking = false; }
+// ---------- input ----------
+function jump(){
+  if(state !== 'playing') return;
+  if(player.jumpsLeft > 0){
+    player.vy = -10.5;
+    player.jumping = true;
+    player.jumpsLeft--;
+  }
+}
+function duckStart(){ if(state==='playing') player.ducking = true; }
+function duckEnd(){ player.ducking = false; }
 
-    window.addEventListener('keydown', e => {
-      if (e.code === 'Space' || e.code === 'ArrowUp') { e.preventDefault(); jump(); }
-      if (e.code === 'ArrowDown') { e.preventDefault(); duckStart(); }
-    });
-    window.addEventListener('keyup', e => {
-      if (e.code === 'ArrowDown') duckEnd();
-    });
-    canvas.addEventListener('touchstart', e => { e.preventDefault(); jump(); });
-    canvas.addEventListener('mousedown', jump);
+window.addEventListener('keydown', e=>{
+  if(e.code === 'Space' || e.code === 'ArrowUp'){ e.preventDefault(); jump(); }
+  if(e.code === 'ArrowDown'){ e.preventDefault(); duckStart(); }
+});
+window.addEventListener('keyup', e=>{
+  if(e.code === 'ArrowDown') duckEnd();
+});
+canvas.addEventListener('touchstart', e=>{ e.preventDefault(); jump(); });
+canvas.addEventListener('mousedown', jump);
 
-    document.getElementById('startBtn').addEventListener('click', startGame);
+document.getElementById('startBtn').addEventListener('click', startGame);
 
-    function startGame() {
-      resetGame();
-      state = 'playing';
-      document.getElementById('overlay').classList.add('hidden');
-    }
+function startGame(){
+  resetGame();
+  state = 'playing';
+  document.getElementById('overlay').classList.add('hidden');
+}
 
-    function endGame() {
-      state = 'dead';
-      scoreLog.push({ t: frame, ev: 'end', score: Math.floor(score) });
-      showGameOver();
-      // Aquí se envía scoreLog al backend (ver sendScoreToBackend más abajo)
-      sendScoreToBackend(scoreLog, Math.floor(score));
-    }
+function endGame(){
+  state = 'dead';
+  scoreLog.push({t: frame, ev:'end', score: Math.floor(score)});
+  showGameOver();
+  // Aquí se envía scoreLog al backend (ver sendScoreToBackend más abajo)
+  sendScoreToBackend(scoreLog, Math.floor(score));
+}
 
-    function showGameOver() {
-      const overlay = document.getElementById('overlay');
-      overlay.classList.remove('hidden');
-      overlay.innerHTML = `
+function showGameOver(){
+  const overlay = document.getElementById('overlay');
+  overlay.classList.remove('hidden');
+  overlay.innerHTML = `
     <h2>¡TE ATRAPÓ EL RÍO!</h2>
     <p class="bigscore">${Math.floor(score)} pts</p>
     <p>Intenta superar tu marca y subir al top semanal.</p>
     <button id="retryBtn">JUGAR DE NUEVO</button>
   `;
-      document.getElementById('retryBtn').addEventListener('click', startGame);
+  document.getElementById('retryBtn').addEventListener('click', startGame);
+}
+
+// ---------- spawns ----------
+function maybeSpawnObstacle(){
+  const minGap = Math.max(55, 110 - Math.floor(score/8));
+  if(frame % Math.max(40, 80 - Math.floor(speed*3)) === 0){
+    const type = Math.random() < 0.35 ? 'rock' : 'log';
+    const h = type === 'rock' ? 24 : 18;
+    obstacles.push({
+      x: W + 20, y: GROUND_Y - h, w: type==='rock'?22:34, h,
+      type
+    });
+  }
+}
+
+const POWER_TYPES = ['shield','multi','slow','magnet','doubleJump','coin'];
+function maybeSpawnPowerup(){
+  if(frame % 220 === 0 && Math.random() < 0.85){
+    const type = POWER_TYPES[Math.floor(Math.random()*POWER_TYPES.length)];
+    powerups.push({
+      x: W + 20,
+      y: GROUND_Y - 70 - Math.random()*40,
+      w: 18, h: 18,
+      type
+    });
+  }
+}
+
+// ---------- update ----------
+function update(){
+  frame++;
+  speed = baseSpeed + Math.min(5, score/250) * (activeBuffs.slow ? 0.4 : 1);
+
+  // score & multiplier
+  multiplier = activeBuffs.multi ? 2 : 1;
+  score += 0.12 * speed * multiplier;
+
+  // buffs countdown
+  for(const k in activeBuffs){
+    activeBuffs[k]--;
+    if(activeBuffs[k] <= 0) delete activeBuffs[k];
+  }
+  player.jumpsLeft = activeBuffs.doubleJump ? 2 : (player.jumping ? player.jumpsLeft : 1);
+
+  // player physics
+  player.vy += gravity;
+  player.y += player.vy;
+  if(player.y > GROUND_Y - player.h){
+    player.y = GROUND_Y - player.h;
+    player.vy = 0;
+    player.jumping = false;
+    player.jumpsLeft = activeBuffs.doubleJump ? 2 : 1;
+  }
+  player.legFrame += 0.3;
+
+  // spawn
+  maybeSpawnObstacle();
+  maybeSpawnPowerup();
+
+  // move obstacles
+  for(const o of obstacles) o.x -= speed;
+  obstacles = obstacles.filter(o => o.x + o.w > -10);
+
+  // move powerups (magnet attracts)
+  for(const p of powerups){
+    p.x -= speed;
+    if(activeBuffs.magnet){
+      const dx = (player.x - p.x), dy = (player.y - p.y);
+      const dist = Math.hypot(dx,dy);
+      if(dist < 120){ p.x += dx*0.08; p.y += dy*0.08; }
     }
+  }
+  powerups = powerups.filter(p => p.x > -20);
 
-    // ---------- spawns ----------
-    function maybeSpawnObstacle() {
-      const minGap = Math.max(55, 110 - Math.floor(score / 8));
-      if (frame % Math.max(40, 80 - Math.floor(speed * 3)) === 0) {
-        const type = Math.random() < 0.35 ? 'rock' : 'log';
-        const h = type === 'rock' ? 24 : 18;
-        obstacles.push({
-          x: W + 20, y: GROUND_Y - h, w: type === 'rock' ? 22 : 34, h,
-          type
-        });
-      }
-    }
-
-    const POWER_TYPES = ['shield', 'multi', 'slow', 'magnet', 'doubleJump', 'coin'];
-    function maybeSpawnPowerup() {
-      if (frame % 220 === 0 && Math.random() < 0.85) {
-        const type = POWER_TYPES[Math.floor(Math.random() * POWER_TYPES.length)];
-        powerups.push({
-          x: W + 20,
-          y: GROUND_Y - 70 - Math.random() * 40,
-          w: 18, h: 18,
-          type
-        });
-      }
-    }
-
-    // ---------- update ----------
-    function update() {
-      frame++;
-      speed = baseSpeed + Math.min(5, score / 250) * (activeBuffs.slow ? 0.4 : 1);
-
-      // score & multiplier
-      multiplier = activeBuffs.multi ? 2 : 1;
-      score += 0.12 * speed * multiplier;
-
-      // buffs countdown
-      for (const k in activeBuffs) {
-        activeBuffs[k]--;
-        if (activeBuffs[k] <= 0) delete activeBuffs[k];
-      }
-      player.jumpsLeft = activeBuffs.doubleJump ? 2 : (player.jumping ? player.jumpsLeft : 1);
-
-      // player physics
-      player.vy += gravity;
-      player.y += player.vy;
-      if (player.y > GROUND_Y - player.h) {
-        player.y = GROUND_Y - player.h;
-        player.vy = 0;
-        player.jumping = false;
-        player.jumpsLeft = activeBuffs.doubleJump ? 2 : 1;
-      }
-      player.legFrame += 0.3;
-
-      // spawn
-      maybeSpawnObstacle();
-      maybeSpawnPowerup();
-
-      // move obstacles
-      for (const o of obstacles) o.x -= speed;
-      obstacles = obstacles.filter(o => o.x + o.w > -10);
-
-      // move powerups (magnet attracts)
-      for (const p of powerups) {
-        p.x -= speed;
-        if (activeBuffs.magnet) {
-          const dx = (player.x - p.x), dy = (player.y - p.y);
-          const dist = Math.hypot(dx, dy);
-          if (dist < 120) { p.x += dx * 0.08; p.y += dy * 0.08; }
-        }
-      }
-      powerups = powerups.filter(p => p.x > -20);
-
-      // collisions: obstacles
-      const hitboxH = player.ducking ? player.h * 0.55 : player.h;
-      const hitboxY = player.ducking ? player.y + player.h * 0.45 : player.y;
-      for (const o of obstacles) {
-        if (rectsOverlap(player.x, hitboxY, player.w, hitboxH, o.x, o.y, o.w, o.h)) {
-          if (activeBuffs.shield) {
-            // protegido: destruye obstáculo, suma puntos chicos
-            obstacles = obstacles.filter(x => x !== o);
-            score += 5;
-            spawnParticles(o.x, o.y, PALETTE.shield);
-          } else {
-            endGame();
-            return;
-          }
-        }
-      }
-
-      // collisions: powerups
-      for (const p of powerups) {
-        if (rectsOverlap(player.x, player.y, player.w, player.h, p.x, p.y, p.w, p.h)) {
-          applyPowerup(p.type);
-          spawnParticles(p.x, p.y, colorForPower(p.type));
-          powerups = powerups.filter(x => x !== p);
-        }
-      }
-
-      // particles
-      for (const pt of particles) { pt.x += pt.vx; pt.y += pt.vy; pt.life--; }
-      particles = particles.filter(p => p.life > 0);
-
-      // log evento de muestreo cada ~2s para validación backend
-      if (frame % 120 === 0) {
-        scoreLog.push({ t: frame, ev: 'checkpoint', score: Math.floor(score), buffs: Object.keys(activeBuffs) });
-      }
-    }
-
-    function rectsOverlap(x1, y1, w1, h1, x2, y2, w2, h2) {
-      return x1 < x2 + w2 && x1 + w1 > x2 && y1 < y2 + h2 && y1 + h1 > y2;
-    }
-
-    function applyPowerup(type) {
-      scoreLog.push({ t: frame, ev: 'powerup', type });
-      switch (type) {
-        case 'shield': activeBuffs.shield = 600; break; // 10s a 60fps
-        case 'multi': activeBuffs.multi = 600; break;
-        case 'slow': activeBuffs.slow = 300; break; // 5s
-        case 'magnet': activeBuffs.magnet = 480; break; // 8s
-        case 'doubleJump': activeBuffs.doubleJump = 600; player.jumpsLeft = 2; break;
-        case 'coin': score += 25; break;
-      }
-      updateBuffsHud();
-    }
-
-    function colorForPower(type) {
-      return {
-        shield: PALETTE.shield, multi: PALETTE.multi, slow: PALETTE.slow,
-        magnet: PALETTE.magnet, doubleJump: '#6ee7b7', coin: PALETTE.coin
-      }[type];
-    }
-
-    function spawnParticles(x, y, color) {
-      for (let i = 0; i < 8; i++) {
-        particles.push({
-          x, y, vx: (Math.random() - 0.5) * 3, vy: -Math.random() * 3,
-          life: 24, color
-        });
-      }
-    }
-
-    // ---------- HUD ----------
-    function updateBuffsHud() {
-      const box = document.getElementById('buffs');
-      const labels = {
-        shield: '🛡 ESCUDO', multi: '✖2 PUNTOS', slow: '🐢 LENTO',
-        magnet: '🧲 IMÁN', doubleJump: '⭐ DOBLE SALTO'
-      };
-      box.innerHTML = Object.keys(activeBuffs).map(k => {
-        const secs = Math.ceil(activeBuffs[k] / 60);
-        return `<div class="buff-pill">${labels[k] || k} ${secs}s</div>`;
-      }).join('');
-    }
-
-    // ---------- dibujo pixel art ----------
-    function drawBackground() {
-      ctx.fillStyle = PALETTE.bg1;
-      ctx.fillRect(0, 0, W, GROUND_Y);
-      // río con franjas
-      ctx.fillStyle = PALETTE.bg2;
-      for (let i = 0; i < 6; i++) {
-        const y = (i * 22 + (frame * 0.6) % 22);
-        ctx.fillRect(0, y, W, 4);
-      }
-      // suelo
-      ctx.fillStyle = PALETTE.ground;
-      ctx.fillRect(0, GROUND_Y, W, H - GROUND_Y);
-      ctx.fillStyle = PALETTE.groundLine;
-      for (let x = -((frame * speed) % 24); x < W; x += 24) {
-        ctx.fillRect(x, GROUND_Y, 14, 4);
-      }
-    }
-
-    function drawCapibara() {
-      const { x, y, w, h, ducking } = player;
-      const bodyH = ducking ? h * 0.6 : h;
-      const by = ducking ? y + h * 0.4 : y;
-
-      ctx.save();
-      // sombra
-      ctx.fillStyle = 'rgba(0,0,0,0.18)';
-      ctx.beginPath();
-      ctx.ellipse(x + w / 2, GROUND_Y + 4, w * 0.55, 5, 0, 0, Math.PI * 2);
-      ctx.fill();
-
-      // cuerpo
-      ctx.fillStyle = activeBuffs.shield ? '#bfe9ff' : PALETTE.capiBody;
-      ctx.fillRect(x, by, w, bodyH);
-      // panza
-      ctx.fillStyle = PALETTE.capiBelly;
-      ctx.fillRect(x + 4, by + bodyH * 0.55, w - 8, bodyH * 0.4);
-      // cabeza
-      ctx.fillStyle = PALETTE.capiDark;
-      ctx.fillRect(x + w - 12, by - 6, 16, 14);
-      // ojo
-      ctx.fillStyle = '#fff';
-      ctx.fillRect(x + w - 6, by - 2, 4, 4);
-      ctx.fillStyle = '#000';
-      ctx.fillRect(x + w - 5, by - 1, 2, 2);
-      // orejas
-      ctx.fillStyle = PALETTE.capiDark;
-      ctx.fillRect(x + w - 10, by - 9, 3, 4);
-      ctx.fillRect(x + w - 2, by - 9, 3, 4);
-      // patas (animación simple)
-      ctx.fillStyle = PALETTE.capiDark;
-      const legOff = Math.sin(player.legFrame) * 4;
-      ctx.fillRect(x + 4, by + bodyH - 4, 5, 6 + legOff * 0.3);
-      ctx.fillRect(x + w - 12, by + bodyH - 4, 5, 6 - legOff * 0.3);
-
-      // escudo visual
-      if (activeBuffs.shield) {
-        ctx.strokeStyle = PALETTE.shield;
-        ctx.lineWidth = 2;
-        ctx.beginPath();
-        ctx.arc(x + w / 2, by + bodyH / 2, w * 0.9, 0, Math.PI * 2);
-        ctx.stroke();
-      }
-      ctx.restore();
-    }
-
-    function drawObstacles() {
-      for (const o of obstacles) {
-        ctx.fillStyle = o.type === 'rock' ? PALETTE.obstacleRock : PALETTE.obstacle;
-        ctx.fillRect(o.x, o.y, o.w, o.h);
-        ctx.fillStyle = 'rgba(0,0,0,0.15)';
-        ctx.fillRect(o.x, o.y, o.w, 4);
-      }
-    }
-
-    function drawPowerups() {
-      const icons = { shield: '🛡', multi: 'x2', slow: '🐢', magnet: '🧲', doubleJump: '⭐', coin: '●' };
-      for (const p of powerups) {
-        ctx.save();
-        const bob = Math.sin(frame * 0.1 + p.x * 0.05) * 3;
-        ctx.fillStyle = colorForPower(p.type);
-        ctx.beginPath();
-        ctx.arc(p.x + p.w / 2, p.y + p.h / 2 + bob, p.w / 2, 0, Math.PI * 2);
-        ctx.fill();
-        ctx.strokeStyle = '#fff';
-        ctx.lineWidth = 2;
-        ctx.stroke();
-        ctx.fillStyle = '#fff';
-        ctx.font = '10px sans-serif';
-        ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
-        ctx.fillText(icons[p.type] || '?', p.x + p.w / 2, p.y + p.h / 2 + bob);
-        ctx.restore();
-      }
-    }
-
-    function drawParticles() {
-      for (const pt of particles) {
-        ctx.fillStyle = pt.color;
-        ctx.globalAlpha = pt.life / 24;
-        ctx.fillRect(pt.x, pt.y, 4, 4);
-        ctx.globalAlpha = 1;
-      }
-    }
-
-    function draw() {
-      drawBackground();
-      drawObstacles();
-      drawPowerups();
-      drawCapibara();
-      drawParticles();
-    }
-
-    function updateScoreHud() {
-      document.getElementById('score').textContent = `PUNTOS: ${Math.floor(score)}${multiplier > 1 ? ' (x2)' : ''}`;
-    }
-
-    // ---------- loop ----------
-    function loop() {
-      if (state === 'playing') {
-        update();
-        updateScoreHud();
-        updateBuffsHud();
-      }
-      draw();
-      requestAnimationFrame(loop);
-    }
-    resetGame();
-    draw();
-    loop();
-
-    /* ============================================================
-       INTEGRACIÓN CON BACKEND (Supabase) - leaderboard semanal
-       ============================================================
-       1. Reemplaza SUPABASE_URL y SUPABASE_ANON_KEY con tus datos.
-       2. Habilita Twitch como proveedor en Authentication > Providers.
-       3. Crea las tablas con el script SQL que te paso aparte.
-       ============================================================ */
-
-    const SUPABASE_URL = 'https://udzvhvxleujmyyzwfvjc.supabase.co';
-    const SUPABASE_ANON_KEY = 'sb_publishable_TehtfAvBQg05hNcaSVdg1Q_E7Nc7ltt';
-    // Descomenta cuando agregues el script de Supabase:
-    // const sb = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
-
-    async function sendScoreToBackend(log, finalScore) {
-      // TODO: reemplazar con la llamada real a Supabase (Edge Function recomendada
-      // para recalcular el puntaje en servidor a partir del log, no confiar en finalScore directo)
-      console.log('Score a enviar:', finalScore, log);
-
-      /* Ejemplo real (cuando tengas Supabase listo):
-    
-      const { data: { user } } = await sb.auth.getUser();
-      if(!user){
-        console.warn('Usuario no logueado con Twitch, puntaje no se guarda');
+  // collisions: obstacles
+  const hitboxH = player.ducking ? player.h*0.55 : player.h;
+  const hitboxY = player.ducking ? player.y + player.h*0.45 : player.y;
+  for(const o of obstacles){
+    if(rectsOverlap(player.x, hitboxY, player.w, hitboxH, o.x, o.y, o.w, o.h)){
+      if(activeBuffs.shield){
+        // protegido: destruye obstáculo, suma puntos chicos
+        obstacles = obstacles.filter(x => x !== o);
+        score += 5;
+        spawnParticles(o.x, o.y, PALETTE.shield);
+      } else {
+        endGame();
         return;
       }
-    
-      await sb.from('scores').insert({
-        twitch_user_id: user.user_metadata.provider_id,
-        twitch_username: user.user_metadata.full_name || user.user_metadata.name,
-        score: finalScore,
-        run_log: log
-      });
-    
-      loadLeaderboard();
-      */
     }
+  }
 
-    async function loadLeaderboard() {
-      // TODO: reemplazar con consulta real a la vista current_week_leaderboard
-      /*
-      const { data, error } = await sb
-        .from('current_week_leaderboard')
-        .select('twitch_username, best_score')
-        .order('best_score', { ascending:false })
-        .limit(10);
-    
-      if(error) return console.error(error);
-    
-      const list = document.getElementById('leaderboardList');
-      list.innerHTML = data.map((row,i)=>
-        `<li><span>#${i+1} ${row.twitch_username}</span><span>${row.best_score}</span></li>`
-      ).join('');
-      */
+  // collisions: powerups
+  for(const p of powerups){
+    if(rectsOverlap(player.x, player.y, player.w, player.h, p.x, p.y, p.w, p.h)){
+      applyPowerup(p.type);
+      spawnParticles(p.x, p.y, colorForPower(p.type));
+      powerups = powerups.filter(x => x !== p);
     }
+  }
 
-    // loadLeaderboard(); // descomentar cuando Supabase esté conectado
-  </script>
+  // particles
+  for(const pt of particles){ pt.x += pt.vx; pt.y += pt.vy; pt.life--; }
+  particles = particles.filter(p => p.life > 0);
+
+  // log evento de muestreo cada ~2s para validación backend
+  if(frame % 120 === 0){
+    scoreLog.push({t: frame, ev:'checkpoint', score: Math.floor(score), buffs: Object.keys(activeBuffs)});
+  }
+}
+
+function rectsOverlap(x1,y1,w1,h1,x2,y2,w2,h2){
+  return x1 < x2+w2 && x1+w1 > x2 && y1 < y2+h2 && y1+h1 > y2;
+}
+
+function applyPowerup(type){
+  scoreLog.push({t: frame, ev:'powerup', type});
+  switch(type){
+    case 'shield': activeBuffs.shield = 600; break; // 10s a 60fps
+    case 'multi': activeBuffs.multi = 600; break;
+    case 'slow': activeBuffs.slow = 300; break; // 5s
+    case 'magnet': activeBuffs.magnet = 480; break; // 8s
+    case 'doubleJump': activeBuffs.doubleJump = 600; player.jumpsLeft = 2; break;
+    case 'coin': score += 25; break;
+  }
+  updateBuffsHud();
+}
+
+function colorForPower(type){
+  return {
+    shield: PALETTE.shield, multi: PALETTE.multi, slow: PALETTE.slow,
+    magnet: PALETTE.magnet, doubleJump: '#6ee7b7', coin: PALETTE.coin
+  }[type];
+}
+
+function spawnParticles(x,y,color){
+  for(let i=0;i<8;i++){
+    particles.push({
+      x, y, vx:(Math.random()-0.5)*3, vy:-Math.random()*3,
+      life: 24, color
+    });
+  }
+}
+
+// ---------- HUD ----------
+function updateBuffsHud(){
+  const box = document.getElementById('buffs');
+  const labels = {
+    shield:'🛡 ESCUDO', multi:'✖2 PUNTOS', slow:'🐢 LENTO',
+    magnet:'🧲 IMÁN', doubleJump:'⭐ DOBLE SALTO'
+  };
+  box.innerHTML = Object.keys(activeBuffs).map(k=>{
+    const secs = Math.ceil(activeBuffs[k]/60);
+    return `<div class="buff-pill">${labels[k]||k} ${secs}s</div>`;
+  }).join('');
+}
+
+// ---------- dibujo pixel art ----------
+function drawBackground(){
+  ctx.fillStyle = PALETTE.bg1;
+  ctx.fillRect(0,0,W,GROUND_Y);
+  // río con franjas
+  ctx.fillStyle = PALETTE.bg2;
+  for(let i=0;i<6;i++){
+    const y = (i*22 + (frame*0.6)%22);
+    ctx.fillRect(0, y, W, 4);
+  }
+  // suelo
+  ctx.fillStyle = PALETTE.ground;
+  ctx.fillRect(0, GROUND_Y, W, H-GROUND_Y);
+  ctx.fillStyle = PALETTE.groundLine;
+  for(let x = -((frame*speed)%24); x < W; x+=24){
+    ctx.fillRect(x, GROUND_Y, 14, 4);
+  }
+}
+
+function drawCapibara(){
+  const {x,y,w,h,ducking} = player;
+  const bodyH = ducking ? h*0.6 : h;
+  const by = ducking ? y + h*0.4 : y;
+
+  ctx.save();
+  // sombra
+  ctx.fillStyle = 'rgba(0,0,0,0.18)';
+  ctx.beginPath();
+  ctx.ellipse(x+w/2, GROUND_Y+4, w*0.55, 5, 0,0,Math.PI*2);
+  ctx.fill();
+
+  // cuerpo
+  ctx.fillStyle = activeBuffs.shield ? '#bfe9ff' : PALETTE.capiBody;
+  ctx.fillRect(x, by, w, bodyH);
+  // panza
+  ctx.fillStyle = PALETTE.capiBelly;
+  ctx.fillRect(x+4, by+bodyH*0.55, w-8, bodyH*0.4);
+  // cabeza
+  ctx.fillStyle = PALETTE.capiDark;
+  ctx.fillRect(x+w-12, by-6, 16, 14);
+  // ojo
+  ctx.fillStyle = '#fff';
+  ctx.fillRect(x+w-6, by-2, 4, 4);
+  ctx.fillStyle = '#000';
+  ctx.fillRect(x+w-5, by-1, 2, 2);
+  // orejas
+  ctx.fillStyle = PALETTE.capiDark;
+  ctx.fillRect(x+w-10, by-9, 3, 4);
+  ctx.fillRect(x+w-2, by-9, 3, 4);
+  // patas (animación simple)
+  ctx.fillStyle = PALETTE.capiDark;
+  const legOff = Math.sin(player.legFrame)*4;
+  ctx.fillRect(x+4, by+bodyH-4, 5, 6+legOff*0.3);
+  ctx.fillRect(x+w-12, by+bodyH-4, 5, 6-legOff*0.3);
+
+  // escudo visual
+  if(activeBuffs.shield){
+    ctx.strokeStyle = PALETTE.shield;
+    ctx.lineWidth = 2;
+    ctx.beginPath();
+    ctx.arc(x+w/2, by+bodyH/2, w*0.9, 0, Math.PI*2);
+    ctx.stroke();
+  }
+  ctx.restore();
+}
+
+function drawObstacles(){
+  for(const o of obstacles){
+    ctx.fillStyle = o.type === 'rock' ? PALETTE.obstacleRock : PALETTE.obstacle;
+    ctx.fillRect(o.x, o.y, o.w, o.h);
+    ctx.fillStyle = 'rgba(0,0,0,0.15)';
+    ctx.fillRect(o.x, o.y, o.w, 4);
+  }
+}
+
+function drawPowerups(){
+  const icons = { shield:'🛡', multi:'x2', slow:'🐢', magnet:'🧲', doubleJump:'⭐', coin:'●' };
+  for(const p of powerups){
+    ctx.save();
+    const bob = Math.sin(frame*0.1 + p.x*0.05)*3;
+    ctx.fillStyle = colorForPower(p.type);
+    ctx.beginPath();
+    ctx.arc(p.x+p.w/2, p.y+p.h/2+bob, p.w/2, 0, Math.PI*2);
+    ctx.fill();
+    ctx.strokeStyle = '#fff';
+    ctx.lineWidth = 2;
+    ctx.stroke();
+    ctx.fillStyle = '#fff';
+    ctx.font = '10px sans-serif';
+    ctx.textAlign='center'; ctx.textBaseline='middle';
+    ctx.fillText(icons[p.type]||'?', p.x+p.w/2, p.y+p.h/2+bob);
+    ctx.restore();
+  }
+}
+
+function drawParticles(){
+  for(const pt of particles){
+    ctx.fillStyle = pt.color;
+    ctx.globalAlpha = pt.life/24;
+    ctx.fillRect(pt.x, pt.y, 4, 4);
+    ctx.globalAlpha = 1;
+  }
+}
+
+function draw(){
+  drawBackground();
+  drawObstacles();
+  drawPowerups();
+  drawCapibara();
+  drawParticles();
+}
+
+function updateScoreHud(){
+  document.getElementById('score').textContent = `PUNTOS: ${Math.floor(score)}${multiplier>1?' (x2)':''}`;
+}
+
+// ---------- loop ----------
+function loop(){
+  if(state === 'playing'){
+    update();
+    updateScoreHud();
+    updateBuffsHud();
+  }
+  draw();
+  requestAnimationFrame(loop);
+}
+resetGame();
+draw();
+loop();
+
+/* ============================================================
+   INTEGRACIÓN CON BACKEND (Supabase) - leaderboard semanal
+   ============================================================
+   1. Reemplaza SUPABASE_URL y SUPABASE_ANON_KEY con tus datos.
+   2. Habilita Twitch como proveedor en Authentication > Providers.
+   3. Crea las tablas con el script SQL que te paso aparte.
+   ============================================================ */
+
+/* ============================================================
+   INTEGRACIÓN CON SUPABASE - leaderboard semanal + login Twitch
+   ============================================================ */
+
+const SUPABASE_URL = 'https://udzvhvxleujmyyzwfvjc.supabase.co';
+const SUPABASE_ANON_KEY = 'sb_publishable_TehtfAvBQg05hNcaSVdg1Q_E7Nc7ltt';
+
+const sb = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+let currentUser = null;
+
+// ---------- Login con Twitch ----------
+document.getElementById('twitchLoginBtn').addEventListener('click', async () => {
+  await sb.auth.signInWithOAuth({
+    provider: 'twitch',
+    options: { redirectTo: window.location.href }
+  });
+});
+
+async function checkSession(){
+  const { data: { session } } = await sb.auth.getSession();
+  currentUser = session?.user || null;
+  updateAuthUI();
+}
+
+function updateAuthUI(){
+  const btn = document.getElementById('twitchLoginBtn');
+  const info = document.getElementById('userInfo');
+  if(currentUser){
+    const name = currentUser.user_metadata?.name || currentUser.user_metadata?.full_name || 'jugador';
+    btn.textContent = 'CERRAR SESIÓN';
+    btn.onclick = async () => { await sb.auth.signOut(); currentUser = null; updateAuthUI(); };
+    info.textContent = `Conectado como ${name}`;
+  } else {
+    btn.textContent = 'CONECTAR CON TWITCH';
+    btn.onclick = async () => {
+      await sb.auth.signInWithOAuth({ provider: 'twitch', options: { redirectTo: window.location.href } });
+    };
+    info.textContent = '';
+  }
+}
+
+sb.auth.onAuthStateChange((_event, session) => {
+  currentUser = session?.user || null;
+  updateAuthUI();
+  loadLeaderboard();
+});
+
+// ---------- Guardar puntaje ----------
+async function sendScoreToBackend(log, finalScore){
+  if(!currentUser){
+    console.warn('No hay sesión de Twitch, el puntaje no se guarda en el top.');
+    return;
+  }
+
+  const username = currentUser.user_metadata?.name
+    || currentUser.user_metadata?.full_name
+    || currentUser.email
+    || 'jugador';
+
+  const { error } = await sb.from('scores').insert({
+    twitch_user_id: currentUser.id,
+    twitch_username: username,
+    score: finalScore,
+    run_log: log
+  });
+
+  if(error){
+    console.error('Error guardando puntaje:', error);
+    return;
+  }
+
+  loadLeaderboard();
+}
+
+// ---------- Cargar leaderboard ----------
+async function loadLeaderboard(){
+  const list = document.getElementById('leaderboardList');
+  const { data, error } = await sb
+    .from('current_week_leaderboard')
+    .select('twitch_username, best_score')
+    .order('best_score', { ascending:false })
+    .limit(10);
+
+  if(error){
+    console.error('Error cargando leaderboard:', error);
+    list.innerHTML = `<li><span>No se pudo cargar el top</span></li>`;
+    return;
+  }
+
+  if(!data || data.length === 0){
+    list.innerHTML = `<li><span>Todavía nadie ha jugado esta semana 🐹</span></li>`;
+    return;
+  }
+
+  list.innerHTML = data.map((row,i)=>
+    `<li><span>#${i+1} ${row.twitch_username}</span><span>${row.best_score}</span></li>`
+  ).join('');
+}
+
+checkSession();
+loadLeaderboard();
+
+</script>
 </body>
-
 </html>
