@@ -410,6 +410,68 @@
       color: #888;
       margin-top: 10px;
     }
+
+    /* ---------- Widget de volumen ---------- */
+    #volumeWidget {
+      position: absolute;
+      bottom: 10px;
+      right: 10px;
+      background: rgba(0,0,0,0.65);
+      border: 2px solid rgba(255,204,0,0.5);
+      border-radius: 10px;
+      padding: 8px 12px;
+      z-index: 50;
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+      pointer-events: all;
+      min-width: 155px;
+    }
+
+    .vol-row {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      font-family: 'Press Start 2P', monospace;
+      font-size: clamp(6px, 1vw, 8px);
+      color: #fff;
+      white-space: nowrap;
+    }
+
+    .vol-row input[type=range] {
+      -webkit-appearance: none;
+      appearance: none;
+      width: 80px;
+      height: 5px;
+      border-radius: 4px;
+      background: rgba(255,255,255,0.25);
+      outline: none;
+      cursor: pointer;
+      margin: 0;
+      padding: 0;
+      border: none;
+    }
+
+    .vol-row input[type=range]::-webkit-slider-thumb {
+      -webkit-appearance: none;
+      appearance: none;
+      width: 13px;
+      height: 13px;
+      border-radius: 50%;
+      background: var(--gold);
+      cursor: pointer;
+      box-shadow: 0 0 4px #000;
+    }
+
+    .vol-row input[type=range]::-moz-range-thumb {
+      width: 13px;
+      height: 13px;
+      border-radius: 50%;
+      background: var(--gold);
+      cursor: pointer;
+      border: none;
+      box-shadow: 0 0 4px #000;
+    }
   </style>
 </head>
 
@@ -440,6 +502,18 @@
           <button class="menu-btn" onclick="openModal('storeModal')">🛒 STORE</button>
           <button class="menu-btn" onclick="openModal('leaderboardModal')">🏆 LEADERBOARD</button>
           <button class="menu-btn" onclick="openModal('authModal')">⚙️ ACCOUNT</button>
+        </div>
+
+        <!-- Widget de volumen -->
+        <div id="volumeWidget">
+          <div class="vol-row">
+            <span>🎵 MENÚ</span>
+            <input type="range" id="volMenu" min="0" max="100" value="45" title="Volumen música menú">
+          </div>
+          <div class="vol-row">
+            <span>🎮 JUEGO</span>
+            <input type="range" id="volGame" min="0" max="100" value="45" title="Volumen música juego">
+          </div>
         </div>
 
         <!-- Modals Integrados -->
@@ -697,30 +771,108 @@
       // ---------- Audio ----------
       const lobbyTracks = ['music/lobby.mp3','music/lobby2.mp3','music/lobby3.mp3','music/lobby4.mp3'];
       let currentAudio = null;
+      let lobbyQueue = [];     // cola aleatoria de pistas del lobby
+      let lobbyActive = false; // true cuando estamos en modo lobby
+      let audioUnlocked = false;
 
-      function playMusic(src, loop = true) {
+      // Volúmenes independientes (0-1)
+      let menuVolume = 0.45;
+      let gameVolume  = 0.45;
+
+      // Genera una cola aleatoria con todas las pistas (Fisher-Yates)
+      function buildLobbyQueue() {
+        lobbyQueue = [...lobbyTracks];
+        for (let i = lobbyQueue.length - 1; i > 0; i--) {
+          const j = Math.floor(Math.random() * (i + 1));
+          [lobbyQueue[i], lobbyQueue[j]] = [lobbyQueue[j], lobbyQueue[i]];
+        }
+      }
+
+      // Música de juego (loop)
+      function playMusic(src) {
         if (currentAudio) {
           currentAudio.pause();
           currentAudio.currentTime = 0;
+          currentAudio.onended = null;
         }
         currentAudio = new Audio(src);
-        currentAudio.loop = loop;
-        currentAudio.volume = 0.45;
-        currentAudio.play().catch(() => {}); // silencia errores de autoplay
+        currentAudio.loop = true;
+        currentAudio.volume = gameVolume;
+        currentAudio.play().catch(() => {});
+      }
+
+      // Reproduce la siguiente pista del lobby en cadena
+      function playNextLobbyTrack() {
+        if (!lobbyActive) return;
+        if (lobbyQueue.length === 0) buildLobbyQueue();
+        const track = lobbyQueue.shift();
+        if (currentAudio) {
+          currentAudio.pause();
+          currentAudio.currentTime = 0;
+          currentAudio.onended = null;
+        }
+        currentAudio = new Audio(track);
+        currentAudio.volume = menuVolume;
+        currentAudio.loop = false;
+        currentAudio.onended = playNextLobbyTrack;
+        currentAudio.play().catch(() => {});
       }
 
       function playLobbyMusic() {
-        const track = lobbyTracks[Math.floor(Math.random() * lobbyTracks.length)];
-        playMusic(track);
+        lobbyActive = true;
+        buildLobbyQueue();
+        playNextLobbyTrack();
       }
 
       function stopMusic() {
+        lobbyActive = false;
         if (currentAudio) {
           currentAudio.pause();
           currentAudio.currentTime = 0;
+          currentAudio.onended = null;
           currentAudio = null;
         }
       }
+
+      // --- Intentar autoplay inmediato al cargar la página ---
+      // Los navegadores modernos permiten autoplay si el usuario ya interactuó antes
+      // con el sitio. Si está bloqueado, se activa en el primer clic/tecla.
+      function tryStartLobbyMusic() {
+        if (audioUnlocked || state !== 'idle') return;
+        playLobbyMusic();
+        // Verificar si realmente empezó a sonar
+        if (currentAudio) {
+          currentAudio.play().then(() => {
+            audioUnlocked = true;
+          }).catch(() => {
+            // Autoplay bloqueado → esperar primera interacción
+            stopMusic();
+          });
+        }
+      }
+
+      function unlockAudio() {
+        if (audioUnlocked) return;
+        audioUnlocked = true;
+        if (state === 'idle' && !currentAudio) playLobbyMusic();
+      }
+
+      // Intentar inmediatamente al cargar
+      document.addEventListener('DOMContentLoaded', () => setTimeout(tryStartLobbyMusic, 200));
+      // Fallback: primera interacción del usuario
+      ['click','keydown','touchstart'].forEach(ev =>
+        document.addEventListener(ev, unlockAudio, { passive: true })
+      );
+
+      // --- Sliders de volumen ---
+      document.getElementById('volMenu').addEventListener('input', function() {
+        menuVolume = this.value / 100;
+        if (lobbyActive && currentAudio) currentAudio.volume = menuVolume;
+      });
+      document.getElementById('volGame').addEventListener('input', function() {
+        gameVolume = this.value / 100;
+        if (!lobbyActive && currentAudio) currentAudio.volume = gameVolume;
+      });
 
       let bgProps = [];
       let stars = [];
