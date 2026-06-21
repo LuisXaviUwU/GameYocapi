@@ -35,7 +35,12 @@
         linear-gradient(180deg, #d9efec 0%, #c5e7e3 100%);
       font-family: 'Nunito', sans-serif;
       color: var(--ink);
-      padding: 24px 16px 48px;
+      padding: 16px 8px 32px;
+    }
+
+    @media (max-width: 600px) {
+      body { padding: 8px 0 16px; }
+      header { padding: 0 8px; }
     }
 
     header {
@@ -58,12 +63,19 @@
       letter-spacing: .5px;
     }
 
-    /* ---------- layout principal: juego + sidebar ---------- */
+    /* ---------- layout principal ---------- */
     #layout {
-      max-width: 1200px;
+      max-width: 1600px;
+      width: 100%;
       margin: 0 auto;
       display: flex;
       justify-content: center;
+      padding: 0 8px;
+      box-sizing: border-box;
+    }
+
+    @media (max-width: 600px) {
+      #layout { padding: 0; }
     }
 
     /* ---------- panel del juego ---------- */
@@ -71,23 +83,58 @@
       background: #fffaf0;
       border: 5px solid var(--capi-dark);
       border-radius: 16px;
-      padding: 18px;
+      padding: 14px;
       box-shadow: 0 8px 0 var(--sand-dark), 0 12px 22px rgba(0, 0, 0, .18);
+      width: 100%;
+      max-width: 1400px;
+    }
+
+    @media (max-width: 600px) {
+      #gamePanel {
+        border-radius: 0;
+        border-left: none;
+        border-right: none;
+        padding: 8px 0 8px;
+        box-shadow: none;
+      }
     }
 
     #gameWrap {
       position: relative;
-      border: 5px solid var(--capi-dark);
-      border-radius: 12px;
+      border: 4px solid var(--capi-dark);
+      border-radius: 10px;
       overflow: hidden;
       image-rendering: pixelated;
       background: var(--river);
       width: 100%;
       aspect-ratio: 16 / 7.2;
-      transition: all 0.3s ease;
     }
 
-    /* ---------- pantalla completa ---------- */
+    @media (max-width: 600px) {
+      #gameWrap {
+        border-radius: 0;
+        border-left: none;
+        border-right: none;
+        aspect-ratio: 16 / 9;
+      }
+    }
+
+    /* ---------- pantalla completa nativa (Fullscreen API) ---------- */
+    /* El navegador maneja el fullscreen real; solo necesitamos que el
+       elemento ocupe todo el viewport cuando está en modo fullscreen */
+    #gameWrap:fullscreen,
+    #gameWrap:-webkit-full-screen,
+    #gameWrap:-moz-full-screen,
+    #gameWrap:-ms-fullscreen {
+      width: 100vw !important;
+      height: 100vh !important;
+      aspect-ratio: unset !important;
+      border-radius: 0 !important;
+      border: none !important;
+      background: #000;
+    }
+
+    /* Fallback CSS para cuando la API no esté disponible */
     #gamePanel.fullscreen-mode {
       position: fixed;
       inset: 0;
@@ -109,11 +156,11 @@
       aspect-ratio: 16 / 7.2;
       border-radius: 0;
       border: none;
-      /* En pantalla completa se usa smooth para mejor calidad visual */
       image-rendering: auto;
     }
 
-    #gamePanel.fullscreen-mode canvas {
+    #gamePanel.fullscreen-mode canvas,
+    #gameWrap:fullscreen canvas {
       image-rendering: auto;
     }
 
@@ -411,6 +458,76 @@
       margin-top: 10px;
     }
 
+    /* ---------- Botones de control móvil ---------- */
+    #mobileControls {
+      display: none; /* Ocultos por defecto en desktop */
+      position: absolute;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      height: 38%;
+      pointer-events: none;
+      z-index: 60;
+    }
+
+    /* Mostramos solo en móvil/pantalla pequeña O en fullscreen */
+    @media (max-width: 768px) {
+      #mobileControls { display: block; }
+    }
+    /* También visibles en fullscreen desde móvil */
+    #gameWrap:fullscreen #mobileControls,
+    #gameWrap:-webkit-full-screen #mobileControls {
+      display: block;
+    }
+
+    .mob-btn {
+      position: absolute;
+      bottom: 8px;
+      width: 30%;
+      max-width: 130px;
+      height: 90%;
+      pointer-events: all;
+      border: 3px solid rgba(255,255,255,0.55);
+      border-radius: 16px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 4px;
+      cursor: pointer;
+      -webkit-tap-highlight-color: transparent;
+      user-select: none;
+      transition: opacity 0.08s, transform 0.08s;
+      font-family: 'Press Start 2P', monospace;
+      font-size: clamp(8px, 2.5vw, 13px);
+      color: #fff;
+      text-shadow: 1px 1px 3px #000;
+      backdrop-filter: blur(2px);
+    }
+
+    #btnJump {
+      left: 6%;
+      background: rgba(30, 120, 255, 0.35);
+      border-color: rgba(100, 180, 255, 0.7);
+    }
+
+    #btnDuck {
+      right: 6%;
+      background: rgba(220, 80, 20, 0.35);
+      border-color: rgba(255, 160, 80, 0.7);
+    }
+
+    .mob-btn:active,
+    .mob-btn.pressed {
+      opacity: 0.75;
+      transform: scale(0.96);
+    }
+
+    .mob-btn .mob-icon {
+      font-size: clamp(20px, 7vw, 36px);
+      line-height: 1;
+    }
+
     /* ---------- Widget de volumen ---------- */
     #volumeWidget {
       position: absolute;
@@ -502,6 +619,18 @@
           <button class="menu-btn" onclick="openModal('storeModal')">🛒 STORE</button>
           <button class="menu-btn" onclick="openModal('leaderboardModal')">🏆 LEADERBOARD</button>
           <button class="menu-btn" onclick="openModal('authModal')">⚙️ ACCOUNT</button>
+        </div>
+
+        <!-- Botones móvil: saltar y agacharse -->
+        <div id="mobileControls">
+          <div id="btnJump" class="mob-btn" role="button" aria-label="Saltar">
+            <span class="mob-icon">⬆️</span>
+            <span>SALTAR</span>
+          </div>
+          <div id="btnDuck" class="mob-btn" role="button" aria-label="Agacharse">
+            <span class="mob-icon">⬇️</span>
+            <span>AGACHAR</span>
+          </div>
         </div>
 
         <!-- Widget de volumen -->
@@ -973,21 +1102,40 @@
         if (e.code === 'ArrowDown') duckEnd();
       });
 
-      // Mobile: un toque = saltar; dos toques rápidos = agacharse
-      let lastTapTime = 0;
-      canvas.addEventListener('touchstart', e => {
-        e.preventDefault();
-        const now = Date.now();
-        const timeSinceLastTap = now - lastTapTime;
-        lastTapTime = now;
-        if (timeSinceLastTap < 300) { // doble toque en < 300ms
-          duckStart();
-          setTimeout(duckEnd, 400); // suelta el agachado automáticamente
-        } else {
-          jump();
-        }
-      });
+      // Mobile: el canvas solo registra toque para desbloquear audio
+      canvas.addEventListener('touchstart', e => { e.preventDefault(); }, { passive: false });
       canvas.addEventListener('mousedown', jump);
+
+      // --- Botones dedicados para móvil ---
+      const btnJump = document.getElementById('btnJump');
+      const btnDuck = document.getElementById('btnDuck');
+
+      // Botón SALTAR
+      btnJump.addEventListener('touchstart', e => {
+        e.preventDefault();
+        btnJump.classList.add('pressed');
+        jump();
+      }, { passive: false });
+      btnJump.addEventListener('touchend', e => {
+        e.preventDefault();
+        btnJump.classList.remove('pressed');
+      }, { passive: false });
+
+      // Botón AGACHARSE (mantener presionado = agachado, soltar = derecho)
+      btnDuck.addEventListener('touchstart', e => {
+        e.preventDefault();
+        btnDuck.classList.add('pressed');
+        duckStart();
+      }, { passive: false });
+      btnDuck.addEventListener('touchend', e => {
+        e.preventDefault();
+        btnDuck.classList.remove('pressed');
+        duckEnd();
+      }, { passive: false });
+      btnDuck.addEventListener('touchcancel', e => {
+        btnDuck.classList.remove('pressed');
+        duckEnd();
+      });
 
       document.getElementById('startBtn').addEventListener('click', startGame);
 
@@ -1812,21 +1960,59 @@
       checkSession();
       loadLeaderboard();
 
-      // ---------- Pantalla completa ----------
+      // ---------- Pantalla completa (Fullscreen API nativa) ----------
       const fullscreenBtn = document.getElementById('fullscreenBtn');
+      const gameWrap = document.getElementById('gameWrap');
       const gamePanel = document.getElementById('gamePanel');
 
+      function enterFullscreen() {
+        const el = gameWrap;
+        if (el.requestFullscreen)           return el.requestFullscreen();
+        if (el.webkitRequestFullscreen)     return el.webkitRequestFullscreen();
+        if (el.mozRequestFullScreen)        return el.mozRequestFullScreen();
+        if (el.msRequestFullscreen)         return el.msRequestFullscreen();
+        // Fallback CSS si el navegador no soporta la API
+        gamePanel.classList.add('fullscreen-mode');
+        document.body.style.overflow = 'hidden';
+      }
+
+      function exitFullscreen() {
+        if (document.exitFullscreen)           return document.exitFullscreen();
+        if (document.webkitExitFullscreen)     return document.webkitExitFullscreen();
+        if (document.mozCancelFullScreen)      return document.mozCancelFullScreen();
+        if (document.msExitFullscreen)         return document.msExitFullscreen();
+        // Fallback CSS
+        gamePanel.classList.remove('fullscreen-mode');
+        document.body.style.overflow = '';
+      }
+
+      function isFullscreen() {
+        return !!(document.fullscreenElement ||
+                  document.webkitFullscreenElement ||
+                  document.mozFullScreenElement ||
+                  document.msFullscreenElement);
+      }
+
       fullscreenBtn.addEventListener('click', () => {
-        const isFs = gamePanel.classList.toggle('fullscreen-mode');
-        fullscreenBtn.textContent = isFs ? '✕ SALIR DE PANTALLA COMPLETA' : '⛶ PANTALLA COMPLETA';
-        document.body.style.overflow = isFs ? 'hidden' : '';
+        if (isFullscreen()) {
+          exitFullscreen();
+        } else {
+          enterFullscreen();
+        }
       });
 
-      // Salir con Escape
+      // Sincronizar texto del botón con el estado real del fullscreen
+      ['fullscreenchange','webkitfullscreenchange','mozfullscreenchange','msfullscreenchange']
+        .forEach(ev => document.addEventListener(ev, () => {
+          const fs = isFullscreen();
+          fullscreenBtn.textContent = fs ? '✕ SALIR DE PANTALLA COMPLETA' : '⧆ PANTALLA COMPLETA';
+        }));
+
+      // Escape también sale del fullscreen CSS fallback
       document.addEventListener('keydown', e => {
         if (e.code === 'Escape' && gamePanel.classList.contains('fullscreen-mode')) {
           gamePanel.classList.remove('fullscreen-mode');
-          fullscreenBtn.textContent = '⛶ PANTALLA COMPLETA';
+          fullscreenBtn.textContent = '⧆ PANTALLA COMPLETA';
           document.body.style.overflow = '';
         }
       });
