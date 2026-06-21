@@ -84,7 +84,51 @@
     background:var(--river);
     width:100%;
     aspect-ratio: 16 / 7.2;
+    transition: all 0.3s ease;
   }
+
+  /* ---------- pantalla completa ---------- */
+  #gamePanel.fullscreen-mode {
+    position: fixed;
+    inset: 0;
+    z-index: 9999;
+    border-radius: 0;
+    border: none;
+    padding: 0;
+    box-shadow: none;
+    background: #000;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+  }
+  #gamePanel.fullscreen-mode #gameWrap {
+    width: min(100vw, calc(100vh * 16 / 7.2));
+    height: min(100vh, calc(100vw * 7.2 / 16));
+    aspect-ratio: 16 / 7.2;
+    border-radius: 0;
+    border: none;
+    /* En pantalla completa se usa smooth para mejor calidad visual */
+    image-rendering: auto;
+  }
+  #gamePanel.fullscreen-mode canvas {
+    image-rendering: auto;
+  }
+  #gamePanel.fullscreen-mode #controlsHint { display: none; }
+  
+  #fullscreenBtn {
+    background: var(--capi-dark);
+    color: #fff;
+    border: none;
+    border-bottom: 3px solid #3a1e0a;
+    font-size: 10px;
+    padding: 7px 14px;
+    margin-top: 10px;
+    margin-left: auto;
+    display: block;
+    border-radius: 8px;
+  }
+  #fullscreenBtn:hover { background: #5a3018; }
 
   canvas{ display:block; image-rendering: pixelated; width:100%; height:100%; }
 
@@ -206,6 +250,22 @@
   .week-note{
     text-align:center; font-size:11px; color:#8a7355; margin-top:10px; line-height:1.5;
   }
+
+  /* ---------- Tienda ---------- */
+  #storeCard{
+    display:none; /* Se muestra solo al loguearse */
+  }
+  .store-item{
+    display:flex; justify-content:space-between; align-items:center;
+    background:rgba(0,0,0,0.05); padding:8px 10px; border-radius:8px;
+    margin-bottom:8px; font-size:12px;
+  }
+  .store-item button{
+    margin:0; padding:6px 12px; font-size:10px; background:#00c896; border-bottom-color:#008f6b;
+  }
+  .store-item button:disabled{
+    background:#ccc; border-bottom-color:#aaa; cursor:not-allowed; transform:none;
+  }
 </style>
 </head>
 <body>
@@ -223,6 +283,8 @@
         <canvas id="game" width="960" height="432"></canvas>
         <div id="hud">
           <div id="score">PUNTOS: 0</div>
+          <div id="sessionCoinsDisplay" style="background:#00000055; padding:6px 10px; border-radius:8px; margin-left:10px;">🟢 0</div>
+          <div style="flex:1"></div>
           <div id="buffs"></div>
         </div>
         <div id="overlay">
@@ -233,8 +295,9 @@
       </div>
 
       <div id="controlsHint">
-        <kbd>ESPACIO</kbd> / <kbd>↑</kbd> saltar &nbsp;&nbsp; <kbd>↓</kbd> agacharse &nbsp;&nbsp; (en celular: toca la pantalla)
+        <kbd>ESPACIO</kbd> / <kbd>↑</kbd> saltar &nbsp;&nbsp; <kbd>↓</kbd> agacharse &nbsp;&nbsp; (en celular: toca · toca·toca para agacharte)
       </div>
+      <button id="fullscreenBtn">⛶ PANTALLA COMPLETA</button>
     </div>
 
     <!-- ====== SIDEBAR: CUENTA + TOP SEMANAL (sección separada) ====== -->
@@ -255,6 +318,27 @@
         <div class="week-note">El top se reinicia cada lunes — el ganador se lleva el premio que anuncia yocapi_pr en stream 🎁</div>
       </div>
 
+      <!-- Tienda -->
+      <div class="sideCard" id="storeCard">
+        <h3>🛒 TIENDA</h3>
+        <div style="text-align:center; margin-bottom:10px; font-weight:bold; color:var(--capi-dark); font-size:14px;">
+          Saldo: <span id="coinBalanceDisplay">0</span> 🟢
+        </div>
+        <div class="store-item">
+          <span>🛡 Inmortal (10s)</span>
+          <button onclick="buyBuff(500, 10)">500</button>
+        </div>
+        <div class="store-item">
+          <span>🛡 Inmortal (20s)</span>
+          <button onclick="buyBuff(1000, 20)">1000</button>
+        </div>
+        <div class="store-item">
+          <span>🛡 Inmortal (30s)</span>
+          <button onclick="buyBuff(1500, 30)">1500</button>
+        </div>
+        <div class="week-note">Se activa de inmediato</div>
+      </div>
+
     </div>
 
   </div>
@@ -269,6 +353,163 @@ const ctx = canvas.getContext('2d');
 const W = canvas.width, H = canvas.height;
 const GROUND_Y = H - 80;
 
+const SPRITE_COLORS = { 
+  '.': null, 
+  'b': '#000', 
+  'd': '#6e4a28', 
+  'm': '#9c6b3e', 
+  'l': '#e8c79a',
+  'r': '#5a5045', 
+  'R': '#7a7065', 
+  'w': '#3a2c1d', 
+  'W': '#6e4a28',
+  'c': '#ffffff',
+  'C': '#f4f4f4',
+  'S': '#d6d6d6',
+  'g': '#71aa34',
+  'G': '#5a8f4f',
+  'D': '#7e5233'
+};
+
+const CLOUD_SPRITE = [
+  "............cccc........",
+  "..........ccCCCCcc......",
+  "........ccCCCCCCCCcc....",
+  ".......cCCCCCCCCCCCCc...",
+  ".....ccCCCCCCCCCCCCCCcc.",
+  "...ccCCCCCCCCCCCCCCCCCCc",
+  "..cCCCCCCCCCCCCCCCCCCCCc",
+  ".cCCCCCCCCCCCCCCCCCCCCCc",
+  "cCCCCCCCCCCCCCCCCCCCCCCS",
+  "cCSSSSSSSSSSSSSSSSSSSSSS",
+  ".cSSSSSSSSSSSSSSSSSSSSS.",
+  "..cccccccccccccccccccc.."
+];
+
+const GRASS_SPRITE = [
+  "gGgGGgGg",
+  "GgGggGgG",
+  "ddDddDdd",
+  "dDddDddD"
+];
+
+const CAPI_F1 = [
+  ".......ddddd....",
+  ".....ddmmmmmd...",
+  "....dmmmmmmmmdb.",
+  "...dmmmmmmmmmmmb",
+  "..dmmmmmmmmmmmmb",
+  "..dmmmmmmmmmmmmm",
+  "..dmmmmmmmmmmmmd",
+  "..dlllllllllllmd",
+  "...dllllllllllmd",
+  "...ddlllddllldd.",
+  "....dd....dd....",
+  "....dd....dd...."
+];
+
+const CAPI_F2 = [
+  ".......ddddd....",
+  ".....ddmmmmmd...",
+  "....dmmmmmmmmdb.",
+  "...dmmmmmmmmmmmb",
+  "..dmmmmmmmmmmmmb",
+  "..dmmmmmmmmmmmmm",
+  "..dmmmmmmmmmmmmd",
+  "..dlllllllllllmd",
+  "...dllllllllllmd",
+  "...ddlllddllldd.",
+  ".....dd....dd...",
+  "....dd......dd.."
+];
+
+const CAPI_JUMP = [
+  ".......ddddd....",
+  ".....ddmmmmmd...",
+  "....dmmmmmmmmdb.",
+  "...dmmmmmmmmmmmb",
+  "..dmmmmmmmmmmmmb",
+  "..dmmmmmmmmmmmmm",
+  "..dmmmmmmmmmmmmd",
+  "..dlllllllllllmd",
+  "...dllllllllllmd",
+  "...ddlllddllldd.",
+  "..dd......dd....",
+  "..dd......dd...."
+];
+
+const CAPI_DUCK = [
+  "................",
+  "................",
+  ".......ddddd....",
+  ".....ddmmmmmd...",
+  "....dmmmmmmmmdb.",
+  "...dmmmmmmmmmmmb",
+  "..dmmmmmmmmmmmmb",
+  "..dmmmmmmmmmmmmm",
+  "..dlllllllllllmd",
+  "...ddlllddllldd.",
+  "....dd....dd....",
+  "................"
+];
+
+const ROCK_SPRITE = [
+  "....rrrr....",
+  "..rrRRRRrr..",
+  ".rRRRRRRRRr.",
+  "rRRrrRRRRRRr",
+  "rRRRRRRrrRRr",
+  "rRRRRRRRRRRr",
+  "rRRRRRRRRRRr",
+  "rrRRRRRRRRrr",
+  ".rrRRRRRRrr.",
+  "..rrrrrrrr.."
+];
+
+const LOG_SPRITE = [
+  "...wwwwwwwwww...",
+  "..wWWWWWWWWWWw..",
+  ".wWWWWWWWWWWWWw.",
+  "wWwWWWWWWWWWWwWw",
+  "wWWwWWWWWWWWwWWw",
+  "wWWWWWWWWWWWWWWw",
+  ".wWWWWWWWWWWWWw.",
+  "..wwwwwwwwwwww.."
+];
+
+function drawSprite(ctx, spriteArr, x, y, w, h) {
+  const rows = spriteArr.length;
+  const cols = spriteArr[0].length;
+  const pw = w / cols;
+  const ph = h / rows;
+  for(let r=0; r<rows; r++){
+    for(let c=0; c<cols; c++){
+      const color = SPRITE_COLORS[spriteArr[r][c]];
+      if(color){
+        ctx.fillStyle = color;
+        ctx.fillRect(x + c*pw, y + r*ph, pw+0.5, ph+0.5); 
+      }
+    }
+  }
+}
+
+// ---------- imágenes powerup ----------
+const POWERUP_IMGS = {};
+(function(){
+  const map = {
+    doubleJump: 'assets/jump.png',
+    multi:      'assets/x2.png',
+    magnet:     'assets/iman.png',
+    coin:       'assets/coin.png',
+    shield:     'assets/inmortal.png'
+  };
+  for(const [key, src] of Object.entries(map)){
+    const img = new Image();
+    img.src = src;
+    POWERUP_IMGS[key] = img;
+  }
+})();
+
 const PALETTE = {
   bg1: '#bfe8e3',
   bg2: '#7fc8c2',
@@ -281,9 +522,9 @@ const PALETTE = {
   obstacleRock: '#7a7065',
   shield: '#7fd6ff',
   multi: '#f2b705',
-  slow: '#b07cf2',
+  slow: '#e3000b',
   magnet: '#ff6b6b',
-  coin: '#ffd93d'
+  coin: '#00c896'
 };
 
 // ---------- estado del juego ----------
@@ -293,13 +534,15 @@ let speed = 0;
 let frame = 0;
 let multiplier = 1;
 let scoreLog = []; // eventos para validar en backend
+let sessionCoins = 0;
+let totalCoins = 0;
 
 // --- curva de dificultad: progresiva y suave ---
-const BASE_SPEED = 4.4;       // velocidad inicial
-const MAX_SPEED_ADD = 4.0;    // techo de velocidad extra ganada con el tiempo
-const RAMP_FRAMES = 3600;     // frames (a 60fps ≈ 60s) para llegar al techo de velocidad
+const BASE_SPEED = 7.0;       // velocidad inicial
+const MAX_SPEED_ADD = 6.0;    // techo de velocidad extra ganada con el tiempo
+const RAMP_FRAMES = 2400;     // frames (a 60fps ≈ 40s) para llegar al techo de velocidad
 
-let player, obstacles, powerups, particles;
+let player, obstacles, powerups, particles, clouds, nextObstacleIn, nextPowerupIn;
 let activeBuffs = {}; // {shield: framesLeft, multi: framesLeft, slow: framesLeft, magnet: framesLeft, doubleJump: framesLeft}
 
 function resetGame(){
@@ -308,10 +551,31 @@ function resetGame(){
   frame = 0;
   multiplier = 1;
   scoreLog = [{t:0, ev:'start'}];
+  sessionCoins = 0;
+  document.getElementById('sessionCoinsDisplay').textContent = '🟢 0';
   activeBuffs = {};
   obstacles = [];
   powerups = [];
   particles = [];
+  nextObstacleIn = 90;
+  nextPowerupIn = 300; // primer powerup a los 5 segundos aprox
+  clouds = [];
+  for(let i=0; i<4; i++){
+    let nx, ny, nw, nh, overlap;
+    let tries = 0;
+    do {
+      nx = Math.random() * W;
+      ny = 10 + Math.random() * 110;
+      nw = 100 + Math.random()*50;
+      nh = 50 + Math.random()*25;
+      overlap = clouds.some(c => Math.abs(c.x - nx) < c.w*0.8 + nw*0.8 && Math.abs(c.y - ny) < c.h*0.8 + nh*0.8);
+      tries++;
+    } while(overlap && tries < 10);
+    
+    if(!overlap){
+      clouds.push({ x: nx, y: ny, w: nw, h: nh, speedMult: 0.1 + Math.random()*0.15 });
+    }
+  }
   player = {
     x: W*0.08, y: GROUND_Y - 48, w: 52, h: 48,
     vy: 0, jumping:false, ducking:false,
@@ -324,12 +588,19 @@ function resetGame(){
 function jump(){
   if(state !== 'playing') return;
   if(player.jumpsLeft > 0){
-    player.vy = -13.5;
+    player.vy = -14.5;
     player.jumping = true;
     player.jumpsLeft--;
   }
 }
-function duckStart(){ if(state==='playing') player.ducking = true; }
+function duckStart(){
+  if(state !== 'playing') return;
+  player.ducking = true;
+  // Si está en el aire, la caída es inmediata (vuelve al suelo rápido)
+  if(player.jumping || player.vy < 0){
+    player.vy = 8; // impulso hacia abajo
+  }
+}
 function duckEnd(){ player.ducking = false; }
 
 window.addEventListener('keydown', e=>{
@@ -339,7 +610,21 @@ window.addEventListener('keydown', e=>{
 window.addEventListener('keyup', e=>{
   if(e.code === 'ArrowDown') duckEnd();
 });
-canvas.addEventListener('touchstart', e=>{ e.preventDefault(); jump(); });
+
+// Mobile: un toque = saltar; dos toques rápidos = agacharse
+let lastTapTime = 0;
+canvas.addEventListener('touchstart', e=>{
+  e.preventDefault();
+  const now = Date.now();
+  const timeSinceLastTap = now - lastTapTime;
+  lastTapTime = now;
+  if(timeSinceLastTap < 300){ // doble toque en < 300ms
+    duckStart();
+    setTimeout(duckEnd, 400); // suelta el agachado automáticamente
+  } else {
+    jump();
+  }
+});
 canvas.addEventListener('mousedown', jump);
 
 document.getElementById('startBtn').addEventListener('click', startGame);
@@ -355,6 +640,9 @@ function endGame(){
   scoreLog.push({t: frame, ev:'end', score: Math.floor(score)});
   showGameOver();
   sendScoreToBackend(scoreLog, Math.floor(score));
+  if(sessionCoins > 0) {
+    syncWallet(sessionCoins);
+  }
 }
 
 function showGameOver(){
@@ -371,28 +659,76 @@ function showGameOver(){
 
 // ---------- spawns ----------
 function maybeSpawnObstacle(){
-  // intervalo entre obstáculos: empieza espacioso, se acorta lento y con piso alto (no agobia)
-  const interval = Math.max(62, 105 - Math.floor(speed*4));
-  if(frame % interval === 0){
-    const type = Math.random() < 0.35 ? 'rock' : 'log';
-    const h = type === 'rock' ? 38 : 30;
-    obstacles.push({
-      x: W + 20, y: GROUND_Y - h, w: type==='rock'?36:56, h,
-      type
-    });
+  nextObstacleIn--;
+  if(nextObstacleIn <= 0){
+    const type = Math.random() < 0.4 ? 'log' : 'rock';
+    if(type === 'rock'){
+      const isLarge = Math.random() < 0.4;
+      const count = Math.floor(Math.random() * 3) + 1; // 1, 2 o 3 rocas juntas
+      const singleW = isLarge ? 42 : 28;
+      const singleH = isLarge ? 46 : 30;
+      obstacles.push({
+        x: W + 20, y: GROUND_Y - singleH, 
+        w: singleW * count, h: singleH,
+        type: 'rock',
+        count: count,
+        singleW: singleW
+      });
+    } else {
+      obstacles.push({
+        x: W + 20, y: GROUND_Y - 30, w: 56, h: 30,
+        type: 'log'
+      });
+    }
+
+    // Calcular el siguiente spawn. A más velocidad, menos frames pero la misma distancia en píxeles.
+    const minFrames = Math.max(30, 90 - speed * 4); // gap mínimo
+    const maxFrames = minFrames + 40 + Math.random() * 50; // gap máximo variable
+    nextObstacleIn = Math.floor(minFrames + Math.random() * (maxFrames - minFrames));
   }
 }
 
-const POWER_TYPES = ['shield','multi','slow','magnet','doubleJump','coin'];
+// Sistema de rareza ponderada para powerups
+// coin=40%, magnet=25%, doubleJump=18%, shield=12%, multi=5%
+function pickPowerupType(){
+  const roll = Math.random() * 100;
+  if(roll < 40)  return 'coin';       // comun
+  if(roll < 65)  return 'magnet';     // raro
+  if(roll < 83)  return 'doubleJump'; // mas raro
+  if(roll < 95)  return 'shield';     // aun mas raro
+  return 'multi';                     // el mas dificil
+}
+
 function maybeSpawnPowerup(){
-  if(frame % 220 === 0 && Math.random() < 0.85){
-    const type = POWER_TYPES[Math.floor(Math.random()*POWER_TYPES.length)];
-    powerups.push({
-      x: W + 20,
-      y: GROUND_Y - 120 - Math.random()*70,
-      w: 30, h: 30,
-      type
+  nextPowerupIn--;
+  if(nextPowerupIn <= 0){
+
+    // El slow aparece con 8% de probabilidad y solo cuando la pista está despejada
+    const isSlow = Math.random() < 0.08;
+    const type = isSlow ? 'slow' : pickPowerupType();
+
+    // Zona de altura segura: entre 60px y 130px sobre el suelo
+    const minY = GROUND_Y - 130;
+    const maxY = GROUND_Y - 70;
+    const py = minY + Math.random() * (maxY - minY);
+
+    const travelFrames = W / speed;
+    const projectedX = player.x + 30;
+    const nearObstacle = obstacles.some(o => {
+      const futureX = o.x - speed * (travelFrames * 0.5);
+      return Math.abs(futureX - projectedX) < (o.w + 80);
     });
+
+    if(isSlow && nearObstacle){
+      nextPowerupIn = 60;
+      return;
+    }
+
+    powerups.push({ x: W + 20, y: py, w: 48, h: 48, type });
+
+    // Gap mayor: powerups menos frecuentes para que tengan valor
+    const minGap = Math.max(220, 380 - speed * 8);
+    nextPowerupIn = Math.floor(minGap + Math.random() * 140);
   }
 }
 
@@ -418,7 +754,7 @@ function update(){
   player.jumpsLeft = activeBuffs.doubleJump ? 2 : (player.jumping ? player.jumpsLeft : 1);
 
   // player physics
-  player.vy += 1.0; // gravedad
+  player.vy += 0.85; // gravedad
   player.y += player.vy;
   if(player.y > GROUND_Y - player.h){
     player.y = GROUND_Y - player.h;
@@ -431,6 +767,20 @@ function update(){
   // spawn
   maybeSpawnObstacle();
   maybeSpawnPowerup();
+
+  if(frame % 80 === 0 && Math.random() < 0.8){
+    const nw = 100 + Math.random()*50;
+    const nh = 50 + Math.random()*25;
+    const ny = 10 + Math.random() * 110;
+    const nx = W + 20;
+    const overlap = clouds.some(c => Math.abs(c.x - nx) < c.w*0.8 + nw*0.8 && Math.abs(c.y - ny) < c.h*0.8 + nh*0.8);
+    if(!overlap){
+      clouds.push({ x: nx, y: ny, w: nw, h: nh, speedMult: 0.1 + Math.random()*0.15 });
+    }
+  }
+
+  for(const c of clouds) c.x -= speed * c.speedMult;
+  clouds = clouds.filter(c => c.x + c.w > -50);
 
   // move obstacles
   for(const o of obstacles) o.x -= speed;
@@ -450,8 +800,13 @@ function update(){
   // collisions: obstacles
   const hitboxH = player.ducking ? player.h*0.55 : player.h;
   const hitboxY = player.ducking ? player.y + player.h*0.45 : player.y;
+  
+  // Margen de error (hitbox más pequeña que el dibujo para que el salto no sea tan estricto)
+  const mx = 12; // margen horizontal
+  const my = 8;  // margen vertical
+
   for(const o of obstacles){
-    if(rectsOverlap(player.x, hitboxY, player.w, hitboxH, o.x, o.y, o.w, o.h)){
+    if(rectsOverlap(player.x + mx, hitboxY + my, player.w - mx*2, hitboxH - my*2, o.x, o.y, o.w, o.h)){
       if(activeBuffs.shield){
         obstacles = obstacles.filter(x => x !== o);
         score += 5;
@@ -494,7 +849,10 @@ function applyPowerup(type){
     case 'slow': activeBuffs.slow = 300; break; // 5s
     case 'magnet': activeBuffs.magnet = 480; break; // 8s
     case 'doubleJump': activeBuffs.doubleJump = 600; player.jumpsLeft = 2; break;
-    case 'coin': score += 25; break;
+    case 'coin': 
+      sessionCoins += 10; 
+      document.getElementById('sessionCoinsDisplay').textContent = '🟢 ' + sessionCoins;
+      break;
   }
   updateBuffsHud();
 }
@@ -530,27 +888,35 @@ function updateBuffsHud(){
 
 // ---------- dibujo pixel art ----------
 function drawBackground(){
-  ctx.fillStyle = PALETTE.bg1;
+  // Cielo
+  ctx.fillStyle = '#87CEEB'; 
   ctx.fillRect(0,0,W,GROUND_Y);
-  // río con franjas
-  ctx.fillStyle = PALETTE.bg2;
-  const stripeH = 7;
-  for(let i=0;i<10;i++){
-    const y = (i*38 + (frame*speed*0.5)%38);
-    ctx.fillRect(0, y, W, stripeH);
+  
+  // Nubes
+  for(const c of clouds){
+    drawSprite(ctx, CLOUD_SPRITE, c.x, c.y, c.w, c.h);
   }
-  // suelo
-  ctx.fillStyle = PALETTE.ground;
+
+  // Base de tierra
+  ctx.fillStyle = '#9c6b3e'; 
   ctx.fillRect(0, GROUND_Y, W, H-GROUND_Y);
-  ctx.fillStyle = PALETTE.groundLine;
+  
+  // Patrón de tierra profunda
+  ctx.fillStyle = '#7e5233';
+  for(let i=0; i<4; i++){
+    ctx.fillRect(0, GROUND_Y + 28 + i*14, W, 4);
+  }
+
+  // Franja de hierba y tierra superior animada
   const tileW = 40;
+  const tileH = 20;
   for(let x = -((frame*speed)%tileW); x < W; x+=tileW){
-    ctx.fillRect(x, GROUND_Y, 24, 7);
+    drawSprite(ctx, GRASS_SPRITE, x, GROUND_Y, tileW, tileH);
   }
 }
 
 function drawCapibara(){
-  const {x,y,w,h,ducking} = player;
+  const {x,y,w,h,ducking,jumping} = player;
   const bodyH = ducking ? h*0.6 : h;
   const by = ducking ? y + h*0.4 : y;
 
@@ -561,29 +927,17 @@ function drawCapibara(){
   ctx.ellipse(x+w/2, GROUND_Y+6, w*0.55, 8, 0,0,Math.PI*2);
   ctx.fill();
 
-  // cuerpo
-  ctx.fillStyle = activeBuffs.shield ? '#bfe9ff' : PALETTE.capiBody;
-  ctx.fillRect(x, by, w, bodyH);
-  // panza
-  ctx.fillStyle = PALETTE.capiBelly;
-  ctx.fillRect(x+7, by+bodyH*0.55, w-14, bodyH*0.4);
-  // cabeza
-  ctx.fillStyle = PALETTE.capiDark;
-  ctx.fillRect(x+w-20, by-10, 26, 24);
-  // ojo
-  ctx.fillStyle = '#fff';
-  ctx.fillRect(x+w-10, by-3, 7, 7);
-  ctx.fillStyle = '#000';
-  ctx.fillRect(x+w-8, by-1, 3, 3);
-  // orejas
-  ctx.fillStyle = PALETTE.capiDark;
-  ctx.fillRect(x+w-17, by-16, 5, 7);
-  ctx.fillRect(x+w-4, by-16, 5, 7);
-  // patas (animación simple)
-  ctx.fillStyle = PALETTE.capiDark;
-  const legOff = Math.sin(player.legFrame)*6;
-  ctx.fillRect(x+7, by+bodyH-6, 9, 10+legOff*0.3);
-  ctx.fillRect(x+w-20, by+bodyH-6, 9, 10-legOff*0.3);
+  let spriteToDraw;
+  if (ducking) {
+    spriteToDraw = CAPI_DUCK;
+  } else if (jumping || player.vy !== 0) {
+    spriteToDraw = CAPI_JUMP;
+  } else {
+    const walkCycle = Math.floor(frame * speed * 0.05) % 2;
+    spriteToDraw = walkCycle === 0 ? CAPI_F1 : CAPI_F2;
+  }
+
+  drawSprite(ctx, spriteToDraw, x, by, w, bodyH);
 
   // escudo visual
   if(activeBuffs.shield){
@@ -598,29 +952,81 @@ function drawCapibara(){
 
 function drawObstacles(){
   for(const o of obstacles){
-    ctx.fillStyle = o.type === 'rock' ? PALETTE.obstacleRock : PALETTE.obstacle;
-    ctx.fillRect(o.x, o.y, o.w, o.h);
+    if(o.type === 'rock'){
+      for(let i=0; i<o.count; i++){
+        drawSprite(ctx, ROCK_SPRITE, o.x + i*o.singleW, o.y, o.singleW, o.h);
+      }
+    } else {
+      drawSprite(ctx, LOG_SPRITE, o.x, o.y, o.w, o.h);
+    }
     ctx.fillStyle = 'rgba(0,0,0,0.15)';
-    ctx.fillRect(o.x, o.y, o.w, 6);
+    ctx.fillRect(o.x, o.y + o.h - 6, o.w, 6);
   }
 }
 
 function drawPowerups(){
-  const icons = { shield:'🛡', multi:'x2', slow:'🐢', magnet:'🧲', doubleJump:'⭐', coin:'●' };
   for(const p of powerups){
     ctx.save();
     const bob = Math.sin(frame*0.1 + p.x*0.05)*5;
-    ctx.fillStyle = colorForPower(p.type);
-    ctx.beginPath();
-    ctx.arc(p.x+p.w/2, p.y+p.h/2+bob, p.w/2, 0, Math.PI*2);
-    ctx.fill();
-    ctx.strokeStyle = '#fff';
-    ctx.lineWidth = 3;
-    ctx.stroke();
-    ctx.fillStyle = '#fff';
-    ctx.font = '16px sans-serif';
-    ctx.textAlign='center'; ctx.textBaseline='middle';
-    ctx.fillText(icons[p.type]||'?', p.x+p.w/2, p.y+p.h/2+bob);
+    const img = POWERUP_IMGS[p.type];
+    const cx = p.x + p.w/2;
+    const cy = p.y + p.h/2 + bob;
+    const r = p.w/2 + 4;
+
+    if(p.type === 'slow'){
+      // Aura roja pulsante
+      ctx.fillStyle = '#ff0000';
+      ctx.globalAlpha = 0.25 + Math.sin(frame*0.25)*0.12;
+      ctx.beginPath();
+      ctx.arc(cx, cy, r + 7, 0, Math.PI*2);
+      ctx.fill();
+      ctx.globalAlpha = 1;
+
+      // Círculo rojo con borde amarillo
+      ctx.fillStyle = '#e3000b';
+      ctx.beginPath();
+      ctx.arc(cx, cy, r, 0, Math.PI*2);
+      ctx.fill();
+      ctx.strokeStyle = '#ffcc00';
+      ctx.lineWidth = 3;
+      ctx.stroke();
+
+      // Icono ⚠️ pequeño centrado (sin texto extra)
+      ctx.font = `${p.w * 0.5}px sans-serif`;
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      ctx.fillText('⚠️', cx, cy);
+    } else {
+      // Aura / fondo circular de color
+      ctx.fillStyle = colorForPower(p.type);
+      ctx.globalAlpha = 0.35;
+      ctx.beginPath();
+      ctx.arc(cx, cy, r + 4, 0, Math.PI*2);
+      ctx.fill();
+      ctx.globalAlpha = 1;
+
+      // Círculo sólido
+      ctx.fillStyle = colorForPower(p.type);
+      ctx.beginPath();
+      ctx.arc(cx, cy, r, 0, Math.PI*2);
+      ctx.fill();
+      ctx.strokeStyle = '#ffffffcc';
+      ctx.lineWidth = 2.5;
+      ctx.stroke();
+
+      // Imagen PNG o fallback emoji
+      if(img && img.complete && img.naturalWidth !== 0){
+        const s = p.w * 0.85;
+        ctx.drawImage(img, cx - s/2, cy - s/2, s, s);
+      } else {
+        const fallback = {shield:'🛡', multi:'x2', magnet:'🧲', doubleJump:'⭐', coin:'●'};
+        ctx.fillStyle = '#fff';
+        ctx.font = `${p.w * 0.6}px sans-serif`;
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        ctx.fillText(fallback[p.type]||'?', cx, cy);
+      }
+    }
     ctx.restore();
   }
 }
@@ -646,19 +1052,32 @@ function updateScoreHud(){
   document.getElementById('score').textContent = `PUNTOS: ${Math.floor(score)}${multiplier>1?' (x2)':''}`;
 }
 
-// ---------- loop ----------
-function loop(){
+let lastTime = 0;
+const MS_PER_UPDATE = 1000 / 60;
+let accumulator = 0;
+
+function loop(currentTime){
+  if(lastTime === 0) lastTime = currentTime;
+  let dt = currentTime - lastTime;
+  lastTime = currentTime;
+  if(dt > 250) dt = 250;
+
   if(state === 'playing'){
-    update();
+    accumulator += dt;
+    while(accumulator >= MS_PER_UPDATE){
+      update();
+      accumulator -= MS_PER_UPDATE;
+    }
     updateScoreHud();
     updateBuffsHud();
   }
+  
   draw();
   requestAnimationFrame(loop);
 }
 resetGame();
 draw();
-loop();
+requestAnimationFrame(loop);
 
 /* ============================================================
    INTEGRACIÓN CON SUPABASE - leaderboard semanal + login Twitch
@@ -704,6 +1123,12 @@ function updateAuthUI(){
 sb.auth.onAuthStateChange((_event, session) => {
   currentUser = session?.user || null;
   updateAuthUI();
+  if(currentUser){
+    document.getElementById('storeCard').style.display = 'block';
+    syncWallet(0);
+  } else {
+    document.getElementById('storeCard').style.display = 'none';
+  }
   loadLeaderboard();
 });
 
@@ -732,6 +1157,66 @@ async function sendScoreToBackend(log, finalScore){
   }
 
   loadLeaderboard();
+}
+
+// ---------- Monedas y Tienda ----------
+async function syncWallet(addedCoins) {
+  if(!currentUser) return;
+  const uid = currentUser.id;
+  const username = currentUser.user_metadata?.name || currentUser.user_metadata?.full_name || currentUser.email || 'jugador';
+  
+  // 1. Obtener balance actual
+  const { data: walletData, error: selErr } = await sb
+    .from('player_wallets')
+    .select('balance')
+    .eq('twitch_user_id', uid)
+    .single();
+
+  let currentBalance = 0;
+  let isNew = false;
+  if(selErr && selErr.code === 'PGRST116'){ // No existe fila
+    isNew = true;
+  } else if(walletData) {
+    currentBalance = walletData.balance;
+  }
+
+  const newBalance = currentBalance + addedCoins;
+  totalCoins = newBalance;
+  document.getElementById('coinBalanceDisplay').textContent = totalCoins;
+
+  // 2. Guardar nuevo balance si hubo un cambio
+  if(addedCoins > 0 || isNew){
+    const payload = {
+      twitch_user_id: uid,
+      twitch_username: username,
+      balance: newBalance,
+      updated_at: new Date().toISOString()
+    };
+    if(isNew){
+      await sb.from('player_wallets').insert(payload);
+    } else {
+      await sb.from('player_wallets').update(payload).eq('twitch_user_id', uid);
+    }
+  }
+}
+
+async function buyBuff(cost, seconds) {
+  if(!currentUser) return alert('Debes iniciar sesión primero.');
+  if(totalCoins < cost) {
+    return alert('No tienes monedas suficientes.');
+  }
+  
+  // Descontar visualmente
+  totalCoins -= cost;
+  document.getElementById('coinBalanceDisplay').textContent = totalCoins;
+  
+  // Activar el buff de escudo (inmortalidad)
+  const frames = seconds * 60;
+  activeBuffs.shield = (activeBuffs.shield || 0) + frames;
+  updateBuffsHud();
+
+  // Guardar en DB (usamos syncWallet enviando monedas negativas)
+  await syncWallet(-cost);
 }
 
 // ---------- Cargar leaderboard ----------
@@ -771,6 +1256,25 @@ async function loadLeaderboard(){
 
 checkSession();
 loadLeaderboard();
+
+// ---------- Pantalla completa ----------
+const fullscreenBtn = document.getElementById('fullscreenBtn');
+const gamePanel = document.getElementById('gamePanel');
+
+fullscreenBtn.addEventListener('click', () => {
+  const isFs = gamePanel.classList.toggle('fullscreen-mode');
+  fullscreenBtn.textContent = isFs ? '✕ SALIR DE PANTALLA COMPLETA' : '⛶ PANTALLA COMPLETA';
+  document.body.style.overflow = isFs ? 'hidden' : '';
+});
+
+// Salir con Escape
+document.addEventListener('keydown', e => {
+  if(e.code === 'Escape' && gamePanel.classList.contains('fullscreen-mode')){
+    gamePanel.classList.remove('fullscreen-mode');
+    fullscreenBtn.textContent = '⛶ PANTALLA COMPLETA';
+    document.body.style.overflow = '';
+  }
+});
 
 </script>
 </body>
