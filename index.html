@@ -190,6 +190,7 @@
       image-rendering: pixelated;
       width: 100%;
       height: 100%;
+      object-fit: contain;
     }
 
     #hud {
@@ -482,49 +483,48 @@
 
     .mob-btn {
       position: absolute;
-      bottom: 8px;
-      width: 30%;
-      max-width: 130px;
-      height: 90%;
+      bottom: 25px;
+      width: 70px;
+      height: 70px;
       pointer-events: all;
-      border: 3px solid rgba(255,255,255,0.55);
-      border-radius: 16px;
+      border: 3px solid rgba(255,255,255,0.4);
+      border-radius: 50%;
       display: flex;
       flex-direction: column;
       align-items: center;
       justify-content: center;
-      gap: 4px;
+      gap: 2px;
       cursor: pointer;
       -webkit-tap-highlight-color: transparent;
       user-select: none;
       transition: opacity 0.08s, transform 0.08s;
       font-family: 'Press Start 2P', monospace;
-      font-size: clamp(8px, 2.5vw, 13px);
+      font-size: 8px;
       color: #fff;
-      text-shadow: 1px 1px 3px #000;
+      text-shadow: 1px 1px 2px #000;
       backdrop-filter: blur(2px);
     }
 
     #btnJump {
-      left: 6%;
-      background: rgba(30, 120, 255, 0.35);
-      border-color: rgba(100, 180, 255, 0.7);
+      left: 20px;
+      background: rgba(30, 120, 255, 0.25);
+      border-color: rgba(100, 180, 255, 0.5);
     }
 
     #btnDuck {
-      right: 6%;
-      background: rgba(220, 80, 20, 0.35);
-      border-color: rgba(255, 160, 80, 0.7);
+      right: 20px;
+      background: rgba(220, 80, 20, 0.25);
+      border-color: rgba(255, 160, 80, 0.5);
     }
 
     .mob-btn:active,
     .mob-btn.pressed {
-      opacity: 0.75;
-      transform: scale(0.96);
+      opacity: 0.8;
+      transform: scale(0.92);
     }
 
     .mob-btn .mob-icon {
-      font-size: clamp(20px, 7vw, 36px);
+      font-size: 24px;
       line-height: 1;
     }
 
@@ -1185,8 +1185,25 @@
     <div class="bigscore">PUNTOS: ${Math.floor(score)}</div>
     <div style="font-size:16px; margin:10px 0;">Monedas ganadas: 🟢 ${sessionCoins}</div>
     <button class="menu-btn" onclick="startRun()">🔄 JUGAR DE NUEVO</button>
-    <button class="menu-btn" onclick="location.reload()">🏠 MENÚ PRINCIPAL</button>
+    <button class="menu-btn" onclick="returnToMenu()">🏠 MENÚ PRINCIPAL</button>
   `;
+      }
+
+      function returnToMenu() {
+        state = 'idle';
+        resetGame();
+        ctx.fillStyle = '#7fc8c2';
+        ctx.fillRect(0, 0, W, H);
+        const overlay = document.getElementById('overlay');
+        overlay.classList.remove('hidden');
+        overlay.innerHTML = `
+          <img src="assets/logo_capi.png" class="logo" alt="Capibara Logo" onerror="this.style.display='none'">
+          <h2>CAPI RUN</h2>
+          <button id="startBtn" class="menu-btn" onclick="startGame()">▶️ START GAME</button>
+          <button class="menu-btn" onclick="openModal('storeModal')">🛒 STORE</button>
+          <button class="menu-btn" onclick="openModal('leaderboardModal')">🏆 LEADERBOARD</button>
+          <button class="menu-btn" onclick="openModal('authModal')">⚙️ ACCOUNT</button>
+        `;
       }
 
       // ---------- spawns ----------
