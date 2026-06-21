@@ -298,6 +298,13 @@
       text-shadow: 3px 3px 0 #000;
     }
 
+    .menu-buttons {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      width: 100%;
+    }
+
     .menu-btn {
       font-family: 'Press Start 2P', monospace;
       font-size: 13px;
@@ -311,6 +318,26 @@
       width: 250px;
       transition: transform 0.1s;
       text-shadow: 2px 2px 0px #000;
+    }
+
+    @media (max-width: 900px) and (orientation: landscape) {
+      #overlay { padding: 5px; }
+      #overlay img.logo { width: 50px; margin-bottom: 2px; }
+      #overlay h2 { font-size: 14px; margin-bottom: 5px; }
+      
+      .menu-buttons {
+        flex-direction: row;
+        flex-wrap: wrap;
+        justify-content: center;
+        gap: 6px;
+        max-width: 500px;
+      }
+      .menu-btn {
+        width: 48%;
+        margin: 0;
+        padding: 8px 10px;
+        font-size: 10px;
+      }
     }
 
     .menu-btn:hover {
@@ -650,10 +677,12 @@
         <div id="overlay">
           <img src="assets/logo_capi.png" class="logo" alt="Capibara Logo" onerror="this.style.display='none'">
           <h2>CAPI RUN</h2>
-          <button id="startBtn" class="menu-btn">▶️ START GAME</button>
-          <button class="menu-btn" onclick="openModal('storeModal')">🛒 STORE</button>
-          <button class="menu-btn" onclick="openModal('leaderboardModal')">🏆 LEADERBOARD</button>
-          <button class="menu-btn" onclick="openModal('authModal')">⚙️ ACCOUNT</button>
+          <div class="menu-buttons">
+            <button id="startBtn" class="menu-btn">▶️ START GAME</button>
+            <button class="menu-btn" onclick="openModal('storeModal')">🛒 STORE</button>
+            <button class="menu-btn" onclick="openModal('leaderboardModal')">🏆 LEADERBOARD</button>
+            <button class="menu-btn" onclick="openModal('authModal')">⚙️ ACCOUNT</button>
+          </div>
         </div>
 
         <!-- Botones móvil: saltar y agacharse -->
@@ -1222,8 +1251,10 @@
     <h2>GAME OVER</h2>
     <div class="bigscore">PUNTOS: ${Math.floor(score)}</div>
     <div style="font-size:16px; margin:10px 0;">Monedas ganadas: 🟢 ${sessionCoins}</div>
-    <button class="menu-btn" onclick="startRun()">🔄 JUGAR DE NUEVO</button>
-    <button class="menu-btn" onclick="returnToMenu()">🏠 MENÚ PRINCIPAL</button>
+    <div class="menu-buttons">
+      <button class="menu-btn" onclick="startRun()">🔄 JUGAR DE NUEVO</button>
+      <button class="menu-btn" onclick="returnToMenu()">🏠 MENÚ PRINCIPAL</button>
+    </div>
   `;
       }
 
@@ -1238,10 +1269,12 @@
         overlay.innerHTML = `
           <img src="assets/logo_capi.png" class="logo" alt="Capibara Logo" onerror="this.style.display='none'">
           <h2>CAPI RUN</h2>
-          <button id="startBtn" class="menu-btn" onclick="startGame()">▶️ START GAME</button>
-          <button class="menu-btn" onclick="openModal('storeModal')">🛒 STORE</button>
-          <button class="menu-btn" onclick="openModal('leaderboardModal')">🏆 LEADERBOARD</button>
-          <button class="menu-btn" onclick="openModal('authModal')">⚙️ ACCOUNT</button>
+          <div class="menu-buttons">
+            <button id="startBtn" class="menu-btn" onclick="startGame()">▶️ START GAME</button>
+            <button class="menu-btn" onclick="openModal('storeModal')">🛒 STORE</button>
+            <button class="menu-btn" onclick="openModal('leaderboardModal')">🏆 LEADERBOARD</button>
+            <button class="menu-btn" onclick="openModal('authModal')">⚙️ ACCOUNT</button>
+          </div>
         `;
       }
 
