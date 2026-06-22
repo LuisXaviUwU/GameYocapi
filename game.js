@@ -1151,6 +1151,15 @@
       function openModal(id) {
         document.getElementById(id).style.display = 'flex';
       }
+      
+      function showStoreTab(tabId) {
+        document.querySelectorAll('.store-tab').forEach(btn => btn.classList.remove('active'));
+        document.querySelectorAll('.store-tab-content').forEach(content => content.classList.remove('active'));
+        
+        document.getElementById('tabBtn-' + tabId).classList.add('active');
+        document.getElementById('tab-' + tabId).classList.add('active');
+      }
+
       function closeModal(id) {
         document.getElementById(id).style.display = 'none';
       }

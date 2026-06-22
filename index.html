@@ -56,43 +56,67 @@
 
         <!-- Modals Integrados -->
         <div id="storeModal" class="modal-overlay">
-          <div class="modal-box">
+          <div class="modal-box store-modal-box">
             <button class="modal-close" onclick="closeModal('storeModal')">X</button>
             <h3>🛒 TIENDA</h3>
             <div style="margin-bottom:15px; color:var(--gold); font-size:16px;">
               Saldo: <span id="coinBalanceDisplay">0</span> <img src="assets/coin.png" style="width:40px; vertical-align:middle; margin-top:-6px; margin-left:4px;">
             </div>
-            <div id="storeContent" style="display:none; max-height: 250px; overflow-y: auto;">
-              <div class="store-item">
-                <span style="display:flex; align-items:center;"><img src="assets/inmortal.png" style="width:20px; margin-right:6px;"> Inmortal (10s)</span>
-                <button onclick="buyBuff('shield', 500, 10)">500</button>
-              </div>
-              <div class="store-item">
-                <span style="display:flex; align-items:center;"><img src="assets/jump.png" style="width:20px; margin-right:6px;"> Doble Salto (15s)</span>
-                <button onclick="buyBuff('doubleJump', 300, 15)">300</button>
-              </div>
-              <div class="store-item">
-                <span style="display:flex; align-items:center;"><img src="assets/iman.png" style="width:20px; margin-right:6px;"> Imán (15s)</span>
-                <button onclick="buyBuff('magnet', 400, 15)">400</button>
-              </div>
-              <div class="store-item">
-                <span style="display:flex; align-items:center;"><img src="assets/x2.png" style="width:20px; margin-right:6px;"> x2 (15s)</span>
-                <button onclick="buyBuff('multi', 1500, 15)">1500</button>
-              </div>
-              <div class="store-item">
-                <span style="display:flex; align-items:center;"><img src="assets/x2.png" style="width:20px; margin-right:6px;"> x4 (15s)</span>
-                <button onclick="buyBuff('multi4', 3000, 15)">3000</button>
-              </div>
-              <div class="store-item">
-                <span style="display:flex; align-items:center;"><img src="assets/x2.png" style="width:20px; margin-right:6px;"> x6 (15s)</span>
-                <button onclick="buyBuff('multi6', 5000, 15)">5000</button>
-              </div>
-              <div class="week-note">Se activa de inmediato</div>
-            </div>
+            
             <div id="storeAuthMsg" class="week-note">Inicia sesión para usar la tienda</div>
+            
+            <div id="storeContent" style="display:none;" class="store-layout">
+              <div class="store-sidebar">
+                <button id="tabBtn-inmortal" class="store-tab active" onclick="showStoreTab('inmortal')">🛡 Escudos</button>
+                <button id="tabBtn-movilidad" class="store-tab" onclick="showStoreTab('movilidad')">⭐ Movilidad</button>
+                <button id="tabBtn-utilidad" class="store-tab" onclick="showStoreTab('utilidad')">🧲 Utilidad</button>
+                <button id="tabBtn-multi" class="store-tab" onclick="showStoreTab('multi')">✖ Multiplicadores</button>
+              </div>
+              <div class="store-content-area">
+                <div id="tab-inmortal" class="store-tab-content active">
+                  <div class="store-item">
+                    <span style="display:flex; align-items:center;"><img src="assets/inmortal.png" style="width:20px; margin-right:6px;"> Inmortal (10s)</span>
+                    <button onclick="buyBuff('shield', 500, 10)">500</button>
+                  </div>
+                  <div class="week-note">Te protege de colisiones</div>
+                </div>
+                
+                <div id="tab-movilidad" class="store-tab-content">
+                  <div class="store-item">
+                    <span style="display:flex; align-items:center;"><img src="assets/jump.png" style="width:20px; margin-right:6px;"> Doble Salto (15s)</span>
+                    <button onclick="buyBuff('doubleJump', 300, 15)">300</button>
+                  </div>
+                  <div class="week-note">Permite saltar en el aire</div>
+                </div>
+                
+                <div id="tab-utilidad" class="store-tab-content">
+                  <div class="store-item">
+                    <span style="display:flex; align-items:center;"><img src="assets/iman.png" style="width:20px; margin-right:6px;"> Imán (15s)</span>
+                    <button onclick="buyBuff('magnet', 400, 15)">400</button>
+                  </div>
+                  <div class="week-note">Atrae monedas hacia ti</div>
+                </div>
+                
+                <div id="tab-multi" class="store-tab-content">
+                  <div class="store-item">
+                    <span style="display:flex; align-items:center;"><img src="assets/x2.png" style="width:20px; margin-right:6px;"> x2 (15s)</span>
+                    <button onclick="buyBuff('multi', 1500, 15)">1500</button>
+                  </div>
+                  <div class="store-item">
+                    <span style="display:flex; align-items:center;"><img src="assets/x2.png" style="width:20px; margin-right:6px;"> x4 (15s)</span>
+                    <button onclick="buyBuff('multi4', 3000, 15)">3000</button>
+                  </div>
+                  <div class="store-item">
+                    <span style="display:flex; align-items:center;"><img src="assets/x2.png" style="width:20px; margin-right:6px;"> x6 (15s)</span>
+                    <button onclick="buyBuff('multi6', 5000, 15)">5000</button>
+                  </div>
+                  <div class="week-note">Multiplica tus puntos</div>
+                </div>
+              </div>
+            </div>
+            
           </div>
         </div>
-
         <div id="leaderboardModal" class="modal-overlay">
           <div class="modal-box">
             <button class="modal-close" onclick="closeModal('leaderboardModal')">X</button>
