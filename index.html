@@ -73,44 +73,66 @@
                 <button id="tabBtn-multi" class="store-tab" onclick="showStoreTab('multi')">✖ Multiplicadores</button>
               </div>
               <div class="store-content-area">
+              <div class="store-content-area">
+                
+                <!-- ESCUDOS -->
                 <div id="tab-inmortal" class="store-tab-content active">
+                  <div style="text-align: center; margin-bottom: 20px;">
+                    <img src="assets/inmortal.png" style="width: 80px; image-rendering: pixelated; filter: drop-shadow(0 4px 6px rgba(0,0,0,0.5));">
+                    <div style="color: var(--gold); margin-top: 10px; font-size: 14px; font-weight: bold;">ESCUDO INMORTAL</div>
+                    <div style="font-size: 10px; color: #ccc; margin-top: 5px;">Te protege de colisiones</div>
+                  </div>
                   <div class="store-item">
-                    <span style="display:flex; align-items:center;"><img src="assets/inmortal.png" style="width:20px; margin-right:6px;"> Inmortal (10s)</span>
+                    <span>10 Segundos</span>
                     <button onclick="buyBuff('shield', 500, 10)">500</button>
                   </div>
-                  <div class="week-note">Te protege de colisiones</div>
                 </div>
                 
+                <!-- MOVILIDAD -->
                 <div id="tab-movilidad" class="store-tab-content">
+                  <div style="text-align: center; margin-bottom: 20px;">
+                    <img src="assets/jump.png" style="width: 80px; image-rendering: pixelated; filter: drop-shadow(0 4px 6px rgba(0,0,0,0.5));">
+                    <div style="color: var(--gold); margin-top: 10px; font-size: 14px; font-weight: bold;">DOBLE SALTO</div>
+                    <div style="font-size: 10px; color: #ccc; margin-top: 5px;">Permite saltar en el aire</div>
+                  </div>
                   <div class="store-item">
-                    <span style="display:flex; align-items:center;"><img src="assets/jump.png" style="width:20px; margin-right:6px;"> Doble Salto (15s)</span>
+                    <span>15 Segundos</span>
                     <button onclick="buyBuff('doubleJump', 300, 15)">300</button>
                   </div>
-                  <div class="week-note">Permite saltar en el aire</div>
                 </div>
                 
+                <!-- UTILIDAD -->
                 <div id="tab-utilidad" class="store-tab-content">
+                  <div style="text-align: center; margin-bottom: 20px;">
+                    <img src="assets/iman.png" style="width: 80px; image-rendering: pixelated; filter: drop-shadow(0 4px 6px rgba(0,0,0,0.5));">
+                    <div style="color: var(--gold); margin-top: 10px; font-size: 14px; font-weight: bold;">IMÁN DE MONEDAS</div>
+                    <div style="font-size: 10px; color: #ccc; margin-top: 5px;">Atrae monedas cercanas</div>
+                  </div>
                   <div class="store-item">
-                    <span style="display:flex; align-items:center;"><img src="assets/iman.png" style="width:20px; margin-right:6px;"> Imán (15s)</span>
+                    <span>15 Segundos</span>
                     <button onclick="buyBuff('magnet', 400, 15)">400</button>
                   </div>
-                  <div class="week-note">Atrae monedas hacia ti</div>
                 </div>
                 
+                <!-- MULTIPLICADORES -->
                 <div id="tab-multi" class="store-tab-content">
+                  <div style="text-align: center; margin-bottom: 20px;">
+                    <img src="assets/x2.png" style="width: 80px; image-rendering: pixelated; filter: drop-shadow(0 4px 6px rgba(0,0,0,0.5));">
+                    <div style="color: var(--gold); margin-top: 10px; font-size: 14px; font-weight: bold;">MULTIPLICADORES</div>
+                    <div style="font-size: 10px; color: #ccc; margin-top: 5px;">Aumenta tus puntos x segundo</div>
+                  </div>
                   <div class="store-item">
-                    <span style="display:flex; align-items:center;"><img src="assets/x2.png" style="width:20px; margin-right:6px;"> x2 (15s)</span>
+                    <span>x2 (15s)</span>
                     <button onclick="buyBuff('multi', 1500, 15)">1500</button>
                   </div>
                   <div class="store-item">
-                    <span style="display:flex; align-items:center;"><img src="assets/x2.png" style="width:20px; margin-right:6px;"> x4 (15s)</span>
+                    <span>x4 (15s)</span>
                     <button onclick="buyBuff('multi4', 3000, 15)">3000</button>
                   </div>
                   <div class="store-item">
-                    <span style="display:flex; align-items:center;"><img src="assets/x2.png" style="width:20px; margin-right:6px;"> x6 (15s)</span>
+                    <span>x6 (15s)</span>
                     <button onclick="buyBuff('multi6', 5000, 15)">5000</button>
                   </div>
-                  <div class="week-note">Multiplica tus puntos</div>
                 </div>
               </div>
             </div>
