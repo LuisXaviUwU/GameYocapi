@@ -1125,7 +1125,7 @@
           btn.textContent = 'CERRAR SESIÓN';
           btn.onclick = async () => { await sb.auth.signOut(); currentUser = null; updateAuthUI(); };
           info.textContent = `Conectado como ${name}`;
-          document.getElementById('storeContent').style.display = 'block';
+          document.getElementById('storeContent').style.display = 'flex';
           document.getElementById('storeAuthMsg').style.display = 'none';
         } else {
           btn.textContent = 'CONECTAR CON TWITCH';
