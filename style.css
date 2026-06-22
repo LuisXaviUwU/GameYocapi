@@ -746,3 +746,72 @@
 .store-tab-content.active {
   display: block;
 }
+
+/* ---------- Inventario (Mochila) ---------- */
+#inventoryHud {
+  position: absolute;
+  bottom: 20px;
+  right: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  z-index: 10;
+  pointer-events: none;
+  font-family: 'Press Start 2P', monospace;
+  font-size: 10px;
+  display: none; /* Se muestra solo al jugar */
+}
+
+.inv-slot {
+  background: rgba(0,0,0,0.6);
+  border: 2px solid var(--gold);
+  border-radius: 8px;
+  padding: 8px;
+  color: white;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  cursor: pointer;
+  pointer-events: auto;
+  transition: transform 0.1s;
+}
+
+.inv-slot:active {
+  transform: scale(0.95);
+}
+
+.inv-key {
+  background: #fff;
+  color: #000;
+  padding: 2px 6px;
+  border-radius: 4px;
+  font-size: 8px;
+}
+
+.inv-icon {
+  width: 20px;
+  height: 20px;
+  image-rendering: pixelated;
+}
+
+.inv-qty {
+  color: var(--gold);
+  font-weight: bold;
+}
+
+@media (max-width: 600px) {
+  #inventoryHud {
+    flex-direction: row;
+    flex-wrap: wrap;
+    justify-content: flex-end;
+    bottom: 10px;
+    right: 10px;
+  }
+  .inv-slot {
+    padding: 4px;
+    gap: 4px;
+  }
+  .inv-key {
+    display: none; /* Ocultar teclas en movil */
+  }
+}

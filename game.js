@@ -190,6 +190,7 @@
       let scoreLog = []; // eventos para validar en backend
       let sessionCoins = 0;
       let totalCoins = 0;
+      let playerInventory = { shield: 0, doubleJump: 0, magnet: 0, multi: 0, multi4: 0, multi6: 0 };
       let globalFrame = 0; // Para el ciclo día/noche continuo
 
       // ---------- Audio ----------
@@ -392,6 +393,14 @@
       window.addEventListener('keydown', e => {
         if (e.code === 'Space' || e.code === 'ArrowUp') { e.preventDefault(); jump(); }
         if (e.code === 'ArrowDown') { e.preventDefault(); duckStart(); }
+        if (state === 'playing') {
+          if (e.code === 'Digit1' || e.code === 'Numpad1') useItem('shield', 10);
+          if (e.code === 'Digit2' || e.code === 'Numpad2') useItem('doubleJump', 15);
+          if (e.code === 'Digit3' || e.code === 'Numpad3') useItem('magnet', 15);
+          if (e.code === 'Digit4' || e.code === 'Numpad4') useItem('multi', 15);
+          if (e.code === 'Digit5' || e.code === 'Numpad5') useItem('multi4', 15);
+          if (e.code === 'Digit6' || e.code === 'Numpad6') useItem('multi6', 15);
+        }
       });
       window.addEventListener('keyup', e => {
         if (e.code === 'ArrowDown') duckEnd();
@@ -451,6 +460,7 @@
 
       function beginPlay() {
         state = 'playing';
+        document.getElementById('inventoryHud').style.display = 'flex';
         stopMusic();
         playMusic('music/musicnormal.mp3');
       }
@@ -466,6 +476,7 @@
 
       function endGame() {
         state = 'dead';
+        document.getElementById('inventoryHud').style.display = 'none';
         document.getElementById('gameWrap').classList.remove('is-playing');
         scoreLog.push({ t: frame, ev: 'end', score: Math.floor(score) });
         showGameOver();
@@ -491,6 +502,7 @@
 
       function returnToMenu() {
         state = 'idle';
+        document.getElementById('inventoryHud').style.display = 'none';
         document.getElementById('gameWrap').classList.remove('is-playing');
         resetGame();
         ctx.fillStyle = '#7fc8c2';
@@ -727,6 +739,40 @@
       }
 
       // ---------- HUD ----------
+      
+      function updateInventoryHud() {
+         const ids = ['shield', 'doubleJump', 'magnet', 'multi', 'multi4', 'multi6'];
+         ids.forEach(id => {
+            const el = document.getElementById('inv-' + id);
+            if (el) {
+               const qty = playerInventory[id] || 0;
+               el.querySelector('.inv-qty').textContent = 'x' + qty;
+               if (qty > 0) {
+                  el.style.opacity = '1';
+               } else {
+                  el.style.opacity = '0.5';
+               }
+            }
+         });
+      }
+
+      async function useItem(type, seconds) {
+        if (!playerInventory[type] || playerInventory[type] <= 0) return;
+        
+        // Consumir
+        playerInventory[type]--;
+        updateInventoryHud();
+        
+        // Activar
+        const frames = seconds * 60;
+        activeBuffs[type] = (activeBuffs[type] || 0) + frames;
+        if (type === 'doubleJump') player.jumpsLeft = 2;
+        updateBuffsHud();
+        
+        // Guardar en nube silenciosamente
+        await syncWallet(0);
+      }
+
       function updateBuffsHud() {
         const box = document.getElementById('buffs');
         const labels = {
@@ -1197,10 +1243,10 @@
         const uid = currentUser.id;
         const username = currentUser.user_metadata?.name || currentUser.user_metadata?.full_name || currentUser.email || 'jugador';
 
-        // 1. Obtener balance actual
+        // 1. Obtener balance actual e inventario
         const { data: walletData, error: selErr } = await sb
           .from('player_wallets')
-          .select('balance')
+          .select('balance, inventory')
           .eq('twitch_user_id', uid)
           .single();
 
@@ -1210,7 +1256,11 @@
           isNew = true;
         } else if (walletData) {
           currentBalance = walletData.balance;
+          if (walletData.inventory) {
+             playerInventory = { ...playerInventory, ...walletData.inventory };
+          }
         }
+        updateInventoryHud();
 
         const newBalance = currentBalance + addedCoins;
         totalCoins = newBalance;
@@ -1222,6 +1272,7 @@
             twitch_user_id: uid,
             twitch_username: username,
             balance: newBalance,
+            inventory: playerInventory,
             updated_at: new Date().toISOString()
           };
           if (isNew) {
@@ -1242,11 +1293,9 @@
         totalCoins -= cost;
         document.getElementById('coinBalanceDisplay').textContent = totalCoins;
 
-        // Activar el buff
-        const frames = seconds * 60;
-        activeBuffs[type] = (activeBuffs[type] || 0) + frames;
-        if (type === 'doubleJump') player.jumpsLeft = 2;
-        updateBuffsHud();
+        // Añadir a inventario en lugar de activar
+        playerInventory[type] = (playerInventory[type] || 0) + 1;
+        updateInventoryHud();
 
         // Guardar en DB (usamos syncWallet enviando monedas negativas)
         await syncWallet(-cost);
