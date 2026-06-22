@@ -7,6 +7,9 @@
       const W = canvas.width, H = canvas.height;
       const GROUND_Y = H - 80;
 
+      const CAPI_IMG = new Image();
+      CAPI_IMG.src = 'assets/capibara.png';
+
       const SPRITE_COLORS = {
         '.': null,
         'b': '#000',
@@ -47,65 +50,17 @@
         "dDddDddD"
       ];
 
-      const CAPI_F1 = [
-        ".......ddddd....",
-        ".....ddmmmmmd...",
-        "....dmmmmmmmmdb.",
-        "...dmmmmmmmmmmmb",
-        "..dmmmmmmmmmmmmb",
-        "..dmmmmmmmmmmmmf",
-        "..dmmmmmmmmmmmmd",
-        "..dlllllllllllmd",
-        "...dllllllllllmd",
-        "...ddlllddllldd.",
-        "....dd....dd....",
-        "....dd....dd...."
-      ];
+      
 
-      const CAPI_F2 = [
-        ".......ddddd....",
-        ".....ddmmmmmd...",
-        "....dmmmmmmmmdb.",
-        "...dmmmmmmmmmmmb",
-        "..dmmmmmmmmmmmmb",
-        "..dmmmmmmmmmmmmf",
-        "..dmmmmmmmmmmmmd",
-        "..dlllllllllllmd",
-        "...dllllllllllmd",
-        "...ddlllddllldd.",
-        ".....dd....dd...",
-        "....dd......dd.."
-      ];
+      
 
-      const CAPI_JUMP = [
-        ".......ddddd....",
-        ".....ddmmmmmd...",
-        "....dmmmmmmmmdb.",
-        "...dmmmmmmmmmmmb",
-        "..dmmmmmmmmmmmmb",
-        "..dmmmmmmmmmmmmf",
-        "..dmmmmmmmmmmmmd",
-        "..dlllllllllllmd",
-        "...dllllllllllmd",
-        "...ddlllddllldd.",
-        "..dd......dd....",
-        "..dd......dd...."
-      ];
 
-      const CAPI_DUCK = [
-        "................",
-        "................",
-        ".......ddddd....",
-        ".....ddmmmmmd...",
-        "....dmmmmmmmmdb.",
-        "...dmmmmmmmmmmmb",
-        "..dmmmmmmmmmmmmb",
-        "..dmmmmmmmmmmmmf",
-        "..dlllllllllllmd",
-        "...ddlllddllldd.",
-        "....dd....dd....",
-        "................"
-      ];
+      
+
+      
+      
+
+      
 
       const ROCK_SPRITE = [
         "....rrrr....",
@@ -131,6 +86,30 @@
         "..wwwwwwwwwwww.."
       ];
 
+
+      const BIRD_F1 = [
+        "....bb..........",
+        "...bmmb.........",
+        "..bmmmmbb.......",
+        ".bmmmmmmmbbbbbbb",
+        "bmmllmmmmmmmmmmd",
+        ".bmmmmmmmbbbbbbb",
+        "..bmmmmbb.......",
+        "...bllb.........",
+        "....bb.........."
+      ];
+
+      const BIRD_F2 = [
+        "................",
+        "....bb..........",
+        "...bmmb.........",
+        "..bmmmmbb.......",
+        "bmmllmmmmmmmmmmd",
+        "..bmmmmbb.......",
+        "...bllb.........",
+        "....bb..........",
+        "................"
+      ];
       function drawSprite(ctx, spriteArr, x, y, w, h) {
         const rows = spriteArr.length;
         const cols = spriteArr[0].length;
@@ -193,9 +172,10 @@
       let playerInventory = { shield: 0, doubleJump: 0, magnet: 0, multi: 0, multi4: 0, multi6: 0 };
       let difficulty = 'easy'; // 'easy', 'medium', 'hard'
       const DIFFICULTY_CONFIG = {
-        easy:   { baseSpeed: 7.0,  maxSpeedAdd: 5.0,  rampFrames: 2400, coinValue: 10, obstacleMin: 90,  obstacleRand: 80, label: 'FÁCIL'  },
-        medium: { baseSpeed: 8.5,  maxSpeedAdd: 7.0,  rampFrames: 1800, coinValue: 30, obstacleMin: 70,  obstacleRand: 60, label: 'MEDIO'  },
-        hard:   { baseSpeed: 10.0, maxSpeedAdd: 9.0,  rampFrames: 1200, coinValue: 50, obstacleMin: 50,  obstacleRand: 45, label: 'DIFÍCIL' }
+        easy:    { baseSpeed: 7.0,  maxSpeedAdd: 5.0,  rampFrames: 2400, coinValue: 10,  obstacleMin: 90,  obstacleRand: 80, label: 'FÁCIL',   flyingEnemies: false },
+        medium:  { baseSpeed: 9.5,  maxSpeedAdd: 8.0,  rampFrames: 1500, coinValue: 30,  obstacleMin: 60,  obstacleRand: 55, label: 'MEDIO',   flyingEnemies: false },
+        hard:    { baseSpeed: 12.0, maxSpeedAdd: 10.5, rampFrames: 900,  coinValue: 50,  obstacleMin: 40,  obstacleRand: 35, label: 'DIFÍCIL', flyingEnemies: false },
+        extreme: { baseSpeed: 15.0, maxSpeedAdd: 14.0, rampFrames: 600,  coinValue: 100, obstacleMin: 25,  obstacleRand: 20, label: 'EXTREMO', flyingEnemies: true  }
       };
       let globalFrame = 0; // Para el ciclo día/noche continuo
 
@@ -465,8 +445,32 @@
       function beginPlay() {
         state = 'playing';
         document.getElementById('inventoryHud').style.display = 'flex';
-        stopMusic();
-        playMusic('music/musicnormal.mp3');
+        fadeOutAndPlay('music/musicnormal.mp3');
+      }
+
+      function fadeOutAndPlay(newSrc) {
+        if (!currentAudio) {
+          playMusic(newSrc);
+          return;
+        }
+        const fadingAudio = currentAudio;
+        currentAudio = null; // desvincula para que no se detenga solo
+        lobbyActive = false;
+        const startVol = fadingAudio.volume;
+        const steps = 30; // ~500ms a 60fps
+        let step = 0;
+        function fade() {
+          step++;
+          fadingAudio.volume = Math.max(0, startVol * (1 - step / steps));
+          if (step < steps) {
+            requestAnimationFrame(fade);
+          } else {
+            fadingAudio.pause();
+            fadingAudio.currentTime = 0;
+            playMusic(newSrc);
+          }
+        }
+        fade();
       }
 
       function startRun() {
@@ -530,6 +534,28 @@
       function maybeSpawnObstacle() {
         nextObstacleIn--;
         if (nextObstacleIn <= 0) {
+          // En modo extremo, 50% de probabilidad de enemigo volador
+          if (DIFFICULTY_CONFIG[difficulty].flyingEnemies && Math.random() < 0.50) {
+            // 50% pájaro ALTO (agacharse) / 50% pájaro BAJO (saltar)
+            let flyH;
+            if (Math.random() < 0.5) {
+              // ALTO: golpea hitbox parado (GROUND_Y-40 a GROUND_Y-8) pero NO la agachada (GROUND_Y-18 a GROUND_Y-8)
+              // Pájaro h=36. Para que golpe parado y NO agachado: bird_bottom entre GROUND_Y-40 y GROUND_Y-18
+              // => flyH entre GROUND_Y-76 y GROUND_Y-54
+              flyH = GROUND_Y - 70 - Math.random() * 10; // bottom: GROUND_Y-34 a GROUND_Y-24 → obliga agacharse
+            } else {
+              // BAJO: pegado al suelo, el jugador debe saltar para esquivar
+              flyH = GROUND_Y - 42 - Math.random() * 6; // bottom: GROUND_Y-6 a GROUND_Y → obliga saltar
+            }
+            obstacles.push({
+              x: W + 20, y: flyH, w: 52, h: 36,
+              type: 'bird', birdFrame: 0
+            });
+            const cfg2 = DIFFICULTY_CONFIG[difficulty];
+            const mf = Math.max(20, cfg2.obstacleMin - speed * 3);
+            nextObstacleIn = Math.floor(mf + Math.random() * cfg2.obstacleRand);
+            return;
+          }
           const type = Math.random() < 0.4 ? 'log' : 'rock';
           if (type === 'rock') {
             const isLarge = Math.random() < 0.4;
@@ -896,23 +922,58 @@
           }
         }
 
-        // Base de tierra
-        ctx.fillStyle = '#654321'; // marrón más oscuro para coincidir con noche
+        // 1. Suelo base con gradiente profundo
+        const grad = ctx.createLinearGradient(0, GROUND_Y, 0, H);
+        grad.addColorStop(0, '#5C3A21'); // tierra superior
+        grad.addColorStop(1, '#2E1D10'); // tierra profunda
+        ctx.fillStyle = grad;
         ctx.fillRect(0, GROUND_Y, W, H - GROUND_Y);
-        ctx.fillStyle = '#4a752c'; // pasto verde oscuro
-        ctx.fillRect(0, GROUND_Y, W, 10);
 
-        // Patrón de tierra profunda
-        ctx.fillStyle = '#543619';
-        for (let i = 0; i < 4; i++) {
-          ctx.fillRect(0, GROUND_Y + 28 + i * 14, W, 4);
+        // 2. Rocas subterráneas (animadas con parallax suave)
+        ctx.fillStyle = '#452A15';
+        const rockOffset = -((frame * speed * 0.8) % 300);
+        for (let rx = rockOffset - 100; rx < W + 100; rx += 300) {
+          ctx.beginPath();
+          ctx.arc(rx + 50, GROUND_Y + 35, 18, 0, Math.PI * 2);
+          ctx.arc(rx + 150, GROUND_Y + 70, 28, 0, Math.PI * 2);
+          ctx.arc(rx + 220, GROUND_Y + 45, 12, 0, Math.PI * 2);
+          ctx.fill();
         }
 
-        // Franja de hierba y tierra superior animada
-        const tileW = 40;
-        const tileH = 20;
-        for (let x = -((frame * speed) % tileW); x < W; x += tileW) {
-          drawSprite(ctx, GRASS_SPRITE, x, GROUND_Y, tileW, tileH);
+        // 3. Franja de hierba base (sólida)
+        ctx.fillStyle = '#5a8f4f';
+        ctx.fillRect(0, GROUND_Y, W, 14);
+
+        // 4. Briznas de hierba procedimentales (animadas por el viento/velocidad)
+        const grassOffset = -((frame * speed) % 60);
+        
+        // Capa trasera (verde oscuro)
+        ctx.fillStyle = '#4a752c'; 
+        ctx.beginPath();
+        for (let x = grassOffset - 60; x < W + 60; x += 15) {
+          ctx.moveTo(x, GROUND_Y + 10);
+          ctx.lineTo(x + 5, GROUND_Y - 8 + (Math.cos(frame * 0.05 + x) * 3));
+          ctx.lineTo(x + 10, GROUND_Y + 10);
+        }
+        ctx.fill();
+
+        // Capa frontal (verde claro) vibrando con movimiento
+        ctx.fillStyle = '#71aa34'; 
+        ctx.beginPath();
+        for (let x = grassOffset - 60 + 7; x < W + 60; x += 20) {
+          ctx.moveTo(x, GROUND_Y + 12);
+          // Curvas cuadráticas para dar forma de brizna doblada
+          const sway = Math.sin(frame * 0.1 + x) * 5;
+          ctx.quadraticCurveTo(x + 5, GROUND_Y - 5, x + 8 + sway, GROUND_Y - 14);
+          ctx.quadraticCurveTo(x + 12, GROUND_Y - 2, x + 16, GROUND_Y + 12);
+        }
+        ctx.fill();
+        
+        // 5. Detalles de tierra (puntos oscuros bajo el pasto para textura)
+        ctx.fillStyle = '#3d2513';
+        for (let x = grassOffset - 60; x < W + 60; x += 25) {
+          ctx.fillRect(x + 12, GROUND_Y + 16, 4, 3);
+          ctx.fillRect(x + 4, GROUND_Y + 22, 6, 2);
         }
       }
 
@@ -928,40 +989,110 @@
         ctx.ellipse(x + w / 2, GROUND_Y + 6, w * 0.55, 8, 0, 0, Math.PI * 2);
         ctx.fill();
 
-        let spriteToDraw;
-        if (ducking) {
-          spriteToDraw = CAPI_DUCK;
-        } else if (jumping || player.vy !== 0) {
-          spriteToDraw = CAPI_JUMP;
+        if (CAPI_IMG.complete && CAPI_IMG.naturalWidth > 0) {
+          const CAPY_FRAMES = [
+            [ // Correr
+              { x: 45, y: 191, w: 151, h: 129 }, { x: 226, y: 191, w: 156, h: 129 }, { x: 412, y: 187, w: 148, h: 133 }, { x: 596, y: 184, w: 159, h: 136 },
+              { x: 784, y: 192, w: 144, h: 128 }, { x: 959, y: 192, w: 153, h: 128 }, { x: 1149, y: 192, w: 146, h: 128 }, { x: 1331, y: 192, w: 145, h: 128 },
+            ],
+            [ // Saltar
+              { x: 45, y: 488, w: 145, h: 124 }, { x: 260, y: 441, w: 154, h: 171 }, { x: 477, y: 428, w: 149, h: 184 }, { x: 666, y: 420, w: 146, h: 192 },
+              { x: 854, y: 430, w: 147, h: 182 }, { x: 1050, y: 463, w: 145, h: 149 }, { x: 1262, y: 505, w: 141, h: 107 },
+            ],
+            [ // Agacharse
+              { x: 45, y: 738, w: 145, h: 132 }, { x: 280, y: 769, w: 151, h: 101 }, { x: 510, y: 789, w: 148, h: 80 }, { x: 741, y: 791, w: 165, h: 78 },
+              { x: 987, y: 767, w: 151, h: 103 },
+            ]
+          ];
+          
+          let row = 0;
+          let col = 0;
+          
+          if (ducking) {
+            row = 2;
+            // Solo ciclar entre los últimos 3 cuadros (deslizándose) a una velocidad más lenta
+            // para evitar que repita la animación de agacharse y parezca que salta.
+            col = 2 + Math.floor(frame * 0.1) % 3; 
+          } else if (jumping || player.vy !== 0) {
+            row = 1;
+            if (player.vy < -7) col = 1;
+            else if (player.vy < -2) col = 2;
+            else if (player.vy < 2) col = 3;
+            else if (player.vy < 7) col = 4;
+            else col = 5;
+          } else {
+            row = 0;
+            col = Math.floor(frame * speed * 0.055) % 8;
+          }
+          
+          const fData = CAPY_FRAMES[row][col];
+          
+          const scale = (w * 1.5) / fData.w;
+          const drawW = fData.w * scale; 
+          const drawH = fData.h * scale; 
+          
+          const dx = x - (drawW - w) / 2;
+          const dy = (by + bodyH) - drawH; 
+          
+          let drawShield = false;
+          let shieldColor = PALETTE.shield;
+          
+          if (activeBuffs.shield) {
+            const shieldFrames = activeBuffs.shield;
+            let shieldVisible = true;
+            if (shieldFrames <= 60) {
+              shieldVisible = Math.floor(frame / 4) % 2 === 0;
+            } else if (shieldFrames <= 180) {
+              shieldVisible = Math.floor(frame / 15) % 2 === 0;
+            }
+            if (shieldVisible) {
+              drawShield = true;
+              shieldColor = shieldFrames <= 180 ? '#ff4444' : PALETTE.shield;
+            }
+          }
+
+          if (drawShield) {
+            const shieldPulse = 10 + Math.sin(frame * 0.2) * 8;
+            ctx.shadowColor = shieldColor;
+            ctx.shadowBlur = shieldPulse;
+            ctx.drawImage(CAPI_IMG, fData.x, fData.y, fData.w, fData.h, dx, dy, drawW, drawH);
+            ctx.drawImage(CAPI_IMG, fData.x, fData.y, fData.w, fData.h, dx, dy, drawW, drawH);
+            ctx.drawImage(CAPI_IMG, fData.x, fData.y, fData.w, fData.h, dx, dy, drawW, drawH);
+            ctx.shadowBlur = 0; 
+          }
+          
+          ctx.drawImage(CAPI_IMG, fData.x, fData.y, fData.w, fData.h, dx, dy, drawW, drawH);
         } else {
-          const walkCycle = Math.floor(frame * speed * 0.05) % 2;
-          spriteToDraw = walkCycle === 0 ? CAPI_F1 : CAPI_F2;
+          ctx.fillStyle = '#6e4a28';
+          ctx.fillRect(x, by, w, bodyH);
         }
 
-        drawSprite(ctx, spriteToDraw, x, by, w, bodyH);
-
-        // escudo visual
-        if (activeBuffs.shield) {
-          ctx.strokeStyle = PALETTE.shield;
-          ctx.lineWidth = 3;
-          ctx.beginPath();
-          ctx.arc(x + w / 2, by + bodyH / 2, w * 0.85, 0, Math.PI * 2);
-          ctx.stroke();
-        }
         ctx.restore();
       }
 
       function drawObstacles() {
         for (const o of obstacles) {
-          if (o.type === 'rock') {
+          if (o.type === 'bird') {
+            // animar pájaro
+            o.birdFrame = (o.birdFrame || 0) + 0.18;
+            const bSprite = Math.floor(o.birdFrame) % 2 === 0 ? BIRD_F1 : BIRD_F2;
+            drawSprite(ctx, bSprite, o.x, o.y, o.w, o.h);
+            // sombra tenue debajo del pájaro
+            ctx.fillStyle = 'rgba(0,0,0,0.10)';
+            ctx.beginPath();
+            ctx.ellipse(o.x + o.w/2, GROUND_Y + 4, o.w * 0.4, 5, 0, 0, Math.PI * 2);
+            ctx.fill();
+          } else if (o.type === 'rock') {
             for (let i = 0; i < o.count; i++) {
               drawSprite(ctx, ROCK_SPRITE, o.x + i * o.singleW, o.y, o.singleW, o.h);
             }
+            ctx.fillStyle = 'rgba(0,0,0,0.15)';
+            ctx.fillRect(o.x, o.y + o.h - 6, o.w, 6);
           } else {
             drawSprite(ctx, LOG_SPRITE, o.x, o.y, o.w, o.h);
+            ctx.fillStyle = 'rgba(0,0,0,0.15)';
+            ctx.fillRect(o.x, o.y + o.h - 6, o.w, 6);
           }
-          ctx.fillStyle = 'rgba(0,0,0,0.15)';
-          ctx.fillRect(o.x, o.y + o.h - 6, o.w, 6);
         }
       }
 

@@ -850,3 +850,5 @@
 #diff-easy.active   { background: #38a169; border-bottom-color: #276749; color: #fff; }
 #diff-medium.active { background: var(--gold); border-bottom-color: #b88600; color: #1a0a00; }
 #diff-hard.active   { background: #e53e3e; border-bottom-color: #9b2c2c; color: #fff; }
+
+#diff-extreme.active { background: #6B21A8; border-bottom-color: #4C1D95; color: #fff; }
