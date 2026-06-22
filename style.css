@@ -1,0 +1,644 @@
+    @import url('https://fonts.googleapis.com/css2?family=Press+Start+2P&family=Nunito:wght@400;700;900&display=swap');
+
+    :root {
+      --sand: #f3d9a4;
+      --sand-dark: #d9b475;
+      --river: #7fc8c2;
+      --river-dark: #4f9b95;
+      --capi-brown: #9c6b3e;
+      --capi-dark: #6e4a28;
+      --ink: #3a2c1d;
+      --gold: #f2b705;
+      --leaf: #5a8f4f;
+      --twitch: #9146FF;
+      --twitch-dark: #5c2d99;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      background:
+        radial-gradient(circle at 15% 0%, #fff3d6 0%, transparent 45%),
+        linear-gradient(180deg, #d9efec 0%, #c5e7e3 100%);
+      font-family: 'Nunito', sans-serif;
+      color: var(--ink);
+      padding: 16px 8px 32px;
+    }
+
+    @media (max-width: 600px) {
+      body { padding: 8px 0 16px; }
+      header { padding: 0 8px; }
+    }
+
+    @media (max-width: 900px) and (orientation: landscape) {
+      body { padding: 0; background: #000; display: flex; align-items: center; justify-content: center; }
+      header { display: none; }
+    }
+
+    header {
+      text-align: center;
+      margin-bottom: 22px;
+    }
+
+    h1 {
+      font-family: 'Press Start 2P', monospace;
+      font-size: 22px;
+      color: var(--capi-dark);
+      text-shadow: 2px 2px 0 #ffffffaa;
+      margin: 0 0 6px 0;
+    }
+
+    .subtitle {
+      font-weight: 700;
+      color: var(--river-dark);
+      font-size: 14px;
+      letter-spacing: .5px;
+    }
+
+    /* ---------- layout principal ---------- */
+    #layout {
+      max-width: 1600px;
+      width: 100%;
+      margin: 0 auto;
+      display: flex;
+      justify-content: center;
+      padding: 0 8px;
+      box-sizing: border-box;
+    }
+
+    @media (max-width: 600px) {
+      #layout { padding: 0; }
+    }
+
+    @media (max-width: 900px) and (orientation: landscape) {
+      #layout { padding: 0; max-width: 100%; height: 100vh; align-items: center; }
+    }
+
+    /* ---------- panel del juego ---------- */
+    #gamePanel {
+      background: #fffaf0;
+      border: 5px solid var(--capi-dark);
+      border-radius: 16px;
+      padding: 14px;
+      box-shadow: 0 8px 0 var(--sand-dark), 0 12px 22px rgba(0, 0, 0, .18);
+      width: 100%;
+      max-width: 1400px;
+    }
+
+    @media (max-width: 600px) {
+      #gamePanel {
+        border-radius: 0;
+        border-left: none;
+        border-right: none;
+        padding: 8px 0 8px;
+        box-shadow: none;
+      }
+    }
+
+    @media (max-width: 900px) and (orientation: landscape) {
+      #gamePanel {
+        border-radius: 0;
+        border: none;
+        padding: 0;
+        box-shadow: none;
+        max-width: 100%;
+        height: 100vh;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        background: transparent;
+      }
+      #controlsHint, #fullscreenBtn { display: none !important; }
+    }
+
+    #gameWrap {
+      position: relative;
+      border: 4px solid var(--capi-dark);
+      border-radius: 10px;
+      overflow: hidden;
+      image-rendering: pixelated;
+      background: var(--river);
+      width: 100%;
+      aspect-ratio: 16 / 7.2;
+    }
+
+    @media (max-width: 600px) {
+      #gameWrap {
+        border-radius: 0;
+        border-left: none;
+        border-right: none;
+        aspect-ratio: 16 / 9;
+      }
+    }
+
+    @media (max-width: 900px) and (orientation: landscape) {
+      #gameWrap {
+        border-radius: 0;
+        border: none;
+        height: 100vh;
+        width: 100vw;
+        aspect-ratio: unset;
+      }
+    }
+
+    /* ---------- pantalla completa nativa (Fullscreen API) ---------- */
+    /* El navegador maneja el fullscreen real; solo necesitamos que el
+       elemento ocupe todo el viewport cuando está en modo fullscreen */
+    #gameWrap:fullscreen,
+    #gameWrap:-webkit-full-screen,
+    #gameWrap:-moz-full-screen,
+    #gameWrap:-ms-fullscreen {
+      width: 100vw !important;
+      height: 100vh !important;
+      aspect-ratio: unset !important;
+      border-radius: 0 !important;
+      border: none !important;
+      background: #000;
+    }
+
+    /* Fallback CSS para cuando la API no esté disponible */
+    #gamePanel.fullscreen-mode {
+      position: fixed;
+      inset: 0;
+      z-index: 9999;
+      border-radius: 0;
+      border: none;
+      padding: 0;
+      box-shadow: none;
+      background: #000;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+    }
+
+    #gamePanel.fullscreen-mode #gameWrap {
+      width: min(100vw, calc(100vh * 16 / 7.2));
+      height: min(100vh, calc(100vw * 7.2 / 16));
+      aspect-ratio: 16 / 7.2;
+      border-radius: 0;
+      border: none;
+      image-rendering: auto;
+    }
+
+    #gamePanel.fullscreen-mode canvas,
+    #gameWrap:fullscreen canvas {
+      image-rendering: auto;
+    }
+
+    #gamePanel.fullscreen-mode #controlsHint {
+      display: none;
+    }
+
+    #fullscreenBtn {
+      background: var(--capi-dark);
+      color: #fff;
+      border: none;
+      border-bottom: 3px solid #3a1e0a;
+      font-size: 10px;
+      padding: 7px 14px;
+      margin-top: 10px;
+      margin-left: auto;
+      display: block;
+      border-radius: 8px;
+    }
+
+    #fullscreenBtn:hover {
+      background: #5a3018;
+    }
+
+    canvas {
+      display: block;
+      image-rendering: pixelated;
+      width: 100%;
+      height: 100%;
+      object-fit: contain;
+    }
+
+    #hud {
+      position: absolute;
+      top: 10px;
+      left: 10px;
+      right: 10px;
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      font-family: 'Press Start 2P', monospace;
+      font-size: clamp(9px, 1.6vw, 13px);
+      color: #fff;
+      text-shadow: 2px 2px 0 #00000055;
+      pointer-events: none;
+    }
+
+    #score {
+      background: #00000055;
+      padding: 6px 10px;
+      border-radius: 8px;
+    }
+
+    #buffs {
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+      align-items: flex-end;
+    }
+
+    .buff-pill {
+      background: #00000066;
+      padding: 4px 8px;
+      border-radius: 6px;
+      font-size: clamp(8px, 1.3vw, 11px);
+      display: flex;
+      align-items: center;
+      gap: 4px;
+    }
+
+    #overlay {
+      position: absolute;
+      inset: 0;
+      background: rgba(0, 0, 0, 0.3);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      color: #fff;
+      text-align: center;
+      padding: 20px;
+    }
+
+    #overlay.hidden {
+      display: none;
+    }
+
+    #overlay img.logo {
+      width: 250px;
+      image-rendering: pixelated;
+      margin-bottom: 5px;
+      filter: drop-shadow(0px 4px 0px rgba(0, 0, 0, 0.5));
+    }
+
+    #overlay h2 {
+      font-family: 'Press Start 2P', monospace;
+      font-size: clamp(16px, 2.5vw, 22px);
+      margin-bottom: 10px;
+      color: var(--gold);
+      text-shadow: 3px 3px 0 #000;
+    }
+
+    .menu-buttons {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      width: 100%;
+    }
+
+    .menu-btn {
+      font-family: 'Press Start 2P', monospace;
+      font-size: 13px;
+      background: rgba(0, 0, 0, 0.6);
+      color: var(--gold);
+      border: 3px solid var(--gold);
+      border-radius: 8px;
+      padding: 10px 20px;
+      margin: 4px 0;
+      cursor: pointer;
+      width: 250px;
+      transition: transform 0.1s;
+      text-shadow: 2px 2px 0px #000;
+    }
+
+    @media (max-width: 900px) and (orientation: landscape) {
+      #overlay { padding: 5px; }
+      #overlay img.logo { width: 120px; margin-bottom: 2px; }
+      #overlay h2 { font-size: 14px; margin-bottom: 5px; }
+      
+      .menu-buttons {
+        flex-direction: row;
+        flex-wrap: wrap;
+        justify-content: center;
+        gap: 6px;
+        max-width: 500px;
+      }
+      .menu-btn {
+        width: 48%;
+        margin: 0;
+        padding: 8px 10px;
+        font-size: 10px;
+      }
+    }
+
+    .menu-btn:hover {
+      transform: scale(1.05);
+      background: rgba(255, 204, 0, 0.2);
+    }
+
+    .bigscore {
+      font-size: clamp(22px, 4vw, 32px) !important;
+      font-weight: 900;
+      color: #fff;
+      text-shadow: 2px 2px #000;
+    }
+
+    button {
+      font-family: 'Press Start 2P', monospace;
+      font-size: 12px;
+      background: var(--gold);
+      color: var(--ink);
+      border: none;
+      border-bottom: 4px solid #b88600;
+      padding: 13px 20px;
+      border-radius: 10px;
+      cursor: pointer;
+      margin-top: 14px;
+      transition: transform .05s ease;
+    }
+
+    button:active {
+      transform: translateY(3px);
+      border-bottom-width: 1px;
+    }
+
+    #controlsHint {
+      margin-top: 14px;
+      font-size: 13px;
+      color: var(--capi-dark);
+      text-align: center;
+      font-weight: 700;
+    }
+
+    kbd {
+      background: #fff;
+      border: 1px solid var(--capi-dark);
+      border-bottom-width: 3px;
+      border-radius: 4px;
+      padding: 1px 6px;
+      font-family: monospace;
+      font-weight: 700;
+    }
+
+    /* ---------- Modals ---------- */
+    .modal-overlay {
+      position: absolute;
+      inset: 0;
+      background: rgba(0, 0, 0, 0.85);
+      display: none;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      z-index: 100;
+    }
+
+    .modal-box {
+      background: #2b2013;
+      border: 4px solid var(--gold);
+      border-radius: 12px;
+      padding: 20px;
+      width: 85%;
+      max-width: 400px;
+      color: #fff;
+      text-align: center;
+      position: relative;
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.8);
+    }
+
+    .modal-close {
+      position: absolute;
+      top: -15px;
+      right: -15px;
+      background: #e3000b;
+      color: white;
+      border: 3px solid #fff;
+      padding: 5px 10px;
+      cursor: pointer;
+      font-family: 'Press Start 2P', monospace;
+      font-size: 14px;
+      border-radius: 50%;
+    }
+
+    .modal-box h3 {
+      font-family: 'Press Start 2P', monospace;
+      font-size: 14px;
+      color: var(--gold);
+      margin-top: 0;
+    }
+
+    /* Leaderboard y Auth en Modal */
+    #twitchLoginBtn {
+      background: var(--twitch);
+      border-bottom: 3px solid var(--twitch-dark);
+      color: #fff;
+      padding: 10px;
+      width: 100%;
+      border-radius: 6px;
+      cursor: pointer;
+      font-family: 'Press Start 2P', monospace;
+      font-size: 10px;
+    }
+
+    #userInfo {
+      font-weight: 700;
+      color: var(--gold);
+      font-size: 14px;
+      display: block;
+      margin: 10px 0;
+    }
+
+    .lb-period {
+      font-size: 10px;
+      color: #aaa;
+      margin-bottom: 12px;
+      font-family: monospace;
+    }
+
+    #leaderboardList {
+      list-style: none;
+      margin: 0;
+      padding: 0;
+      font-size: 12px;
+      text-align: left;
+      max-height: 200px;
+      overflow-y: auto;
+    }
+
+    #leaderboardList li {
+      display: flex;
+      justify-content: space-between;
+      padding: 6px 4px;
+      border-bottom: 1px dashed #555;
+    }
+
+    #leaderboardList li:first-child {
+      color: var(--gold);
+      font-weight: bold;
+    }
+
+    /* Tienda en Modal */
+    .store-item {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      background: rgba(255, 255, 255, 0.1);
+      padding: 8px 10px;
+      border-radius: 8px;
+      margin-bottom: 8px;
+      font-size: 14px;
+    }
+
+    .store-item button {
+      margin: 0;
+      padding: 8px 12px;
+      font-size: 10px;
+      background: #00c896;
+      border: none;
+      border-bottom: 3px solid #008f6b;
+      border-radius: 6px;
+      color: #fff;
+      cursor: pointer;
+      font-family: 'Press Start 2P', monospace;
+    }
+
+    .store-item button:active {
+      transform: translateY(2px);
+      border-bottom-width: 1px;
+    }
+
+    .week-note {
+      font-size: 10px;
+      color: #888;
+      margin-top: 10px;
+    }
+
+    /* ---------- Botones de control móvil ---------- */
+    #mobileControls {
+      display: none; /* Ocultos por defecto en desktop */
+      position: absolute;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      height: 38%;
+      pointer-events: none;
+      z-index: 60;
+    }
+
+    /* Mostramos solo en móvil/pantalla pequeña cuando está en juego */
+    @media (max-width: 900px) {
+      #gameWrap.is-playing #mobileControls { display: block; }
+    }
+    /* También visibles en fullscreen desde móvil */
+    #gameWrap:fullscreen.is-playing #mobileControls,
+    #gameWrap:-webkit-full-screen.is-playing #mobileControls {
+      display: block;
+    }
+
+    .mob-btn {
+      position: absolute;
+      bottom: 25px;
+      width: 70px;
+      height: 70px;
+      pointer-events: all;
+      border: 3px solid rgba(255,255,255,0.4);
+      border-radius: 50%;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 2px;
+      cursor: pointer;
+      -webkit-tap-highlight-color: transparent;
+      user-select: none;
+      transition: opacity 0.08s, transform 0.08s;
+      font-family: 'Press Start 2P', monospace;
+      font-size: 8px;
+      color: #fff;
+      text-shadow: 1px 1px 2px #000;
+      backdrop-filter: blur(2px);
+    }
+
+    #btnJump {
+      left: 20px;
+      background: rgba(30, 120, 255, 0.25);
+      border-color: rgba(100, 180, 255, 0.5);
+    }
+
+    #btnDuck {
+      right: 20px;
+      background: rgba(220, 80, 20, 0.25);
+      border-color: rgba(255, 160, 80, 0.5);
+    }
+
+    .mob-btn:active,
+    .mob-btn.pressed {
+      opacity: 0.8;
+      transform: scale(0.92);
+    }
+
+    .mob-btn .mob-icon {
+      font-size: 24px;
+      line-height: 1;
+    }
+
+    /* ---------- Widget de volumen ---------- */
+    #volumeWidget {
+      position: absolute;
+      bottom: 10px;
+      right: 10px;
+      background: rgba(0,0,0,0.65);
+      border: 2px solid rgba(255,204,0,0.5);
+      border-radius: 10px;
+      padding: 8px 12px;
+      z-index: 50;
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+      pointer-events: all;
+      min-width: 155px;
+    }
+
+    .vol-row {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      font-family: 'Press Start 2P', monospace;
+      font-size: clamp(6px, 1vw, 8px);
+      color: #fff;
+      white-space: nowrap;
+    }
+
+    .vol-row input[type=range] {
+      -webkit-appearance: none;
+      appearance: none;
+      width: 80px;
+      height: 5px;
+      border-radius: 4px;
+      background: rgba(255,255,255,0.25);
+      outline: none;
+      cursor: pointer;
+      margin: 0;
+      padding: 0;
+      border: none;
+    }
+
+    .vol-row input[type=range]::-webkit-slider-thumb {
+      -webkit-appearance: none;
+      appearance: none;
+      width: 13px;
+      height: 13px;
+      border-radius: 50%;
+      background: var(--gold);
+      cursor: pointer;
+      box-shadow: 0 0 4px #000;
+    }
+
+    .vol-row input[type=range]::-moz-range-thumb {
+      width: 13px;
+      height: 13px;
+      border-radius: 50%;
+      background: var(--gold);
+      cursor: pointer;
+      border: none;
+      box-shadow: 0 0 4px #000;
+    }
