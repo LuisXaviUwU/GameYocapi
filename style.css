@@ -750,10 +750,11 @@
 /* ---------- Inventario (Mochila) ---------- */
 #inventoryHud {
   position: absolute;
-  bottom: 20px;
-  right: 20px;
+  top: 10px;
+  left: 50%;
+  transform: translateX(-50%);
   display: flex;
-  flex-direction: column;
+  flex-direction: row;
   gap: 8px;
   z-index: 10;
   pointer-events: none;
@@ -803,9 +804,10 @@
   #inventoryHud {
     flex-direction: row;
     flex-wrap: wrap;
-    justify-content: flex-end;
-    bottom: 10px;
-    right: 10px;
+    justify-content: center;
+    top: 10px;
+    left: 50%;
+    transform: translateX(-50%);
   }
   .inv-slot {
     padding: 4px;

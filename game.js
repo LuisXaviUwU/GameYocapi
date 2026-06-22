@@ -770,7 +770,7 @@
         updateBuffsHud();
         
         // Guardar en nube silenciosamente
-        await syncWallet(0);
+        await syncWallet(0, true);
       }
 
       function updateBuffsHud() {
@@ -1238,7 +1238,7 @@
       }
 
       // ---------- Monedas y Tienda ----------
-      async function syncWallet(addedCoins) {
+      async function syncWallet(addedCoins, forceSave = false) {
         if (!currentUser) return;
         const uid = currentUser.id;
         const username = currentUser.user_metadata?.name || currentUser.user_metadata?.full_name || currentUser.email || 'jugador';
@@ -1256,7 +1256,8 @@
           isNew = true;
         } else if (walletData) {
           currentBalance = walletData.balance;
-          if (walletData.inventory) {
+          if (walletData.inventory && (addedCoins === 0 && !forceSave)) {
+             // Solo cargar del servidor si no estamos modificando la mochila localmente
              playerInventory = { ...playerInventory, ...walletData.inventory };
           }
         }
@@ -1267,7 +1268,7 @@
         document.getElementById('coinBalanceDisplay').textContent = totalCoins;
 
         // 2. Guardar nuevo balance si hubo un cambio
-        if (addedCoins > 0 || isNew) {
+        if (addedCoins !== 0 || isNew || forceSave) {
           const payload = {
             twitch_user_id: uid,
             twitch_username: username,
@@ -1298,7 +1299,7 @@
         updateInventoryHud();
 
         // Guardar en DB (usamos syncWallet enviando monedas negativas)
-        await syncWallet(-cost);
+        await syncWallet(-cost, true);
       }
 
       // ---------- Cargar leaderboard ----------
