@@ -817,3 +817,36 @@
     display: none; /* Ocultar teclas en movil */
   }
 }
+
+/* ---------- Selector de Dificultad ---------- */
+.diff-btn {
+  font-family: 'Press Start 2P', monospace;
+  font-size: 10px;
+  background: rgba(0,0,0,0.5);
+  color: #fff;
+  border: 2px solid #555;
+  border-radius: 8px;
+  padding: 10px 12px;
+  cursor: pointer;
+  transition: all 0.15s;
+  line-height: 1.6;
+  text-align: center;
+  min-width: 80px;
+}
+
+.diff-btn:hover {
+  background: rgba(255,204,0,0.2);
+  border-color: var(--gold);
+}
+
+.diff-btn.active {
+  background: var(--gold);
+  color: #1a0a00;
+  border-color: #fff;
+  border-bottom: 4px solid #b88600;
+}
+
+/* Color diferente por dificultad cuando activo */
+#diff-easy.active   { background: #38a169; border-bottom-color: #276749; color: #fff; }
+#diff-medium.active { background: var(--gold); border-bottom-color: #b88600; color: #1a0a00; }
+#diff-hard.active   { background: #e53e3e; border-bottom-color: #9b2c2c; color: #fff; }

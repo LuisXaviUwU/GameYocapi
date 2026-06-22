@@ -191,6 +191,12 @@
       let sessionCoins = 0;
       let totalCoins = 0;
       let playerInventory = { shield: 0, doubleJump: 0, magnet: 0, multi: 0, multi4: 0, multi6: 0 };
+      let difficulty = 'easy'; // 'easy', 'medium', 'hard'
+      const DIFFICULTY_CONFIG = {
+        easy:   { baseSpeed: 7.0,  maxSpeedAdd: 5.0,  rampFrames: 2400, coinValue: 10, obstacleMin: 90,  obstacleRand: 80, label: 'FÁCIL'  },
+        medium: { baseSpeed: 8.5,  maxSpeedAdd: 7.0,  rampFrames: 1800, coinValue: 30, obstacleMin: 70,  obstacleRand: 60, label: 'MEDIO'  },
+        hard:   { baseSpeed: 10.0, maxSpeedAdd: 9.0,  rampFrames: 1200, coinValue: 50, obstacleMin: 50,  obstacleRand: 45, label: 'DIFÍCIL' }
+      };
       let globalFrame = 0; // Para el ciclo día/noche continuo
 
       // ---------- Audio ----------
@@ -322,16 +328,14 @@
       }
 
       // --- curva de dificultad: progresiva y suave ---
-      const BASE_SPEED = 7.0;       // velocidad inicial
-      const MAX_SPEED_ADD = 6.0;    // techo de velocidad extra ganada con el tiempo
-      const RAMP_FRAMES = 2400;     // frames (a 60fps ≈ 40s) para llegar al techo de velocidad
+      // BASE_SPEED, MAX_SPEED_ADD y RAMP_FRAMES vienen de DIFFICULTY_CONFIG según la dificultad elegida
 
       let player, obstacles, powerups, particles, clouds, nextObstacleIn, nextPowerupIn;
       let activeBuffs = {}; // {shield: framesLeft, multi: framesLeft, slow: framesLeft, magnet: framesLeft, doubleJump: framesLeft}
 
       function resetGame() {
         score = 0;
-        speed = BASE_SPEED;
+        speed = DIFFICULTY_CONFIG[difficulty].baseSpeed;
         frame = 0;
         multiplier = 1;
         scoreLog = [{ t: 0, ev: 'start' }];
@@ -344,7 +348,7 @@
         particles = [];
         initBgEnv();
 
-        nextObstacleIn = 90;
+        nextObstacleIn = DIFFICULTY_CONFIG[difficulty].obstacleMin;
         nextPowerupIn = 300; // primer powerup a los 5 segundos aprox
         clouds = [];
         for (let i = 0; i < 4; i++) {
@@ -492,6 +496,7 @@
         overlay.innerHTML = `
     <h2>GAME OVER</h2>
     <div class="bigscore">PUNTOS: ${Math.floor(score)}</div>
+    <div style="font-size:12px; margin:6px 0; color: #aaa;">Modo: ${DIFFICULTY_CONFIG[difficulty].label}</div>
     <div style="font-size:16px; margin:10px 0;">Monedas ganadas: 🟢 ${sessionCoins}</div>
     <div class="menu-buttons">
       <button class="menu-btn" onclick="startRun()">🔄 JUGAR DE NUEVO</button>
@@ -512,6 +517,11 @@
         overlay.innerHTML = `
           <img src="assets/logo_capi.png" class="logo" alt="Capibara Logo" onerror="this.style.display='none'">
           <h2>CAPI RUN</h2>
+          <div id="difficultySelector" style="display:flex; gap:8px; justify-content:center; margin-bottom:12px;">
+            <button id="diff-easy"   class="diff-btn active" onclick="setDifficulty('easy')">FÁCIL<br><span style='font-size:8px;font-family:monospace'>10 monedas</span></button>
+            <button id="diff-medium" class="diff-btn"        onclick="setDifficulty('medium')">MEDIO<br><span style='font-size:8px;font-family:monospace'>30 monedas</span></button>
+            <button id="diff-hard"   class="diff-btn"        onclick="setDifficulty('hard')">DIFÍCIL<br><span style='font-size:8px;font-family:monospace'>50 monedas</span></button>
+          </div>
           <div class="menu-buttons">
             <button id="startBtn" class="menu-btn" onclick="startGame()">▶️ START GAME</button>
             <button class="menu-btn" onclick="openModal('storeModal')">🛒 STORE</button>
@@ -545,9 +555,10 @@
             });
           }
 
-          // Calcular el siguiente spawn. A más velocidad, menos frames pero la misma distancia en píxeles.
-          const minFrames = Math.max(30, 90 - speed * 4); // gap mínimo
-          const maxFrames = minFrames + 40 + Math.random() * 50; // gap máximo variable
+          // Calcular el siguiente spawn según la dificultad
+          const cfg = DIFFICULTY_CONFIG[difficulty];
+          const minFrames = Math.max(25, cfg.obstacleMin - speed * 3);
+          const maxFrames = minFrames + cfg.obstacleRand;
           nextObstacleIn = Math.floor(minFrames + Math.random() * (maxFrames - minFrames));
         }
       }
@@ -601,10 +612,16 @@
         frame++;
 
         // velocidad: rampa progresiva y suave hasta un techo, sin picos bruscos
-        const ramp = Math.min(1, frame / RAMP_FRAMES);
-        const targetSpeed = BASE_SPEED + ramp * MAX_SPEED_ADD;
+        const cfg = DIFFICULTY_CONFIG[difficulty];
+        const ramp = Math.min(1, frame / cfg.rampFrames);
+        const targetSpeed = cfg.baseSpeed + ramp * cfg.maxSpeedAdd;
         speed += (targetSpeed - speed) * 0.02; // suaviza el cambio frame a frame
-        if (activeBuffs.slow) speed *= 0.55;
+        if (activeBuffs.slow) {
+          speed *= 0.55;
+          // Congelar timers mientras slow activo para evitar acumulación de obstáculos
+          nextObstacleIn++;
+          nextPowerupIn++;
+        }
 
         // score & multiplier
         multiplier = activeBuffs.multi6 ? 6 : (activeBuffs.multi4 ? 4 : (activeBuffs.multi ? 2 : 1));
@@ -715,7 +732,7 @@
           case 'magnet': activeBuffs.magnet = 480; break; // 8s
           case 'doubleJump': activeBuffs.doubleJump = 600; player.jumpsLeft = 2; break;
           case 'coin':
-            sessionCoins += 10;
+            sessionCoins += DIFFICULTY_CONFIG[difficulty].coinValue;
             document.getElementById('sessionCoinsDisplay').innerHTML = '<img src="assets/coin.png" style="width:36px; vertical-align:middle; margin-top:-4px; margin-right:4px;"> ' + sessionCoins;
             break;
         }
@@ -1198,6 +1215,14 @@
         document.getElementById(id).style.display = 'flex';
       }
       
+
+      function setDifficulty(d) {
+        difficulty = d;
+        document.querySelectorAll('.diff-btn').forEach(b => b.classList.remove('active'));
+        const el = document.getElementById('diff-' + d);
+        if (el) el.classList.add('active');
+      }
+
       function showStoreTab(tabId) {
         document.querySelectorAll('.store-tab').forEach(btn => btn.classList.remove('active'));
         document.querySelectorAll('.store-tab-content').forEach(content => content.classList.remove('active'));
