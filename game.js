@@ -517,16 +517,11 @@
         overlay.innerHTML = `
           <img src="assets/logo_capi.png" class="logo" alt="Capibara Logo" onerror="this.style.display='none'">
           <h2>CAPI RUN</h2>
-          <div id="difficultySelector" style="display:flex; gap:8px; justify-content:center; margin-bottom:12px;">
-            <button id="diff-easy"   class="diff-btn active" onclick="setDifficulty('easy')">FÁCIL<br><span style='font-size:8px;font-family:monospace'>10 monedas</span></button>
-            <button id="diff-medium" class="diff-btn"        onclick="setDifficulty('medium')">MEDIO<br><span style='font-size:8px;font-family:monospace'>30 monedas</span></button>
-            <button id="diff-hard"   class="diff-btn"        onclick="setDifficulty('hard')">DIFÍCIL<br><span style='font-size:8px;font-family:monospace'>50 monedas</span></button>
-          </div>
           <div class="menu-buttons">
             <button id="startBtn" class="menu-btn" onclick="startGame()">▶️ START GAME</button>
             <button class="menu-btn" onclick="openModal('storeModal')">🛒 STORE</button>
             <button class="menu-btn" onclick="openModal('leaderboardModal')">🏆 LEADERBOARD</button>
-            <button class="menu-btn" onclick="openModal('authModal')">⚙️ ACCOUNT</button>
+            <button class="menu-btn" onclick="openModal('authModal')">⚙️ SETTINGS</button>
           </div>
         `;
       }
@@ -973,68 +968,94 @@
       function drawPowerups() {
         for (const p of powerups) {
           ctx.save();
-          const bob = Math.sin(frame * 0.1 + p.x * 0.05) * 5;
+          const bob = Math.sin(frame * 0.1 + p.x * 0.05) * 4;
           const img = POWERUP_IMGS[p.type];
           const cx = p.x + p.w / 2;
           const cy = p.y + p.h / 2 + bob;
-          const r = p.w / 2 + 4;
+          const size = p.w; // bounding box size
+          const half = size / 2;
+          const rx = cx - half; // rect x
+          const ry = cy - half; // rect y
 
+          // Color palette per type
+          const colors = {
+            shield:     { bg: '#1565C0', rim: '#42A5F5', glow: '#90CAF9' },
+            doubleJump: { bg: '#2E7D32', rim: '#66BB6A', glow: '#A5D6A7' },
+            magnet:     { bg: '#6A1B9A', rim: '#CE93D8', glow: '#E1BEE7' },
+            multi:      { bg: '#E65100', rim: '#FFA726', glow: '#FFE0B2' },
+            coin:       { bg: '#F57F17', rim: '#FFD54F', glow: '#FFF9C4' },
+            slow:       { bg: '#B71C1C', rim: '#EF5350', glow: '#FFCDD2' },
+          };
+          const col = colors[p.type] || { bg: '#333', rim: '#aaa', glow: '#fff' };
+
+          // --- Glow outer pulse ---
+          const pulse = 0.3 + Math.abs(Math.sin(frame * 0.1)) * 0.25;
+          ctx.globalAlpha = pulse;
+          ctx.fillStyle = col.glow;
+          const glowR = half + 8;
+          ctx.beginPath();
+          roundRect(ctx, cx - glowR, cy - glowR, glowR * 2, glowR * 2, 12);
+          ctx.fill();
+          ctx.globalAlpha = 1;
+
+          // --- Rounded square background ---
+          ctx.fillStyle = col.bg;
+          roundRect(ctx, rx, ry, size, size, 10);
+          ctx.fill();
+
+          // --- Rim / border ---
+          ctx.strokeStyle = col.rim;
+          ctx.lineWidth = 3;
+          roundRect(ctx, rx, ry, size, size, 10);
+          ctx.stroke();
+
+          // --- Icon (PNG or fallback text) ---
           if (p.type === 'slow') {
-            // Aura roja pulsante
-            ctx.fillStyle = '#ff0000';
-            ctx.globalAlpha = 0.25 + Math.sin(frame * 0.25) * 0.12;
-            ctx.beginPath();
-            ctx.arc(cx, cy, r + 7, 0, Math.PI * 2);
-            ctx.fill();
-            ctx.globalAlpha = 1;
-
-            // Círculo rojo con borde amarillo
-            ctx.fillStyle = '#e3000b';
-            ctx.beginPath();
-            ctx.arc(cx, cy, r, 0, Math.PI * 2);
-            ctx.fill();
-            ctx.strokeStyle = '#ffcc00';
-            ctx.lineWidth = 3;
-            ctx.stroke();
-
-            // Icono ⚠️ pequeño centrado (sin texto extra)
-            ctx.font = `${p.w * 0.5}px sans-serif`;
+            // Warning symbol drawn manually
+            ctx.font = `${size * 0.52}px sans-serif`;
             ctx.textAlign = 'center';
             ctx.textBaseline = 'middle';
-            ctx.fillText('⚠️', cx, cy);
+            ctx.fillText('⚠️', cx, cy - 2);
+          } else if (img && img.complete && img.naturalWidth !== 0) {
+            const s = size * 0.72;
+            ctx.drawImage(img, cx - s / 2, cy - s / 2 - 2, s, s);
           } else {
-            // Aura / fondo circular de color
-            ctx.fillStyle = colorForPower(p.type);
-            ctx.globalAlpha = 0.35;
-            ctx.beginPath();
-            ctx.arc(cx, cy, r + 4, 0, Math.PI * 2);
-            ctx.fill();
-            ctx.globalAlpha = 1;
-
-            // Círculo sólido
-            ctx.fillStyle = colorForPower(p.type);
-            ctx.beginPath();
-            ctx.arc(cx, cy, r, 0, Math.PI * 2);
-            ctx.fill();
-            ctx.strokeStyle = '#ffffffcc';
-            ctx.lineWidth = 2.5;
-            ctx.stroke();
-
-            // Imagen PNG o fallback emoji
-            if (img && img.complete && img.naturalWidth !== 0) {
-              const s = p.w * 0.85;
-              ctx.drawImage(img, cx - s / 2, cy - s / 2, s, s);
-            } else {
-              const fallback = { shield: '🛡', multi: 'x2', magnet: '🧲', doubleJump: '⭐', coin: '●' };
-              ctx.fillStyle = '#fff';
-              ctx.font = `${p.w * 0.6}px sans-serif`;
-              ctx.textAlign = 'center';
-              ctx.textBaseline = 'middle';
-              ctx.fillText(fallback[p.type] || '?', cx, cy);
-            }
+            const fallback = { shield: '🛡', multi: 'x2', magnet: '🧲', doubleJump: '⭐', coin: '●' };
+            ctx.fillStyle = '#fff';
+            ctx.font = `bold ${size * 0.5}px 'Press Start 2P', monospace`;
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'middle';
+            ctx.fillText(fallback[p.type] || '?', cx, cy);
           }
+
+          // --- Small label at the bottom of the box ---
+          const labels = { shield: 'ESCUDO', doubleJump: 'x2 SALTO', magnet: 'IMÁN', multi: 'x2', coin: 'MONEDA', slow: 'LENTO' };
+          const label = labels[p.type] || '';
+          if (label) {
+            ctx.fillStyle = col.rim;
+            ctx.font = `bold 7px 'Press Start 2P', monospace`;
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'bottom';
+            ctx.fillText(label, cx, ry + size - 3);
+          }
+
           ctx.restore();
         }
+      }
+
+      // Helper: draw rounded rect path (doesn't stroke/fill itself)
+      function roundRect(ctx, x, y, w, h, r) {
+        ctx.beginPath();
+        ctx.moveTo(x + r, y);
+        ctx.lineTo(x + w - r, y);
+        ctx.arcTo(x + w, y,     x + w, y + r,     r);
+        ctx.lineTo(x + w, y + h - r);
+        ctx.arcTo(x + w, y + h, x + w - r, y + h, r);
+        ctx.lineTo(x + r, y + h);
+        ctx.arcTo(x,     y + h, x,     y + h - r, r);
+        ctx.lineTo(x,     y + r);
+        ctx.arcTo(x,     y,     x + r, y,          r);
+        ctx.closePath();
       }
 
       function drawParticles() {

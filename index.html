@@ -164,9 +164,18 @@
             <h3>⚙️ SETTINGS</h3>
             <span id="userInfo"></span>
             <button id="twitchLoginBtn">CONECTAR CON TWITCH</button>
-            
+
             <div style="margin-top: 25px; border-top: 2px dashed #555; padding-top: 20px;">
-              <h4 style="font-family: 'Press Start 2P', monospace; font-size: 12px; color: var(--gold); margin-top: 0; margin-bottom: 15px;">VOLUMEN</h4>
+              <h4 style="font-family: 'Press Start 2P', monospace; font-size: 12px; color: var(--gold); margin-top: 0; margin-bottom: 12px;">🎯 DIFICULTAD</h4>
+              <div style="display:flex; gap:8px; justify-content:center; margin-bottom: 0;">
+                <button id="diff-easy"   class="diff-btn active" onclick="setDifficulty('easy')">FÁCIL<br><span style="font-size:8px;font-family:monospace">10 monedas</span></button>
+                <button id="diff-medium" class="diff-btn"        onclick="setDifficulty('medium')">MEDIO<br><span style="font-size:8px;font-family:monospace">30 monedas</span></button>
+                <button id="diff-hard"   class="diff-btn"        onclick="setDifficulty('hard')">DIFÍCIL<br><span style="font-size:8px;font-family:monospace">50 monedas</span></button>
+              </div>
+            </div>
+
+            <div style="margin-top: 20px; border-top: 2px dashed #555; padding-top: 20px;">
+              <h4 style="font-family: 'Press Start 2P', monospace; font-size: 12px; color: var(--gold); margin-top: 0; margin-bottom: 15px;">🔊 VOLUMEN</h4>
               <div class="vol-row" style="margin-bottom: 15px; justify-content: space-between;">
                 <span>🎵 MENÚ</span>
                 <input type="range" id="volMenu" min="0" max="100" value="45" title="Volumen música menú">
