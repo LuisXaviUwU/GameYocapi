@@ -527,11 +527,10 @@
     /* Mostramos solo en móvil/pantalla pequeña cuando está en juego */
     @media (max-width: 900px) {
       #gameWrap.is-playing #mobileControls { display: block; }
-    }
-    /* También visibles en fullscreen desde móvil */
-    #gameWrap:fullscreen.is-playing #mobileControls,
-    #gameWrap:-webkit-full-screen.is-playing #mobileControls {
-      display: block;
+      #gameWrap:fullscreen.is-playing #mobileControls,
+      #gameWrap:-webkit-full-screen.is-playing #mobileControls {
+        display: block;
+      }
     }
 
     .mob-btn {

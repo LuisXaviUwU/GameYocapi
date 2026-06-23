@@ -58,6 +58,15 @@ async function loadPlayers() {
   renderTable();
 }
 
+const ITEM_ICONS = {
+  shield: 'assets/inmortal.png',
+  doubleJump: 'assets/jump.png',
+  magnet: 'assets/iman.png',
+  multi: 'assets/x2.png',
+  multi4: 'assets/x2.png',
+  multi6: 'assets/x2.png'
+};
+
 function renderTable(filter = '') {
   const tbody = document.getElementById('playersList');
   tbody.innerHTML = '';
@@ -67,7 +76,7 @@ function renderTable(filter = '') {
   );
 
   if (filtered.length === 0) {
-    tbody.innerHTML = `<tr><td colspan="4" style="text-align:center;">No se encontraron jugadores.</td></tr>`;
+    tbody.innerHTML = `<tr><td colspan="4" style="text-align:center; padding: 20px;">No se encontraron jugadores. (Si solo sales tú, desactiva el RLS en Supabase)</td></tr>`;
     return;
   }
 
@@ -75,26 +84,36 @@ function renderTable(filter = '') {
     const inv = p.inventory || {};
     const invHTML = Object.keys(inv).map(key => {
       if (inv[key] > 0) {
-        return `<div class="inv-badge">${key}: ${inv[key]}</div>`;
+        const iconSrc = ITEM_ICONS[key] || '';
+        return `<div class="inv-badge"><img src="${iconSrc}" title="${key}"> x${inv[key]}</div>`;
       }
       return '';
     }).join('');
 
     const tr = document.createElement('tr');
     tr.innerHTML = `
-      <td style="font-weight:bold; color:var(--gold);">${p.twitch_username}</td>
+      <td style="font-weight:bold; color:var(--gold); font-size: 14px;">
+         <img src="assets/logo_capi.png" style="width:24px; vertical-align:middle; margin-right:8px; border-radius:50%; background:#000;">
+         ${p.twitch_username}
+      </td>
       <td>
-        <input type="number" id="bal-${p.twitch_user_id}" class="input-coin" value="${p.balance}">
-        <button onclick="updateBalance('${p.twitch_user_id}')" class="btn-action">Guardar</button>
+        <div style="display:flex; align-items:center; gap:8px;">
+          <img src="assets/coin.png" style="width:20px;">
+          <input type="number" id="bal-${p.twitch_user_id}" class="input-coin" value="${p.balance}">
+          <button onclick="updateBalance('${p.twitch_user_id}')" class="btn-action">💾</button>
+        </div>
       </td>
       <td>
         <div class="inventory-badges">${invHTML || '<span style="color:#888;">Vacío</span>'}</div>
       </td>
       <td>
-        <button onclick="addCoins('${p.twitch_user_id}', 100)" class="btn-action" style="background:#00c896;">+100 🟡</button>
-        <button onclick="giveItem('${p.twitch_user_id}', 'shield')" class="btn-action" style="background:#1565C0;">+🛡</button>
-        <button onclick="giveItem('${p.twitch_user_id}', 'magnet')" class="btn-action" style="background:#6A1B9A;">+🧲</button>
-        <button onclick="giveItem('${p.twitch_user_id}', 'multi')" class="btn-action" style="background:#E65100;">+x2</button>
+        <div style="display:flex; gap:6px; flex-wrap:wrap;">
+          <button onclick="addCoins('${p.twitch_user_id}', 100)" class="btn-action" style="background:#00c896; font-size:10px;">+100<img src="assets/coin.png" style="width:12px; vertical-align:middle;"></button>
+          <button onclick="giveItem('${p.twitch_user_id}', 'shield')" class="btn-action" style="background:#1565C0;" title="Dar Escudo">+<img src="assets/inmortal.png" style="width:14px; vertical-align:middle;"></button>
+          <button onclick="giveItem('${p.twitch_user_id}', 'doubleJump')" class="btn-action" style="background:#2E7D32;" title="Dar Doble Salto">+<img src="assets/jump.png" style="width:14px; vertical-align:middle;"></button>
+          <button onclick="giveItem('${p.twitch_user_id}', 'magnet')" class="btn-action" style="background:#6A1B9A;" title="Dar Imán">+<img src="assets/iman.png" style="width:14px; vertical-align:middle;"></button>
+          <button onclick="giveItem('${p.twitch_user_id}', 'multi')" class="btn-action" style="background:#E65100;" title="Dar x2">+<img src="assets/x2.png" style="width:14px; vertical-align:middle;"></button>
+        </div>
       </td>
     `;
     tbody.appendChild(tr);
