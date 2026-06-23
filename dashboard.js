@@ -32,6 +32,7 @@ sb.auth.onAuthStateChange(async (_event, session) => {
       document.getElementById('adminArea').style.display = 'block';
       document.getElementById('adminName').textContent = `Admin: ${username}`;
       loadPlayers();
+      loadStoreItems();
     } else {
       // No es Admin
       document.getElementById('loginArea').innerHTML = `
@@ -168,4 +169,109 @@ async function giveItem(uid, item) {
   } else {
     loadPlayers();
   }
+}
+
+// ---------- Tab switcher ----------
+function switchDashTab(tab) {
+  document.querySelectorAll('.dash-tab').forEach(b => b.classList.remove('active'));
+  document.querySelectorAll('.dash-section').forEach(s => s.classList.remove('active'));
+  document.getElementById('dash-' + tab).classList.add('active');
+  // Highlight button
+  document.querySelectorAll('.dash-tab').forEach(b => {
+    if (b.textContent.toLowerCase().includes(tab === 'players' ? 'jugadores' : 'tienda')) {
+      b.classList.add('active');
+    }
+  });
+}
+
+// ---------- Gestión de Tienda ----------
+let storeData = [];
+
+const ASSET_LIST = [
+  'assets/inmortal.png',
+  'assets/jump.png',
+  'assets/iman.png',
+  'assets/x2.png',
+  'assets/x4.png',
+  'assets/x6.png',
+  'assets/coin.png',
+];
+
+async function loadStoreItems() {
+  const list = document.getElementById('storeItemsList');
+  list.innerHTML = '<p style="color:#aaa;">Cargando...</p>';
+  const { data, error } = await sb.from('store_config').select('*').order('tab').order('price');
+  if (error) {
+    list.innerHTML = `<p style="color:red;">Error: ${error.message}<br>Crea la tabla <b>store_config</b> en Supabase primero.</p>`;
+    return;
+  }
+  storeData = data || [];
+  renderStoreEditor();
+}
+
+function renderStoreEditor() {
+  const list = document.getElementById('storeItemsList');
+  if (!storeData.length) {
+    list.innerHTML = `<p style="color:#aaa;">No hay ítems aún. Presiona "+ NUEVO ÍTEM" para agregar.</p>`;
+    return;
+  }
+  list.innerHTML = storeData.map(item => `
+    <div class="store-editor-row" id="row-${item.id}">
+      <img src="${item.image || 'assets/coin.png'}" class="store-preview-img" id="preview-${item.id}">
+      <label>Tab/Categoría<input type="text" value="${item.tab || ''}" id="tab-${item.id}"></label>
+      <label>Tipo (key)<input type="text" value="${item.type || ''}" id="type-${item.id}"></label>
+      <label>Etiqueta<input type="text" value="${item.label || ''}" id="label-${item.id}"></label>
+      <label>Descripción<input type="text" value="${item.description || ''}" id="desc-${item.id}"></label>
+      <label>Imagen
+        <select id="img-${item.id}" onchange="document.getElementById('preview-${item.id}').src=this.value">
+          ${ASSET_LIST.map(a => `<option value="${a}"${item.image===a?' selected':''}>${a.replace('assets/','')}</option>`).join('')}
+        </select>
+      </label>
+      <label>Segundos<input type="number" value="${item.seconds || 15}" id="secs-${item.id}" style="width:60px;"></label>
+      <label>Precio<input type="number" value="${item.price || 0}" id="price-${item.id}" style="width:80px;"></label>
+      <label>Activo<input type="checkbox" ${item.enabled?'checked':''} id="enabled-${item.id}"></label>
+      <div style="display:flex; flex-direction:column; gap:6px;">
+        <button onclick="saveStoreItem(${item.id})" class="btn-action" style="background:#00c896;">💾 Guardar</button>
+        <button onclick="deleteStoreItem(${item.id})" class="btn-action btn-danger">🗑 Borrar</button>
+      </div>
+    </div>
+  `).join('');
+}
+
+async function saveStoreItem(id) {
+  const payload = {
+    tab:         document.getElementById(`tab-${id}`).value.trim(),
+    type:        document.getElementById(`type-${id}`).value.trim(),
+    label:       document.getElementById(`label-${id}`).value.trim(),
+    description: document.getElementById(`desc-${id}`).value.trim(),
+    image:       document.getElementById(`img-${id}`).value,
+    seconds:     parseInt(document.getElementById(`secs-${id}`).value) || 15,
+    price:       parseInt(document.getElementById(`price-${id}`).value) || 0,
+    enabled:     document.getElementById(`enabled-${id}`).checked,
+  };
+  const { error } = await sb.from('store_config').update(payload).eq('id', id);
+  if (error) { alert('Error guardando: ' + error.message); console.error(error); }
+  else { alert('¡Guardado!'); loadStoreItems(); }
+}
+
+async function deleteStoreItem(id) {
+  if (!confirm('¿Eliminar este ítem de la tienda?')) return;
+  const { error } = await sb.from('store_config').delete().eq('id', id);
+  if (error) { alert('Error borrando: ' + error.message); }
+  else { loadStoreItems(); }
+}
+
+async function addStoreItem() {
+  const { error } = await sb.from('store_config').insert({
+    tab: 'Nueva Categoría',
+    type: 'nuevoItem',
+    label: 'Nuevo Ítem',
+    description: 'Descripción del ítem',
+    image: 'assets/coin.png',
+    seconds: 15,
+    price: 500,
+    enabled: true,
+  });
+  if (error) { alert('Error creando: ' + error.message); console.error(error); }
+  else { loadStoreItems(); }
 }

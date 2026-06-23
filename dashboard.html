@@ -136,6 +136,63 @@
       font-family: 'Press Start 2P', monospace;
       font-size: 8px;
     }
+    .dash-tabs {
+      display: flex;
+      gap: 8px;
+      margin-bottom: 20px;
+      border-bottom: 2px solid var(--gold);
+      padding-bottom: 10px;
+    }
+    .dash-tab {
+      background: #444;
+      border: 2px solid #666;
+      border-radius: 6px 6px 0 0;
+      color: #fff;
+      font-family: 'Press Start 2P', monospace;
+      font-size: 8px;
+      padding: 8px 12px;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+    .dash-tab.active {
+      background: var(--gold);
+      color: #000;
+      border-color: var(--gold);
+    }
+    .dash-section { display: none; }
+    .dash-section.active { display: block; }
+    .store-editor-row {
+      display: flex;
+      gap: 8px;
+      align-items: center;
+      flex-wrap: wrap;
+      border: 1px solid #444;
+      border-radius: 8px;
+      padding: 10px;
+      margin-bottom: 8px;
+      background: rgba(0,0,0,0.3);
+    }
+    .store-editor-row input, .store-editor-row select {
+      background: #111;
+      border: 1px solid var(--gold);
+      color: #fff;
+      padding: 5px 8px;
+      border-radius: 4px;
+      font-family: monospace;
+    }
+    .store-editor-row label {
+      font-size: 10px;
+      color: #aaa;
+      display: flex;
+      flex-direction: column;
+      gap: 3px;
+    }
+    .store-preview-img {
+      width: 32px;
+      height: 32px;
+      object-fit: contain;
+      image-rendering: pixelated;
+    }
   </style>
 </head>
 
@@ -149,7 +206,7 @@
     <a href="index.html" class="back-btn">VOLVER AL JUEGO</a>
   </div>
 
-  <div id="adminArea" class="admin-container">
+  <div id="adminArea" class="admin-container" style="display:none;">
     <div class="admin-header">
       <h1>🛠 PANEL DE CONTROL</h1>
       <div style="display: flex; gap: 10px; align-items: center;">
@@ -158,25 +215,48 @@
       </div>
     </div>
 
-    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
-      <input type="text" id="searchBox" placeholder="Buscar jugador por nombre...">
-      <button id="refreshBtn" class="btn-action" style="background:var(--river); border-color:var(--river-dark);">🔄 ACTUALIZAR</button>
+    <!-- Nav tabs -->
+    <div class="dash-tabs">
+      <button class="dash-tab active" onclick="switchDashTab('players')">👥 Jugadores</button>
+      <button class="dash-tab" onclick="switchDashTab('store')">🛒 Tienda</button>
     </div>
 
-    <div style="overflow-x: auto;">
-      <table id="playersTable">
-        <thead>
-          <tr>
-            <th>Usuario</th>
-            <th>Monedas</th>
-            <th>Inventario</th>
-            <th>Acciones Rápida</th>
-          </tr>
-        </thead>
-        <tbody id="playersList">
-          <!-- Carga dinámica -->
-        </tbody>
-      </table>
+    <!-- JUGADORES -->
+    <div id="dash-players" class="dash-section active">
+      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
+        <input type="text" id="searchBox" placeholder="Buscar jugador por nombre...">
+        <button id="refreshBtn" class="btn-action" style="background:var(--river); border-color:var(--river-dark);">🔄 ACTUALIZAR</button>
+      </div>
+      <div style="overflow-x: auto;">
+        <table id="playersTable">
+          <thead>
+            <tr>
+              <th>Usuario</th>
+              <th>Monedas</th>
+              <th>Inventario</th>
+              <th>Acciones Rápidas</th>
+            </tr>
+          </thead>
+          <tbody id="playersList"></tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- TIENDA -->
+    <div id="dash-store" class="dash-section">
+      <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:15px;">
+        <h2 style="color:var(--gold); margin:0; font-size:14px;">🛒 EDITOR DE TIENDA</h2>
+        <div style="display:flex; gap:8px;">
+          <button onclick="addStoreItem()" class="btn-action" style="background:#00c896;">+ NUEVO ÍTEM</button>
+          <button onclick="loadStoreItems()" class="btn-action" style="background:var(--river); border-color:var(--river-dark);">🔄 RECARGAR</button>
+        </div>
+      </div>
+      <p style="font-size:10px; color:#aaa; margin-bottom:15px;">
+        Edita los ítems de la tienda. Los cambios se guardan en Supabase y aparecen en el juego al instante.<br>
+        <strong style="color:var(--gold);">Columnas de Supabase necesarias en tabla <code>store_config</code>:</strong>
+        id (int8, PK autoincrement), tab (text), type (text), label (text), description (text), image (text), seconds (int4), price (int4), enabled (bool)
+      </p>
+      <div id="storeItemsList"></div>
     </div>
   </div>
 

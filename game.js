@@ -169,13 +169,13 @@
       let scoreLog = []; // eventos para validar en backend
       let sessionCoins = 0;
       let totalCoins = 0;
-      let playerInventory = { shield: 0, doubleJump: 0, magnet: 0, multi: 0, multi4: 0, multi6: 0 };
+      let playerInventory = { shield: 0, shield30: 0, shield60: 0, doubleJump: 0, magnet: 0, multi: 0, multi4: 0, multi6: 0 };
       let difficulty = 'easy'; // 'easy', 'medium', 'hard'
       const DIFFICULTY_CONFIG = {
-        easy:    { baseSpeed: 7.0,  maxSpeedAdd: 5.0,  rampFrames: 2400, coinValue: 10,  obstacleMin: 90,  obstacleRand: 80, label: 'FÁCIL',   flyingEnemies: false },
-        medium:  { baseSpeed: 9.5,  maxSpeedAdd: 8.0,  rampFrames: 1500, coinValue: 30,  obstacleMin: 60,  obstacleRand: 55, label: 'MEDIO',   flyingEnemies: false },
-        hard:    { baseSpeed: 12.0, maxSpeedAdd: 10.5, rampFrames: 900,  coinValue: 50,  obstacleMin: 40,  obstacleRand: 35, label: 'DIFÍCIL', flyingEnemies: false },
-        extreme: { baseSpeed: 15.0, maxSpeedAdd: 14.0, rampFrames: 600,  coinValue: 100, obstacleMin: 25,  obstacleRand: 20, label: 'EXTREMO', flyingEnemies: true  }
+        easy:    { baseSpeed: 7.0,  maxSpeedAdd: 5.0,  rampFrames: 2400, coinValue: 10,  obstacleMin: 90,  obstacleRand: 80, label: 'FÁCIL',   flyingEnemies: false, diffMult: 1.0  },
+        medium:  { baseSpeed: 9.5,  maxSpeedAdd: 8.0,  rampFrames: 1500, coinValue: 30,  obstacleMin: 60,  obstacleRand: 55, label: 'MEDIO',   flyingEnemies: false, diffMult: 1.5  },
+        hard:    { baseSpeed: 12.0, maxSpeedAdd: 10.5, rampFrames: 900,  coinValue: 50,  obstacleMin: 40,  obstacleRand: 35, label: 'DIFÍCIL', flyingEnemies: false, diffMult: 2.0  },
+        extreme: { baseSpeed: 15.0, maxSpeedAdd: 14.0, rampFrames: 600,  coinValue: 100, obstacleMin: 25,  obstacleRand: 20, label: 'EXTREMO', flyingEnemies: true,  diffMult: 2.5  }
       };
       let globalFrame = 0; // Para el ciclo día/noche continuo
 
@@ -648,9 +648,10 @@
           nextPowerupIn++;
         }
 
-        // score & multiplier
+        // score & multiplier (item multiplier × difficulty base multiplier)
+        const diffMult = DIFFICULTY_CONFIG[difficulty].diffMult || 1;
         multiplier = activeBuffs.multi6 ? 6 : (activeBuffs.multi4 ? 4 : (activeBuffs.multi ? 2 : 1));
-        score += 0.12 * speed * multiplier;
+        score += 0.12 * speed * multiplier * diffMult;
 
         // buffs countdown
         for (const k in activeBuffs) {
@@ -1495,6 +1496,61 @@
         await syncWallet(-cost, true);
       }
 
+      // ---------- Tienda dinámica desde DB ----------
+      // Estructura esperada en Supabase table "store_config":
+      //   id, tab, type, label, description, image, seconds, price, enabled (boolean)
+      // Si la tabla no existe aún, la tienda cae en modo estático.
+      let storeConfig = null; // null = no cargado
+
+      async function loadStoreFromDB() {
+        try {
+          const { data, error } = await sb
+            .from('store_config')
+            .select('*')
+            .eq('enabled', true)
+            .order('tab')
+            .order('price');
+          if (error || !data || data.length === 0) return; // usa tienda HTML estática
+          storeConfig = data;
+          renderDynamicStore();
+        } catch(e) { /* tabla no existe aún, se usa tienda estática */ }
+      }
+
+      function renderDynamicStore() {
+        if (!storeConfig) return;
+        const tabsOrder = [...new Set(storeConfig.map(i => i.tab))];
+
+        // Sidebar
+        const sidebar = document.querySelector('.store-sidebar');
+        if (sidebar) {
+          sidebar.innerHTML = tabsOrder.map((tab, idx) =>
+            `<button id="tabBtn-${tab}" class="store-tab${idx===0?' active':''}" onclick="showStoreTab('${tab}')">${tab}</button>`
+          ).join('');
+        }
+
+        // Content area
+        const area = document.querySelector('.store-content-area');
+        if (!area) return;
+        area.innerHTML = tabsOrder.map((tab, idx) => {
+          const items = storeConfig.filter(i => i.tab === tab);
+          const first = items[0];
+          return `
+            <div id="tab-${tab}" class="store-tab-content${idx===0?' active':''}">
+              <div style="text-align:center; margin-bottom:20px;">
+                <img src="${first.image || 'assets/coin.png'}" style="width:80px; image-rendering:pixelated; filter:drop-shadow(0 4px 6px rgba(0,0,0,0.5));">
+                <div style="color:var(--gold); margin-top:10px; font-size:14px; font-weight:bold;">${tab.toUpperCase()}</div>
+                <div style="font-size:10px; color:#ccc; margin-top:5px;">${first.description || ''}</div>
+              </div>
+              ${items.map(item => `
+                <div class="store-item">
+                  <span>${item.label}</span>
+                  <button onclick="buyBuff('${item.type}', ${item.price}, ${item.seconds})">${item.price}</button>
+                </div>
+              `).join('')}
+            </div>`;
+        }).join('');
+      }
+
       // ---------- Cargar leaderboard ----------
       function updateWeekRange() {
         const now = new Date();
@@ -1532,6 +1588,7 @@
 
       checkSession();
       loadLeaderboard();
+      loadStoreFromDB();
 
       // ---------- Pantalla completa (Fullscreen API nativa) ----------
       const fullscreenBtn = document.getElementById('fullscreenBtn');
