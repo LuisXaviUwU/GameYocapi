@@ -1165,35 +1165,57 @@
 @media (max-width: 900px) and (orientation: landscape) {
   #wheelModal.modal-overlay {
     padding: 5px;
-    align-items: flex-start;
+    align-items: center;
     justify-content: center;
   }
   .wheel-modal-box {
-    padding: 10px;
-    max-width: 320px !important;
-  }
-  .wheel-wrap {
-    width: 180px;
-    height: 190px;
-    margin-bottom: 8px;
-  }
-  #wheelCanvas {
-    width: 180px !important;
-    height: 180px !important;
-    margin-top: 10px;
+    padding: 10px 15px;
+    max-width: 550px !important;
+    display: grid;
+    grid-template-columns: 1.2fr 1fr;
+    grid-template-areas: 
+      "title title"
+      "wheel content";
+    gap: 10px;
+    align-items: center;
   }
   .wheel-modal-box h3 {
-    font-size: 11px;
-    margin-bottom: 4px;
+    grid-area: title;
+    font-size: 12px;
+    margin-bottom: 0;
   }
   .wheel-subtitle {
-    font-size: 9px;
-    margin-bottom: 6px;
+    display: none; /* ocultamos para ahorrar espacio */
+  }
+  .wheel-wrap {
+    grid-area: wheel;
+    width: 220px;
+    height: 230px;
+    margin: 0 auto;
+  }
+  #wheelCanvas {
+    width: 220px !important;
+    height: 220px !important;
+    margin-top: 10px;
+  }
+  #wheelLoginMsg {
+    grid-area: content;
+  }
+  #wheelContent {
+    grid-area: content;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
   }
   .spin-btn {
-    font-size: 10px;
-    padding: 8px 16px;
-    margin-top: 4px;
+    font-size: 11px;
+    padding: 12px 16px;
+    margin-top: 0;
+  }
+  .wheel-result {
+    font-size: 9px;
+    padding: 8px;
+    margin-bottom: 8px;
   }
 }
 
