@@ -1035,6 +1035,21 @@
   animation: dailyPulse 2.5s infinite;
 }
 
+@media (max-width: 600px) {
+  .daily-reward-corner-btn {
+    bottom: 12px;
+    left: 10px;
+    padding: 8px 12px;
+    font-size: 10px;
+    gap: 6px;
+    border-radius: 12px;
+    border-width: 3px;
+    border-bottom-width: 4px;
+  }
+  .daily-reward-label { display: none; }
+  .daily-reward-icon { font-size: 20px; }
+}
+
 @keyframes dailyPulse {
   0%, 100% { box-shadow: 0 0 14px rgba(168, 85, 247, 0.5), 0 4px 0 #4c1d95; }
   50%       { box-shadow: 0 0 28px rgba(168, 85, 247, 0.9), 0 4px 0 #4c1d95; }
@@ -1089,31 +1104,49 @@
 #gameWrap.is-playing .daily-reward-corner-btn { display: none; }
 
 /* ========== Modal Sesión Diaria ========== */
+
+/* En mobile el overlay sube al nivel del body para ocupar toda la pantalla */
+@media (max-width: 600px) {
+  #dailyRewardModal.modal-overlay {
+    position: fixed;
+    inset: 0;
+    z-index: 9999;
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
+    padding: 10px 6px 24px;
+    align-items: flex-start;
+    justify-content: flex-start;
+  }
+}
+
 .daily-modal-box {
   max-width: 800px !important;
   width: 95% !important;
-  max-height: 90vh;
-  overflow-y: auto;
   background: linear-gradient(160deg, #1a0a3d 0%, #2b1060 60%, #1a0a3d 100%);
   border-color: #a855f7 !important;
   box-shadow: 0 0 40px rgba(168, 85, 247, 0.6), 0 10px 30px rgba(0,0,0,0.9) !important;
 }
 
-.daily-modal-box::-webkit-scrollbar {
-  width: 8px;
-}
-.daily-modal-box::-webkit-scrollbar-track {
-  background: rgba(0,0,0,0.3);
-  border-radius: 8px;
-}
-.daily-modal-box::-webkit-scrollbar-thumb {
-  background: #a855f7;
-  border-radius: 8px;
+@media (max-width: 600px) {
+  .daily-modal-box {
+    width: 100% !important;
+    max-width: 100% !important;
+    margin: 0 auto;
+    padding: 18px 12px 20px;
+    border-radius: 16px;
+  }
 }
 
 .daily-modal-box h3 {
   color: #e9d5ff !important;
   text-shadow: 0 0 12px rgba(168, 85, 247, 0.8);
+}
+
+@media (max-width: 600px) {
+  .daily-modal-box h3 {
+    font-size: 11px;
+    margin-bottom: 6px;
+  }
 }
 
 .daily-subtitle {
@@ -1122,6 +1155,14 @@
   color: #c4b5fd;
   margin: 0 0 20px 0;
   line-height: 1.5;
+}
+
+@media (max-width: 600px) {
+  .daily-subtitle {
+    font-size: 12px;
+    margin-bottom: 12px;
+    line-height: 1.4;
+  }
 }
 
 /* Racha info */
@@ -1135,9 +1176,18 @@
   font-size: 14px;
   color: #e9d5ff;
   text-align: center;
+  line-height: 1.6;
 }
 
-/* Grid de 7 días */
+@media (max-width: 600px) {
+  .daily-streak-info {
+    font-size: 9px;
+    padding: 10px 12px;
+    margin-bottom: 14px;
+  }
+}
+
+/* Grid de 7 días — Desktop: 7 cols, Tablet: 4 cols, Mobile: 2 cols */
 .daily-days-grid {
   display: grid;
   grid-template-columns: repeat(7, 1fr);
@@ -1145,20 +1195,32 @@
   margin-bottom: 24px;
 }
 
-/* Responsividad móvil vertical/horizontal */
 @media (max-width: 900px) {
   .daily-days-grid {
     grid-template-columns: repeat(4, 1fr);
     gap: 10px;
   }
 }
-@media (max-width: 500px) {
+
+@media (max-width: 600px) {
   .daily-days-grid {
-    grid-template-columns: repeat(3, 1fr);
-    gap: 8px;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 10px;
+    margin-bottom: 16px;
   }
+  /* Día 7 en su propia fila centrado */
   .daily-day-card:last-child {
-    grid-column: 1 / -1; /* El día 7 ocupa toda la fila al final */
+    grid-column: 1 / -1;
+    max-width: 50%;
+    margin: 0 auto;
+    width: 100%;
+  }
+}
+
+@media (max-width: 380px) {
+  .daily-days-grid {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 8px;
   }
 }
 
@@ -1176,6 +1238,14 @@
   flex-direction: column;
   align-items: center;
   justify-content: center;
+}
+
+@media (max-width: 600px) {
+  .daily-day-card {
+    padding: 14px 8px;
+    border-radius: 14px;
+    border-width: 2px;
+  }
 }
 
 .daily-day-card.claimed {
@@ -1211,6 +1281,13 @@
   display: block;
 }
 
+@media (max-width: 600px) {
+  .daily-day-num {
+    font-size: 9px;
+    margin-bottom: 6px;
+  }
+}
+
 .daily-day-img {
   width: 48px;
   height: 48px;
@@ -1218,6 +1295,14 @@
   display: block;
   margin: 0 auto 8px auto;
   filter: drop-shadow(0 4px 6px rgba(0,0,0,0.6));
+}
+
+@media (max-width: 600px) {
+  .daily-day-img {
+    width: 52px;
+    height: 52px;
+    margin-bottom: 6px;
+  }
 }
 
 .daily-day-reward {
@@ -1229,13 +1314,14 @@
   word-break: break-word;
 }
 
-.daily-day-card.claimed .daily-day-reward {
-  color: #86efac;
+@media (max-width: 600px) {
+  .daily-day-reward {
+    font-size: 12px;
+  }
 }
 
-.daily-day-card.available .daily-day-reward {
-  color: #f0abfc;
-}
+.daily-day-card.claimed .daily-day-reward { color: #86efac; }
+.daily-day-card.available .daily-day-reward { color: #f0abfc; }
 
 /* Check de reclamado */
 .daily-day-card.claimed::after {
@@ -1273,6 +1359,16 @@
   box-shadow: 0 0 20px rgba(168, 85, 247, 0.6);
   animation: claimPulse 1.2s infinite alternate;
   transition: transform 0.1s;
+  -webkit-tap-highlight-color: transparent;
+  touch-action: manipulation;
+}
+
+@media (max-width: 600px) {
+  .claim-btn {
+    font-size: 11px;
+    padding: 16px 20px;
+    border-bottom-width: 4px;
+  }
 }
 
 @keyframes claimPulse {
@@ -1294,6 +1390,13 @@
   background: rgba(0,0,0,0.3);
   border-radius: 8px;
   border: 1px solid rgba(168, 85, 247, 0.3);
+}
+
+@media (max-width: 600px) {
+  .daily-next-info {
+    font-size: 13px;
+    padding: 10px 8px;
+  }
 }
 
 /* Animación de recompensa */
