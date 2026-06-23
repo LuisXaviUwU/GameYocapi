@@ -1092,9 +1092,23 @@
 .daily-modal-box {
   max-width: 800px !important;
   width: 95% !important;
+  max-height: 90vh;
+  overflow-y: auto;
   background: linear-gradient(160deg, #1a0a3d 0%, #2b1060 60%, #1a0a3d 100%);
   border-color: #a855f7 !important;
   box-shadow: 0 0 40px rgba(168, 85, 247, 0.6), 0 10px 30px rgba(0,0,0,0.9) !important;
+}
+
+.daily-modal-box::-webkit-scrollbar {
+  width: 8px;
+}
+.daily-modal-box::-webkit-scrollbar-track {
+  background: rgba(0,0,0,0.3);
+  border-radius: 8px;
+}
+.daily-modal-box::-webkit-scrollbar-thumb {
+  background: #a855f7;
+  border-radius: 8px;
 }
 
 .daily-modal-box h3 {
