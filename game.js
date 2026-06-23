@@ -752,11 +752,11 @@
       function applyPowerup(type) {
         scoreLog.push({ t: frame, ev: 'powerup', type });
         switch (type) {
-          case 'shield': activeBuffs.shield = 600; break; // 10s a 60fps
-          case 'multi': activeBuffs.multi = 600; break;
-          case 'slow': activeBuffs.slow = 300; break; // 5s
-          case 'magnet': activeBuffs.magnet = 480; break; // 8s
-          case 'doubleJump': activeBuffs.doubleJump = 600; player.jumpsLeft = 2; break;
+          case 'shield': activeBuffs.shield = (activeBuffs.shield || 0) + 600; break; // +10s
+          case 'multi': activeBuffs.multi = (activeBuffs.multi || 0) + 600; break;
+          case 'slow': activeBuffs.slow = (activeBuffs.slow || 0) + 300; break;
+          case 'magnet': activeBuffs.magnet = (activeBuffs.magnet || 0) + 480; break;
+          case 'doubleJump': activeBuffs.doubleJump = (activeBuffs.doubleJump || 0) + 600; player.jumpsLeft = 2; break;
           case 'coin':
             sessionCoins += DIFFICULTY_CONFIG[difficulty].coinValue;
             document.getElementById('sessionCoinsDisplay').innerHTML = '<img src="assets/coin.png" style="width:36px; vertical-align:middle; margin-top:-4px; margin-right:4px;"> ' + sessionCoins;
@@ -784,18 +784,22 @@
       // ---------- HUD ----------
       
       function updateInventoryHud() {
-         const ids = ['shield', 'shield30', 'shield60', 'doubleJump', 'magnet', 'multi', 'multi4', 'multi6'];
-         ids.forEach(id => {
+         const allIds = ['shield', 'shield30', 'shield60', 'doubleJump', 'magnet', 'multi', 'multi4', 'multi6'];
+         const KEYS = ['1','2','3','4','5','6','7','8','9','0'];
+         let keyIdx = 0;
+
+         allIds.forEach(id => {
             const el = document.getElementById('inv-' + id);
-            if (el) {
-               const qty = playerInventory[id] || 0;
+            if (!el) return;
+            const qty = playerInventory[id] || 0;
+            if (qty > 0) {
+               el.style.display = 'flex';
                el.querySelector('.inv-qty').textContent = 'x' + qty;
-               if (qty > 0) {
-                  el.style.display = 'flex';
-                  el.style.opacity = '1';
-               } else {
-                  el.style.display = 'none';
-               }
+               const keyEl = el.querySelector('.inv-key');
+               if (keyEl) keyEl.textContent = KEYS[keyIdx] || '-';
+               keyIdx++;
+            } else {
+               el.style.display = 'none';
             }
          });
       }
