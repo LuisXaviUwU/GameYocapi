@@ -439,6 +439,7 @@
         countdownValue = 3;
         countdownTimer = COUNTDOWN_FPS;
         document.getElementById('overlay').classList.add('hidden');
+        document.getElementById('extraMenuButtons').style.display = 'none';
         // Detener lobby y arrancar música de juego al terminar el countdown
       }
 
@@ -480,6 +481,7 @@
         countdownValue = 3;
         countdownTimer = COUNTDOWN_FPS;
         document.getElementById('overlay').classList.add('hidden');
+        document.getElementById('extraMenuButtons').style.display = 'none';
       }
 
       function endGame() {
@@ -497,6 +499,7 @@
       function showGameOver() {
         const overlay = document.getElementById('overlay');
         overlay.classList.remove('hidden');
+        document.getElementById('extraMenuButtons').style.display = 'block';
         overlay.innerHTML = `
     <h2>GAME OVER</h2>
     <div class="bigscore">PUNTOS: ${Math.floor(score)}</div>
@@ -518,6 +521,7 @@
         ctx.fillRect(0, 0, W, H);
         const overlay = document.getElementById('overlay');
         overlay.classList.remove('hidden');
+        document.getElementById('extraMenuButtons').style.display = 'block';
         overlay.innerHTML = `
           <img src="assets/logo_capi.png" class="logo" alt="Capibara Logo" onerror="this.style.display='none'">
           <h2>CAPI RUN</h2>
@@ -1336,8 +1340,16 @@
       function updateAuthUI() {
         const btn = document.getElementById('twitchLoginBtn');
         const info = document.getElementById('userInfo');
+        const adminBtn = document.getElementById('adminDashboardBtn');
         if (currentUser) {
           const name = currentUser.user_metadata?.name || currentUser.user_metadata?.full_name || 'jugador';
+          
+          if (name.toLowerCase() === 'capiluisxavi' && adminBtn) {
+            adminBtn.style.display = 'inline-block';
+          } else if (adminBtn) {
+            adminBtn.style.display = 'none';
+          }
+
           btn.textContent = 'CERRAR SESIÓN';
           btn.onclick = async () => { await sb.auth.signOut(); currentUser = null; updateAuthUI(); };
           info.textContent = `Conectado como ${name}`;

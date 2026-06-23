@@ -987,3 +987,26 @@
     height: 24px;
   }
 }
+
+/* ---------- Botón Admin ---------- */
+.admin-corner-btn {
+  position: absolute;
+  top: 60px;
+  left: 15px;
+  background: #e53e3e;
+  border: 3px solid #9b2c2c;
+  border-radius: 8px;
+  padding: 8px 12px;
+  text-decoration: none;
+  color: #fff;
+  font-family: 'Press Start 2P', monospace;
+  font-size: 10px;
+  z-index: 100;
+  box-shadow: 0 4px 0 #9b2c2c, 0 5px 15px rgba(0,0,0,0.5);
+  transition: all 0.2s;
+}
+
+.admin-corner-btn:hover {
+  transform: translateY(2px);
+  box-shadow: 0 2px 0 #9b2c2c, 0 0 10px #e53e3e;
+}
