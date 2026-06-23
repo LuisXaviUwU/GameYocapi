@@ -374,16 +374,22 @@
       }
       function duckEnd() { player.ducking = false; }
 
+      // Mapa dinámico de tecla → {id, seconds} según qué slots están visibles
+      // Se reconstruye cada vez que cambia el inventario (en updateInventoryHud)
+      let keySlotMap = {}; // e.g. { 'Digit1': { id: 'multi', seconds: 15 }, ... }
+
+      const SLOT_SECONDS = {
+        shield: 10, shield30: 30, shield60: 60,
+        doubleJump: 15, magnet: 15,
+        multi: 15, multi4: 15, multi6: 15
+      };
+
       window.addEventListener('keydown', e => {
         if (e.code === 'Space' || e.code === 'ArrowUp') { e.preventDefault(); jump(); }
         if (e.code === 'ArrowDown') { e.preventDefault(); duckStart(); }
         if (state === 'playing') {
-          if (e.code === 'Digit1' || e.code === 'Numpad1') useItem('shield', 10);
-          if (e.code === 'Digit2' || e.code === 'Numpad2') useItem('doubleJump', 15);
-          if (e.code === 'Digit3' || e.code === 'Numpad3') useItem('magnet', 15);
-          if (e.code === 'Digit4' || e.code === 'Numpad4') useItem('multi', 15);
-          if (e.code === 'Digit5' || e.code === 'Numpad5') useItem('multi4', 15);
-          if (e.code === 'Digit6' || e.code === 'Numpad6') useItem('multi6', 15);
+          const slot = keySlotMap[e.code];
+          if (slot) useItem(slot.id, slot.seconds);
         }
       });
       window.addEventListener('keyup', e => {
@@ -785,8 +791,10 @@
       
       function updateInventoryHud() {
          const allIds = ['shield', 'shield30', 'shield60', 'doubleJump', 'magnet', 'multi', 'multi4', 'multi6'];
-         const KEYS = ['1','2','3','4','5','6','7','8','9','0'];
+         const KEY_CODES = ['Digit1','Digit2','Digit3','Digit4','Digit5','Digit6','Digit7','Digit8','Digit9','Digit0'];
+         const KEY_LABELS = ['1','2','3','4','5','6','7','8','9','0'];
          let keyIdx = 0;
+         keySlotMap = {}; // reiniciar el mapa de teclas
 
          allIds.forEach(id => {
             const el = document.getElementById('inv-' + id);
@@ -796,7 +804,11 @@
                el.style.display = 'flex';
                el.querySelector('.inv-qty').textContent = 'x' + qty;
                const keyEl = el.querySelector('.inv-key');
-               if (keyEl) keyEl.textContent = KEYS[keyIdx] || '-';
+               if (keyEl) keyEl.textContent = KEY_LABELS[keyIdx] || '-';
+               // Mapear tecla → item
+               if (KEY_CODES[keyIdx]) {
+                 keySlotMap[KEY_CODES[keyIdx]] = { id, seconds: SLOT_SECONDS[id] || 15 };
+               }
                keyIdx++;
             } else {
                el.style.display = 'none';
