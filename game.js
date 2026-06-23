@@ -786,9 +786,10 @@
                const qty = playerInventory[id] || 0;
                el.querySelector('.inv-qty').textContent = 'x' + qty;
                if (qty > 0) {
+                  el.style.display = 'flex';
                   el.style.opacity = '1';
                } else {
-                  el.style.opacity = '0.5';
+                  el.style.display = 'none';
                }
             }
          });

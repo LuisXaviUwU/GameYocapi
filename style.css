@@ -805,16 +805,45 @@
     flex-direction: row;
     flex-wrap: wrap;
     justify-content: center;
-    top: 10px;
+    top: auto;
+    bottom: 110px;
     left: 50%;
     transform: translateX(-50%);
+    width: 90%;
   }
   .inv-slot {
-    padding: 4px;
-    gap: 4px;
+    padding: 8px;
+    gap: 6px;
   }
   .inv-key {
     display: none; /* Ocultar teclas en movil */
+  }
+  .inv-icon {
+    width: 24px;
+    height: 24px;
+  }
+  .inv-qty {
+    font-size: 12px;
+  }
+}
+
+@media (max-width: 900px) and (orientation: landscape) {
+  #inventoryHud {
+    top: auto;
+    bottom: 20px;
+    left: 50%;
+    transform: translateX(-50%);
+    flex-direction: row;
+    flex-wrap: wrap;
+    justify-content: center;
+    max-width: 60%;
+  }
+  .inv-slot {
+    padding: 6px 10px;
+  }
+  .inv-icon {
+    width: 22px;
+    height: 22px;
   }
 }
 
