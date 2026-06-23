@@ -1652,177 +1652,177 @@
         .forEach(ev => document.addEventListener(ev, () => {
           const fs = isFullscreen();
           fullscreenBtn.textContent = fs ? '✕ SALIR DE PANTALLA COMPLETA' : '⧆ PANTALLA COMPLETA';
-        }));
+          .eq('twitch_user_id', uid)
+          .single();
 
-      // Escape también sale del fullscreen CSS fallback
-      document.addEventListener('keydown', e => {
-        if (e.code === 'Escape' && gamePanel.classList.contains('fullscreen-mode')) {
-          gamePanel.classList.remove('fullscreen-mode');
-          fullscreenBtn.textContent = '⧆ PANTALLA COMPLETA';
-          document.body.style.overflow = '';
-        }
-      });
-
-      // ---------- Twitch Live Check ----------
-      async function checkTwitchLive() {
-        try {
-          const res = await fetch('https://decapi.me/twitch/uptime/yocapi_pr');
-          const text = await res.text();
-          const btn = document.getElementById('twitchLiveBtn');
-          if (btn) {
-            if (text.toLowerCase().includes('offline')) {
-              btn.classList.remove('is-live');
-              btn.style.display = 'flex'; 
-            } else {
-              btn.classList.add('is-live');
-              btn.style.display = 'flex';
-            }
+        let currentBalance = 0;
+        let isNew = false;
+        if (selErr && selErr.code === 'PGRST116') { // No existe fila
+          isNew = true;
+        } else if (walletData) {
+          currentBalance = walletData.balance;
+          if (walletData.inventory && (addedCoins === 0 && !forceSave)) {
+             // Solo cargar del servidor si no estamos modificando la mochila localmente
+             playerInventory = { ...playerInventory, ...walletData.inventory };
           }
-        } catch (e) {
-          console.error('Twitch check failed', e);
         }
-      }
-      
-      checkTwitchLive();
-      setInterval(checkTwitchLive, 5 * 60 * 1000);
+        updateInventoryHud();
 
-      /* ============================================================
-         SISTEMA DE SESIÓN DIARIA (Recompensas Semanales)
-         Reset a las 12:00 AM hora Ciudad de México (UTC-6)
-         ============================================================ */
+        const newBalance = currentBalance + addedCoins;
+        totalCoins = newBalance;
+        document.getElementById('coinBalanceDisplay').textContent = totalCoins;
 
-      // Definición de recompensas por día (1-7) — usa PNGs de assets/
-      const DAILY_REWARDS = [
-        { day: 1, img: 'assets/coin.png',    label: '500 Monedas',         type: 'coins',      amount: 500 },
-        { day: 2, img: 'assets/jump.png',    label: '2 Doble Salto',       type: 'doubleJump', amount: 2   },
-        { day: 3, img: 'assets/iman.png',    label: '2 Imán',              type: 'magnet',     amount: 2   },
-        { day: 4, img: 'assets/coin.png',    label: '500 Monedas',         type: 'coins',      amount: 500 },
-        { day: 5, img: 'assets/inmortal.png',label: 'Escudo 30s',          type: 'shield30',   amount: 1   },
-        { day: 6, img: 'assets/inmortal.png',label: 'Escudo 1 Min',        type: 'shield60',   amount: 1   },
-        { day: 7, img: 'assets/x6.png',      label: '3 Mult. x6',          type: 'multi6',     amount: 3   },
-      ];
-
-      // Obtener la fecha actual en la zona horaria de México (UTC-6)
-      // UTC-6 es America/Mexico_City (sin horario de verano este año para simplificar;
-      // usamos el offset fijo -6 que es correcto para el horario estándar de México).
-      function getMexicoDate() {
-        const now = new Date();
-        // Mexico City = UTC-6 (CDT en verano = UTC-5, pero usamos el display con Intl)
-        const mxStr = now.toLocaleDateString('en-CA', { timeZone: 'America/Mexico_City' }); // YYYY-MM-DD
-        return mxStr; // e.g. "2026-06-23"
-      }
-
-      function getMexicoMidnight() {
-        // Próxima medianoche en Ciudad de México
-        const now = new Date();
-        // Construir la fecha de mañana a las 00:00 en CDMX
-        const todayMx = getMexicoDate();
-        const [y, m, d] = todayMx.split('-').map(Number);
-        // Crear una fecha de mañana 00:00 en zona CDMX usando un string ISO con offset correcto
-        // Intl nos dice si está en -5 o -6
-        const sampleMx = new Date().toLocaleString('en-US', { timeZone: 'America/Mexico_City', hour12: false });
-        const utcNow = now.getTime();
-        // Calcular el offset real del TZ
-        const mxNow = new Date(new Date().toLocaleString('en-US', { timeZone: 'America/Mexico_City' }));
-        const tzOffset = Math.round((utcNow - mxNow.getTime()) / 60000); // minutos (ej. 360 para -6)
-        // Medianoche mañana en CDMX = construir date de (tomorrow 00:00) + offset
-        const tomorrowMx = new Date(y, m - 1, d + 1, 0, 0, 0, 0);
-        // Ajustar por el offset para obtener UTC correcto
-        const midnight = new Date(tomorrowMx.getTime() + tzOffset * 60000);
-        return midnight;
-      }
-
-      // Estado local del daily reward
-      let dailyState = {
-        weekStart: '',      // YYYY-MM-DD del lunes de la semana actual (hora MX)
-        daysClaimed: [],    // array de días reclamados [1,2,3...] en esta semana
-        lastClaimedDate: '' // YYYY-MM-DD del último día reclamado
-      };
-
-      // Calcular el lunes de la semana actual (hora México)
-      function getMondayOfWeek(dateStr) {
-        const [y, m, d] = dateStr.split('-').map(Number);
-        const dt = new Date(y, m - 1, d);
-        const dow = dt.getDay(); // 0=dom, 1=lun...
-        const diff = (dow === 0) ? -6 : 1 - dow; // días para llegar al lunes
-        const monday = new Date(y, m - 1, d + diff);
-        return monday.toLocaleDateString('en-CA'); // YYYY-MM-DD
-      }
-
-      // Día de la semana en esta semana (1=lun ... 7=dom), basado en fecha MX
-      function getDayOfWeek(dateStr) {
-        const [y, m, d] = dateStr.split('-').map(Number);
-        const dt = new Date(y, m - 1, d);
-        const dow = dt.getDay(); // 0=dom
-        return dow === 0 ? 7 : dow; // 1=lun, 7=dom
-      }
-
-      // Cargar estado de Supabase (tabla daily_rewards) o localStorage
-      async function loadDailyState() {
-        const todayMx = getMexicoDate();
-        const thisMonday = getMondayOfWeek(todayMx);
-
-        if (currentUser) {
-          try {
-            const { data, error } = await sb
-              .from('daily_rewards')
-              .select('week_start, days_claimed, last_claimed_date')
-              .eq('twitch_user_id', currentUser.id)
-              .single();
-
-            if (!error && data) {
-              // Si la semana del servidor coincide, usar esos datos
-              if (data.week_start === thisMonday) {
-                dailyState = {
-                  weekStart: data.week_start,
-                  daysClaimed: data.days_claimed || [],
-                  lastClaimedDate: data.last_claimed_date || ''
-                };
-              } else {
-                // Nueva semana: reiniciar
-                dailyState = { weekStart: thisMonday, daysClaimed: [], lastClaimedDate: '' };
-                await saveDailyState();
-              }
-              renderDailyModal();
-              updateDailyBadge();
-              return;
-            }
-          } catch(e) { /* tabla no existe aún, usar localStorage */ }
-        }
-
-        // Fallback: localStorage
-        const stored = localStorage.getItem('dailyReward_v1');
-        if (stored) {
-          try {
-            const parsed = JSON.parse(stored);
-            if (parsed.weekStart === thisMonday) {
-              dailyState = parsed;
-            } else {
-              dailyState = { weekStart: thisMonday, daysClaimed: [], lastClaimedDate: '' };
-            }
-          } catch(e) {
-            dailyState = { weekStart: thisMonday, daysClaimed: [], lastClaimedDate: '' };
-          }
-        } else {
-          dailyState = { weekStart: thisMonday, daysClaimed: [], lastClaimedDate: '' };
-        }
-
-        renderDailyModal();
-        updateDailyBadge();
-      }
-
-      // Guardar estado en Supabase + localStorage
-      async function saveDailyState() {
-        localStorage.setItem('dailyReward_v1', JSON.stringify(dailyState));
-
-        if (!currentUser) return;
-        try {
-          const uid = currentUser.id;
-          const username = currentUser.user_metadata?.name || currentUser.user_metadata?.full_name || 'jugador';
+        // 2. Guardar nuevo balance si hubo un cambio
+        if (addedCoins !== 0 || isNew || forceSave) {
           const payload = {
             twitch_user_id: uid,
             twitch_username: username,
-            week_start: dailyState.weekStart,
+            balance: newBalance,
+            inventory: playerInventory,
+            updated_at: new Date().toISOString()
+          };
+          if (isNew) {
+            await sb.from('player_wallets').insert(payload);
+          } else {
+            await sb.from('player_wallets').update(payload).eq('twitch_user_id', uid);
+          }
+        }
+      }
+
+      async function buyBuff(type, cost, seconds) {
+        if (!currentUser) return alert('Debes iniciar sesión primero.');
+        if (totalCoins < cost) {
+          return alert('No tienes monedas suficientes.');
+        }
+
+        // Descontar visualmente
+        totalCoins -= cost;
+        document.getElementById('coinBalanceDisplay').textContent = totalCoins;
+
+        // Añadir a inventario en lugar de activar
+        playerInventory[type] = (playerInventory[type] || 0) + 1;
+        updateInventoryHud();
+
+        // Guardar en DB (usamos syncWallet enviando monedas negativas)
+        await syncWallet(-cost, true);
+      }
+
+      // ---------- Tienda dinámica desde DB ----------
+      // Estructura esperada en Supabase table "store_config":
+      //   id, tab, type, label, description, image, seconds, price, enabled (boolean)
+      // Si la tabla no existe aún, la tienda cae en modo estático.
+      let storeConfig = null; // null = no cargado
+
+      async function loadStoreFromDB() {
+        try {
+          const { data, error } = await sb
+            .from('store_config')
+            .select('*')
+            .eq('enabled', true)
+            .order('tab')
+            .order('price');
+          if (error || !data || data.length === 0) return; // usa tienda HTML estática
+          storeConfig = data;
+          renderDynamicStore();
+        } catch(e) { /* tabla no existe aún, se usa tienda estática */ }
+      }
+
+      function renderDynamicStore() {
+        if (!storeConfig) return;
+        const tabsOrder = [...new Set(storeConfig.map(i => i.tab))];
+
+        // Sidebar
+        const sidebar = document.querySelector('.store-sidebar');
+        if (sidebar) {
+          sidebar.innerHTML = tabsOrder.map((tab, idx) =>
+            `<button id="tabBtn-${tab}" class="store-tab${idx===0?' active':''}" onclick="showStoreTab('${tab}')">${tab}</button>`
+          ).join('');
+        }
+
+        // Content area
+        const area = document.querySelector('.store-content-area');
+        if (!area) return;
+        area.innerHTML = tabsOrder.map((tab, idx) => {
+          const items = storeConfig.filter(i => i.tab === tab);
+          const first = items[0];
+          return `
+            <div id="tab-${tab}" class="store-tab-content${idx===0?' active':''}">
+              <div style="text-align:center; margin-bottom:20px;">
+                <img src="${first.image || 'assets/coin.png'}" style="width:80px; image-rendering:pixelated; filter:drop-shadow(0 4px 6px rgba(0,0,0,0.5));">
+                <div style="color:var(--gold); margin-top:10px; font-size:14px; font-weight:bold;">${tab.toUpperCase()}</div>
+                <div style="font-size:10px; color:#ccc; margin-top:5px;">${first.description || ''}</div>
+              </div>
+              ${items.map(item => `
+                <div class="store-item">
+                  <span>${item.label}</span>
+                  <button onclick="buyBuff('${item.type}', ${item.price}, ${item.seconds})">${item.price}</button>
+                </div>
+              `).join('')}
+            </div>`;
+        }).join('');
+      }
+
+      // ---------- Cargar leaderboard ----------
+      function updateWeekRange() {
+        const now = new Date();
+        const day = (now.getDay() + 6) % 7; // lunes = 0
+        const monday = new Date(now); monday.setDate(now.getDate() - day);
+        const sunday = new Date(monday); sunday.setDate(monday.getDate() + 6);
+        const fmt = d => d.toLocaleDateString('es-MX', { day: 'numeric', month: 'short' });
+        document.getElementById('weekRange').textContent = `${fmt(monday)} – ${fmt(sunday)}`;
+      }
+
+      async function loadLeaderboard() {
+        updateWeekRange();
+        const list = document.getElementById('leaderboardList');
+        const { data, error } = await sb
+          .from('current_week_leaderboard')
+          .select('twitch_username, best_score')
+          .order('best_score', { ascending: false })
+          .limit(10);
+
+        if (error) {
+          console.error('Error cargando leaderboard:', error);
+          list.innerHTML = `<li><span>No se pudo cargar el top</span></li>`;
+          return;
+        }
+
+        if (!data || data.length === 0) {
+          list.innerHTML = `<li><span>Todavía nadie ha jugado esta semana 🐹</span></li>`;
+          return;
+        }
+
+        list.innerHTML = data.map((row, i) =>
+          `<li><span>#${i + 1} ${row.twitch_username}</span><span>${row.best_score}</span></li>`
+        ).join('');
+      }
+
+      checkSession();
+      loadLeaderboard();
+      loadStoreFromDB();
+
+      // ---------- Pantalla completa (Fullscreen API nativa) ----------
+      const fullscreenBtn = document.getElementById('fullscreenBtn');
+      const gameWrap = document.getElementById('gameWrap');
+      const gamePanel = document.getElementById('gamePanel');
+
+      function enterFullscreen() {
+        const el = gameWrap;
+        if (el.requestFullscreen)           return el.requestFullscreen();
+        if (el.webkitRequestFullscreen)     return el.webkitRequestFullscreen();
+        if (el.mozRequestFullScreen)        return el.mozRequestFullScreen();
+        if (el.msRequestFullscreen)         return el.msRequestFullscreen();
+        // Fallback CSS si el navegador no soporta la API
+        gamePanel.classList.add('fullscreen-mode');
+        document.body.style.overflow = 'hidden';
+      }
+
+      function exitFullscreen() {
+        if (document.exitFullscreen)           return document.exitFullscreen();
+        if (document.webkitExitFullscreen)     return document.webkitExitFullscreen();
+        if (document.mozCancelFullScreen)      return document.mozCancelFullScreen();
+        if (document.msExitFullscreen)         return document.msExitFullscreen();
+        // Fallback CSS
         gamePanel.classList.remove('fullscreen-mode');
         document.body.style.overflow = '';
       }
@@ -1877,7 +1877,7 @@
           console.error('Twitch check failed', e);
         }
       }
-      
+
       checkTwitchLive();
       setInterval(checkTwitchLive, 5 * 60 * 1000);
 
