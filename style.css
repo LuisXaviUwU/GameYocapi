@@ -1162,6 +1162,41 @@
   #wheelCanvas { width: 280px !important; height: 280px !important; }
 }
 
+@media (max-width: 900px) and (orientation: landscape) {
+  #wheelModal.modal-overlay {
+    padding: 5px;
+    align-items: flex-start;
+    justify-content: center;
+  }
+  .wheel-modal-box {
+    padding: 10px;
+    max-width: 320px !important;
+  }
+  .wheel-wrap {
+    width: 180px;
+    height: 190px;
+    margin-bottom: 8px;
+  }
+  #wheelCanvas {
+    width: 180px !important;
+    height: 180px !important;
+    margin-top: 10px;
+  }
+  .wheel-modal-box h3 {
+    font-size: 11px;
+    margin-bottom: 4px;
+  }
+  .wheel-subtitle {
+    font-size: 9px;
+    margin-bottom: 6px;
+  }
+  .spin-btn {
+    font-size: 10px;
+    padding: 8px 16px;
+    margin-top: 4px;
+  }
+}
+
 /* Puntero (flecha) */
 .wheel-pointer {
   position: absolute;

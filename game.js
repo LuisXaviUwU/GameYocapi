@@ -2045,17 +2045,24 @@ if (document.readyState !== 'loading') {
    ============================================================ */
 
 const WHEEL_SEGMENTS = [
-  { label: '100\nMonedas',   emoji: '🪙', color: '#f59e0b', type: 'coins',       amount: 100  },
-  { label: '1 Multi\nx2',    emoji: '✖2', color: '#3b82f6', type: 'multi',       amount: 1    },
-  { label: 'Escudo\n30s',    emoji: '🛡',  color: '#8b5cf6', type: 'shield30',    amount: 1    },
-  { label: 'Otra\nOport.',   emoji: '🔄',  color: '#6b7280', type: 'retry',       amount: 0    },
-  { label: '300\nMonedas',   emoji: '🪙',  color: '#f97316', type: 'coins',       amount: 300  },
-  { label: '2 Imanes',       emoji: '🧲',  color: '#ec4899', type: 'magnet',      amount: 2    },
-  { label: '2 Multi\nx4',    emoji: '✖4', color: '#10b981', type: 'multi4',      amount: 2    },
-  { label: 'Otra\nOport.',   emoji: '🔄',  color: '#6b7280', type: 'retry',       amount: 0    },
-  { label: '2000\nMonedas',  emoji: '💰',  color: '#eab308', type: 'coins',       amount: 2000 },
-  { label: '2 Multi\nx6',    emoji: '✖6', color: '#ef4444', type: 'multi6',      amount: 2    },
+  { label: '100\nMonedas',   img: 'coin.png', emoji: '🪙', color: '#f59e0b', type: 'coins',       amount: 100  },
+  { label: '1 Multi\nx2',    img: 'x2.png', emoji: '✖2', color: '#3b82f6', type: 'multi',       amount: 1    },
+  { label: 'Escudo\n30s',    img: 'inmortal.png', emoji: '🛡',  color: '#8b5cf6', type: 'shield30',    amount: 1    },
+  { label: 'Otra\nOport.',   img: null, emoji: '🔄',  color: '#6b7280', type: 'retry',       amount: 0    },
+  { label: '300\nMonedas',   img: 'coin.png', emoji: '🪙',  color: '#f97316', type: 'coins',       amount: 300  },
+  { label: '2 Imanes',       img: 'iman.png', emoji: '🧲',  color: '#ec4899', type: 'magnet',      amount: 2    },
+  { label: '2 Multi\nx4',    img: 'x4.png', emoji: '✖4', color: '#10b981', type: 'multi4',      amount: 2    },
+  { label: 'Otra\nOport.',   img: null, emoji: '🔄',  color: '#6b7280', type: 'retry',       amount: 0    },
+  { label: '2000\nMonedas',  img: 'coin.png', emoji: '💰',  color: '#eab308', type: 'coins',       amount: 2000 },
+  { label: '2 Multi\nx6',    img: 'x6.png', emoji: '✖6', color: '#ef4444', type: 'multi6',      amount: 2    },
 ];
+
+const wheelImages = {};
+['coin.png', 'x2.png', 'x4.png', 'x6.png', 'inmortal.png', 'iman.png'].forEach(src => {
+  const img = new Image();
+  img.src = 'assets/' + src;
+  wheelImages[src] = img;
+});
 
 const WHEEL_COOLDOWN_MS = 3 * 60 * 60 * 1000; // 3 horas
 let wheelState = { lastSpinAt: 0 };
@@ -2101,9 +2108,14 @@ function drawWheel(canvas, angle) {
     ctx2.shadowColor = '#000';
     ctx2.shadowBlur = 3;
 
-    // Emoji
-    ctx2.font = `${Math.max(10, size * 0.065)}px serif`;
-    ctx2.fillText(seg.emoji, r - 6, 5);
+    // Emoji o Imagen PNG
+    const imgSize = Math.max(16, size * 0.08);
+    if (seg.img && wheelImages[seg.img] && wheelImages[seg.img].complete) {
+      ctx2.drawImage(wheelImages[seg.img], r - 10 - imgSize, -imgSize/2, imgSize, imgSize);
+    } else {
+      ctx2.font = `${Math.max(10, size * 0.065)}px serif`;
+      ctx2.fillText(seg.emoji, r - 6, 5);
+    }
 
     // Etiqueta multilinea
     const lines = seg.label.split('\n');
@@ -2175,7 +2187,6 @@ function msToHMS(ms) {
 
 function updateWheelUI() {
   const spinBtn      = document.getElementById('spinBtn');
-  const cdInfo       = document.getElementById('wheelCooldownInfo');
   const badge        = document.getElementById('wheelCooldownBadge');
   const loginMsg     = document.getElementById('wheelLoginMsg');
   const wheelContent = document.getElementById('wheelContent');
@@ -2194,16 +2205,11 @@ function updateWheelUI() {
   if (canSpinNow()) {
     spinBtn.disabled = false;
     spinBtn.textContent = '🎰 ¡GIRAR!';
-    if (cdInfo) cdInfo.style.display = 'none';
     if (badge) badge.style.display = 'flex';
   } else {
     spinBtn.disabled = true;
     const remaining = WHEEL_COOLDOWN_MS - (Date.now() - wheelState.lastSpinAt);
     spinBtn.textContent = `⏳ ${msToHMS(remaining)}`;
-    if (cdInfo) {
-      cdInfo.style.display = 'block';
-      cdInfo.innerHTML = `⏳ Próximo giro en <b>${msToHMS(remaining)}</b>`;
-    }
     if (badge) badge.style.display = 'none';
   }
 }
