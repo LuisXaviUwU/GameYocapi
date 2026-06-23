@@ -47,6 +47,12 @@
                <span class="live-text">EN DIRECTO</span>
           </a>
           <a href="dashboard.html" id="adminDashboardBtn" class="admin-corner-btn" style="display:none;">🛠 ADMIN PANEL</a>
+          <!-- Botón Sesión Diaria -->
+          <button id="dailyRewardBtn" class="daily-reward-corner-btn" onclick="openDailyReward()" title="Sesión Diaria">
+            <span class="daily-reward-icon">🎁</span>
+            <span class="daily-reward-label">DIARIO</span>
+            <span id="dailyRewardBadge" class="daily-reward-badge" style="display:none;">!</span>
+          </button>
         </div>
 
         <div id="overlay">
@@ -207,6 +213,28 @@
                 <span>🎮 JUEGO</span>
                 <input type="range" id="volGame" min="0" max="100" value="45" title="Volumen música juego">
               </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- ====== MODAL SESIÓN DIARIA ====== -->
+        <div id="dailyRewardModal" class="modal-overlay">
+          <div class="modal-box daily-modal-box">
+            <button class="modal-close" onclick="closeModal('dailyRewardModal')">X</button>
+            <h3>🎁 SESIÓN DIARIA</h3>
+            <p class="daily-subtitle">¡Inicia sesión cada día para ganar recompensas! Se reinicia a las 12:00 AM (México)</p>
+
+            <div id="dailyLoginRequired" class="week-note" style="margin:20px 0;">Inicia sesión con Twitch para recibir recompensas diarias</div>
+
+            <div id="dailyRewardContent" style="display:none;">
+              <div class="daily-streak-info">
+                <span id="dailyStreakText">Racha actual: 0 días</span>
+              </div>
+              <div class="daily-days-grid" id="dailyDaysGrid">
+                <!-- Días generados por JS -->
+              </div>
+              <button id="claimDailyBtn" class="claim-btn" onclick="claimDailyReward()" style="display:none;">✨ RECLAMAR RECOMPENSA</button>
+              <div id="dailyNextInfo" class="daily-next-info" style="display:none;"></div>
             </div>
           </div>
         </div>

@@ -1686,3 +1686,340 @@
       checkTwitchLive();
       setInterval(checkTwitchLive, 5 * 60 * 1000);
 
+      /* ============================================================
+         SISTEMA DE SESIÓN DIARIA (Recompensas Semanales)
+         Reset a las 12:00 AM hora Ciudad de México (UTC-6)
+         ============================================================ */
+
+      // Definición de recompensas por día (1-7)
+      const DAILY_REWARDS = [
+        { day: 1, icon: '🪙', label: '500 Monedas',      type: 'coins',    amount: 500 },
+        { day: 2, icon: '⭐', label: '2 Doble Salto',    type: 'doubleJump', amount: 2 },
+        { day: 3, icon: '🧲', label: '2 Imán',           type: 'magnet',   amount: 2 },
+        { day: 4, icon: '🪙', label: '500 Monedas',      type: 'coins',    amount: 500 },
+        { day: 5, icon: '🛡', label: 'Escudo 30s',       type: 'shield30', amount: 1 },
+        { day: 6, icon: '🛡', label: 'Escudo 1 Min',     type: 'shield60', amount: 1 },
+        { day: 7, icon: '✖6', label: '3 Multiplicador x6', type: 'multi6', amount: 3 },
+      ];
+
+      // Obtener la fecha actual en la zona horaria de México (UTC-6)
+      // UTC-6 es America/Mexico_City (sin horario de verano este año para simplificar;
+      // usamos el offset fijo -6 que es correcto para el horario estándar de México).
+      function getMexicoDate() {
+        const now = new Date();
+        // Mexico City = UTC-6 (CDT en verano = UTC-5, pero usamos el display con Intl)
+        const mxStr = now.toLocaleDateString('en-CA', { timeZone: 'America/Mexico_City' }); // YYYY-MM-DD
+        return mxStr; // e.g. "2026-06-23"
+      }
+
+      function getMexicoMidnight() {
+        // Próxima medianoche en Ciudad de México
+        const now = new Date();
+        // Construir la fecha de mañana a las 00:00 en CDMX
+        const todayMx = getMexicoDate();
+        const [y, m, d] = todayMx.split('-').map(Number);
+        // Crear una fecha de mañana 00:00 en zona CDMX usando un string ISO con offset correcto
+        // Intl nos dice si está en -5 o -6
+        const sampleMx = new Date().toLocaleString('en-US', { timeZone: 'America/Mexico_City', hour12: false });
+        const utcNow = now.getTime();
+        // Calcular el offset real del TZ
+        const mxNow = new Date(new Date().toLocaleString('en-US', { timeZone: 'America/Mexico_City' }));
+        const tzOffset = Math.round((utcNow - mxNow.getTime()) / 60000); // minutos (ej. 360 para -6)
+        // Medianoche mañana en CDMX = construir date de (tomorrow 00:00) + offset
+        const tomorrowMx = new Date(y, m - 1, d + 1, 0, 0, 0, 0);
+        // Ajustar por el offset para obtener UTC correcto
+        const midnight = new Date(tomorrowMx.getTime() + tzOffset * 60000);
+        return midnight;
+      }
+
+      // Estado local del daily reward
+      let dailyState = {
+        weekStart: '',      // YYYY-MM-DD del lunes de la semana actual (hora MX)
+        daysClaimed: [],    // array de días reclamados [1,2,3...] en esta semana
+        lastClaimedDate: '' // YYYY-MM-DD del último día reclamado
+      };
+
+      // Calcular el lunes de la semana actual (hora México)
+      function getMondayOfWeek(dateStr) {
+        const [y, m, d] = dateStr.split('-').map(Number);
+        const dt = new Date(y, m - 1, d);
+        const dow = dt.getDay(); // 0=dom, 1=lun...
+        const diff = (dow === 0) ? -6 : 1 - dow; // días para llegar al lunes
+        const monday = new Date(y, m - 1, d + diff);
+        return monday.toLocaleDateString('en-CA'); // YYYY-MM-DD
+      }
+
+      // Día de la semana en esta semana (1=lun ... 7=dom), basado en fecha MX
+      function getDayOfWeek(dateStr) {
+        const [y, m, d] = dateStr.split('-').map(Number);
+        const dt = new Date(y, m - 1, d);
+        const dow = dt.getDay(); // 0=dom
+        return dow === 0 ? 7 : dow; // 1=lun, 7=dom
+      }
+
+      // Cargar estado de Supabase (tabla daily_rewards) o localStorage
+      async function loadDailyState() {
+        const todayMx = getMexicoDate();
+        const thisMonday = getMondayOfWeek(todayMx);
+
+        if (currentUser) {
+          try {
+            const { data, error } = await sb
+              .from('daily_rewards')
+              .select('week_start, days_claimed, last_claimed_date')
+              .eq('twitch_user_id', currentUser.id)
+              .single();
+
+            if (!error && data) {
+              // Si la semana del servidor coincide, usar esos datos
+              if (data.week_start === thisMonday) {
+                dailyState = {
+                  weekStart: data.week_start,
+                  daysClaimed: data.days_claimed || [],
+                  lastClaimedDate: data.last_claimed_date || ''
+                };
+              } else {
+                // Nueva semana: reiniciar
+                dailyState = { weekStart: thisMonday, daysClaimed: [], lastClaimedDate: '' };
+                await saveDailyState();
+              }
+              renderDailyModal();
+              updateDailyBadge();
+              return;
+            }
+          } catch(e) { /* tabla no existe aún, usar localStorage */ }
+        }
+
+        // Fallback: localStorage
+        const stored = localStorage.getItem('dailyReward_v1');
+        if (stored) {
+          try {
+            const parsed = JSON.parse(stored);
+            if (parsed.weekStart === thisMonday) {
+              dailyState = parsed;
+            } else {
+              dailyState = { weekStart: thisMonday, daysClaimed: [], lastClaimedDate: '' };
+            }
+          } catch(e) {
+            dailyState = { weekStart: thisMonday, daysClaimed: [], lastClaimedDate: '' };
+          }
+        } else {
+          dailyState = { weekStart: thisMonday, daysClaimed: [], lastClaimedDate: '' };
+        }
+
+        renderDailyModal();
+        updateDailyBadge();
+      }
+
+      // Guardar estado en Supabase + localStorage
+      async function saveDailyState() {
+        localStorage.setItem('dailyReward_v1', JSON.stringify(dailyState));
+
+        if (!currentUser) return;
+        try {
+          const uid = currentUser.id;
+          const username = currentUser.user_metadata?.name || currentUser.user_metadata?.full_name || 'jugador';
+          const payload = {
+            twitch_user_id: uid,
+            twitch_username: username,
+            week_start: dailyState.weekStart,
+            days_claimed: dailyState.daysClaimed,
+            last_claimed_date: dailyState.lastClaimedDate,
+            updated_at: new Date().toISOString()
+          };
+          // Upsert
+          await sb.from('daily_rewards').upsert(payload, { onConflict: 'twitch_user_id' });
+        } catch(e) { /* tabla aún no existe, datos en localStorage */ }
+      }
+
+      // Badge de notificación (!) cuando hay recompensa disponible
+      function updateDailyBadge() {
+        const badge = document.getElementById('dailyRewardBadge');
+        if (!badge) return;
+        const todayMx = getMexicoDate();
+        const todayDow = getDayOfWeek(todayMx);
+        const alreadyClaimedToday = dailyState.lastClaimedDate === todayMx;
+        // Mostrar badge si: el día de hoy no fue reclamado Y hay días disponibles aún (≤7)
+        const canClaim = !alreadyClaimedToday && dailyState.daysClaimed.length < 7;
+        badge.style.display = canClaim ? 'flex' : 'none';
+      }
+
+      // Abrir el modal de recompensa diaria
+      function openDailyReward() {
+        renderDailyModal();
+        openModal('dailyRewardModal');
+      }
+
+      // Renderizar el modal con el estado actual
+      function renderDailyModal() {
+        const todayMx = getMexicoDate();
+        const alreadyClaimedToday = dailyState.lastClaimedDate === todayMx;
+        const totalClaimed = dailyState.daysClaimed.length;
+        const nextDayIdx = totalClaimed; // índice 0-based del próximo día a reclamar (0-6)
+        const nextDayNum = nextDayIdx + 1; // día 1-7
+
+        // Login requerido / contenido
+        const loginReq = document.getElementById('dailyLoginRequired');
+        const content = document.getElementById('dailyRewardContent');
+
+        if (!currentUser) {
+          if (loginReq) loginReq.style.display = 'block';
+          if (content) content.style.display = 'none';
+          return;
+        }
+        if (loginReq) loginReq.style.display = 'none';
+        if (content) content.style.display = 'block';
+
+        // Racha
+        const streakEl = document.getElementById('dailyStreakText');
+        if (streakEl) {
+          const streak = dailyState.daysClaimed.length;
+          streakEl.textContent = streak === 0
+            ? '¡Comienza tu racha semanal!'
+            : `Racha: ${streak}/7 días esta semana 🔥`;
+        }
+
+        // Grid de días
+        const grid = document.getElementById('dailyDaysGrid');
+        if (grid) {
+          grid.innerHTML = DAILY_REWARDS.map((r, idx) => {
+            const dayNum = idx + 1;
+            let cardClass = 'locked';
+            if (dailyState.daysClaimed.includes(dayNum)) {
+              cardClass = 'claimed';
+            } else if (dayNum === nextDayNum && !alreadyClaimedToday && totalClaimed < 7) {
+              cardClass = 'available';
+            }
+            return `
+              <div class="daily-day-card ${cardClass}" id="dayCard${dayNum}">
+                <span class="daily-day-num">DÍA ${dayNum}</span>
+                <span class="daily-day-icon">${r.icon}</span>
+                <span class="daily-day-reward">${r.label}</span>
+              </div>`;
+          }).join('');
+        }
+
+        // Botón de reclamar / info
+        const claimBtn = document.getElementById('claimDailyBtn');
+        const nextInfo = document.getElementById('dailyNextInfo');
+
+        if (totalClaimed >= 7) {
+          // Semana completa
+          if (claimBtn) claimBtn.style.display = 'none';
+          if (nextInfo) {
+            nextInfo.style.display = 'block';
+            nextInfo.innerHTML = '🎉 <b>¡Completaste la semana!</b> Las recompensas se reinician el próximo lunes.';
+          }
+        } else if (alreadyClaimedToday) {
+          // Ya reclamó hoy
+          if (claimBtn) claimBtn.style.display = 'none';
+          if (nextInfo) {
+            nextInfo.style.display = 'block';
+            const midnight = getMexicoMidnight();
+            const now = new Date();
+            const diff = midnight - now;
+            const hh = Math.floor(diff / 3600000);
+            const mm = Math.floor((diff % 3600000) / 60000);
+            nextInfo.innerHTML = `⏰ Próxima recompensa en <b>${hh}h ${mm}m</b> (medianoche CDMX)`;
+          }
+        } else {
+          // Puede reclamar
+          if (claimBtn) {
+            claimBtn.style.display = 'block';
+            claimBtn.textContent = `✨ RECLAMAR DÍA ${nextDayNum}`;
+          }
+          if (nextInfo) nextInfo.style.display = 'none';
+        }
+      }
+
+      // Reclamar la recompensa del día
+      async function claimDailyReward() {
+        if (!currentUser) {
+          alert('Debes iniciar sesión con Twitch para reclamar tu recompensa diaria.');
+          return;
+        }
+        const todayMx = getMexicoDate();
+        if (dailyState.lastClaimedDate === todayMx) {
+          alert('Ya reclamaste tu recompensa de hoy. ¡Vuelve mañana!');
+          return;
+        }
+        if (dailyState.daysClaimed.length >= 7) {
+          alert('¡Ya completaste la semana! Las recompensas se reinician el próximo lunes.');
+          return;
+        }
+
+        const nextDayIdx = dailyState.daysClaimed.length;
+        const reward = DAILY_REWARDS[nextDayIdx];
+        if (!reward) return;
+
+        // Marcar como reclamado
+        dailyState.daysClaimed.push(reward.day);
+        dailyState.lastClaimedDate = todayMx;
+
+        // Aplicar recompensa
+        if (reward.type === 'coins') {
+          // Agregar monedas directamente a la wallet
+          await syncWallet(reward.amount);
+          showRewardToast(`🪙 +${reward.amount} monedas`);
+        } else {
+          // Agregar al inventario
+          playerInventory[reward.type] = (playerInventory[reward.type] || 0) + reward.amount;
+          updateInventoryHud();
+          await syncWallet(0, true); // guardar inventario actualizado
+          showRewardToast(`${reward.icon} +${reward.amount} ${reward.label}`);
+        }
+
+        // Guardar estado
+        await saveDailyState();
+
+        // Actualizar UI
+        renderDailyModal();
+        updateDailyBadge();
+
+        // Animación en la tarjeta
+        const card = document.getElementById('dayCard' + reward.day);
+        if (card) {
+          card.classList.remove('available');
+          card.classList.add('claimed', 'reward-anim');
+        }
+      }
+
+      // Toast de recompensa
+      function showRewardToast(msg) {
+        const toast = document.createElement('div');
+        toast.textContent = msg;
+        toast.style.cssText = `
+          position: fixed; bottom: 80px; left: 50%; transform: translateX(-50%);
+          background: linear-gradient(135deg, #7c3aed, #a855f7);
+          color: #fff; font-family: 'Press Start 2P', monospace; font-size: 12px;
+          padding: 14px 24px; border-radius: 12px; z-index: 9999;
+          box-shadow: 0 0 30px rgba(168,85,247,0.8); border: 2px solid #e9d5ff;
+          animation: rewardPop 0.5s cubic-bezier(0.34,1.56,0.64,1) forwards;
+          text-shadow: 1px 1px 0 #000;
+        `;
+        document.body.appendChild(toast);
+        setTimeout(() => {
+          toast.style.transition = 'opacity 0.5s';
+          toast.style.opacity = '0';
+          setTimeout(() => toast.remove(), 500);
+        }, 2800);
+      }
+
+      // Inicializar cuando hay sesión
+      sb.auth.onAuthStateChange((_evt, session) => {
+        // (ya existe el handler original, este es adicional solo para daily)
+        if (session?.user) {
+          setTimeout(loadDailyState, 300);
+        } else {
+          updateDailyBadge();
+        }
+      });
+
+      // Cargar al inicio (puede estar sin sesión, usa localStorage)
+      document.addEventListener('DOMContentLoaded', () => {
+        setTimeout(loadDailyState, 500);
+      });
+      // Si el DOM ya cargó (script al final del body)
+      if (document.readyState !== 'loading') {
+        setTimeout(loadDailyState, 500);
+      }

@@ -1009,3 +1009,271 @@
   transform: translateY(2px);
   box-shadow: 0 2px 0 #9b2c2c, 0 0 10px #e53e3e;
 }
+
+/* ========== Botón Sesión Diaria (esquina inferior-izquierda) ========== */
+.daily-reward-corner-btn {
+  position: absolute;
+  bottom: 15px;
+  left: 15px;
+  background: linear-gradient(135deg, #1a0a3d 0%, #2d1060 100%);
+  border: 3px solid #a855f7;
+  border-bottom: 5px solid #6b21a8;
+  border-radius: 12px;
+  padding: 8px 12px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  cursor: pointer;
+  font-family: 'Press Start 2P', monospace;
+  font-size: 9px;
+  color: #e9d5ff;
+  z-index: 100;
+  box-shadow: 0 0 18px rgba(168, 85, 247, 0.5), 0 4px 0 #4c1d95;
+  transition: all 0.15s;
+  text-shadow: 1px 1px 0 #000;
+  margin-top: 0;
+  animation: dailyPulse 2.5s infinite;
+}
+
+@keyframes dailyPulse {
+  0%, 100% { box-shadow: 0 0 14px rgba(168, 85, 247, 0.5), 0 4px 0 #4c1d95; }
+  50%       { box-shadow: 0 0 28px rgba(168, 85, 247, 0.9), 0 4px 0 #4c1d95; }
+}
+
+.daily-reward-corner-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 0 32px rgba(168, 85, 247, 1), 0 6px 0 #4c1d95;
+}
+
+.daily-reward-corner-btn:active {
+  transform: translateY(3px);
+  border-bottom-width: 2px;
+  box-shadow: 0 0 10px rgba(168, 85, 247, 0.5), 0 1px 0 #4c1d95;
+}
+
+.daily-reward-icon {
+  font-size: 18px;
+  line-height: 1;
+  filter: drop-shadow(0 0 4px #a855f7);
+}
+
+.daily-reward-label {
+  letter-spacing: 1px;
+}
+
+.daily-reward-badge {
+  position: absolute;
+  top: -8px;
+  right: -8px;
+  background: #ef4444;
+  color: #fff;
+  font-family: 'Press Start 2P', monospace;
+  font-size: 9px;
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 2px solid #fff;
+  animation: badgeBounce 0.8s infinite alternate;
+  box-shadow: 0 0 8px #ef4444;
+}
+
+@keyframes badgeBounce {
+  from { transform: scale(1); }
+  to   { transform: scale(1.2); }
+}
+
+/* Se oculta mientras se juega */
+#gameWrap.is-playing .daily-reward-corner-btn { display: none; }
+
+/* ========== Modal Sesión Diaria ========== */
+.daily-modal-box {
+  max-width: 620px !important;
+  width: 95% !important;
+  background: linear-gradient(160deg, #1a0a3d 0%, #2b1060 60%, #1a0a3d 100%);
+  border-color: #a855f7 !important;
+  box-shadow: 0 0 40px rgba(168, 85, 247, 0.6), 0 10px 30px rgba(0,0,0,0.9) !important;
+}
+
+.daily-modal-box h3 {
+  color: #e9d5ff !important;
+  text-shadow: 0 0 12px rgba(168, 85, 247, 0.8);
+}
+
+.daily-subtitle {
+  font-family: 'Nunito', sans-serif;
+  font-size: 12px;
+  color: #c4b5fd;
+  margin: 0 0 16px 0;
+  line-height: 1.5;
+}
+
+/* Racha info */
+.daily-streak-info {
+  background: rgba(168, 85, 247, 0.15);
+  border: 2px solid rgba(168, 85, 247, 0.4);
+  border-radius: 8px;
+  padding: 8px 14px;
+  margin-bottom: 16px;
+  font-family: 'Press Start 2P', monospace;
+  font-size: 10px;
+  color: #e9d5ff;
+  text-align: center;
+}
+
+/* Grid de 7 días */
+.daily-days-grid {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 8px;
+  margin-bottom: 16px;
+}
+
+@media (max-width: 600px) {
+  .daily-days-grid {
+    grid-template-columns: repeat(4, 1fr);
+    gap: 6px;
+  }
+}
+
+/* Tarjeta de cada día */
+.daily-day-card {
+  background: rgba(0, 0, 0, 0.4);
+  border: 2px solid rgba(168, 85, 247, 0.3);
+  border-radius: 10px;
+  padding: 8px 4px;
+  text-align: center;
+  position: relative;
+  transition: all 0.2s;
+  min-width: 0;
+}
+
+.daily-day-card.claimed {
+  background: linear-gradient(135deg, rgba(34, 197, 94, 0.25) 0%, rgba(22, 163, 74, 0.15) 100%);
+  border-color: #22c55e;
+  box-shadow: 0 0 10px rgba(34, 197, 94, 0.3);
+}
+
+.daily-day-card.available {
+  background: linear-gradient(135deg, rgba(168, 85, 247, 0.3) 0%, rgba(109, 40, 217, 0.2) 100%);
+  border-color: #a855f7;
+  box-shadow: 0 0 14px rgba(168, 85, 247, 0.6);
+  animation: cardGlow 1.5s infinite alternate;
+  cursor: pointer;
+}
+
+@keyframes cardGlow {
+  from { box-shadow: 0 0 8px rgba(168, 85, 247, 0.5); }
+  to   { box-shadow: 0 0 20px rgba(168, 85, 247, 1); }
+}
+
+.daily-day-card.locked {
+  background: rgba(0, 0, 0, 0.5);
+  border-color: rgba(100, 100, 100, 0.3);
+  opacity: 0.6;
+}
+
+.daily-day-num {
+  font-family: 'Press Start 2P', monospace;
+  font-size: 8px;
+  color: #a78bfa;
+  margin-bottom: 6px;
+  display: block;
+}
+
+.daily-day-icon {
+  font-size: 22px;
+  display: block;
+  margin-bottom: 4px;
+  line-height: 1;
+  filter: drop-shadow(0 2px 4px rgba(0,0,0,0.5));
+}
+
+.daily-day-reward {
+  font-family: 'Nunito', sans-serif;
+  font-size: 9px;
+  font-weight: 900;
+  color: #e9d5ff;
+  line-height: 1.3;
+  word-break: break-word;
+}
+
+.daily-day-card.claimed .daily-day-reward {
+  color: #86efac;
+}
+
+.daily-day-card.available .daily-day-reward {
+  color: #f0abfc;
+}
+
+/* Check de reclamado */
+.daily-day-card.claimed::after {
+  content: '✓';
+  position: absolute;
+  top: -8px;
+  right: -6px;
+  background: #22c55e;
+  color: #fff;
+  font-size: 10px;
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 2px solid #fff;
+  font-weight: bold;
+}
+
+/* Botón Reclamar */
+.claim-btn {
+  background: linear-gradient(135deg, #7c3aed 0%, #a855f7 100%);
+  border: none;
+  border-bottom: 4px solid #4c1d95;
+  color: #fff;
+  font-family: 'Press Start 2P', monospace;
+  font-size: 11px;
+  padding: 14px 24px;
+  border-radius: 10px;
+  cursor: pointer;
+  width: 100%;
+  margin-top: 4px;
+  text-shadow: 1px 1px 0 #000;
+  box-shadow: 0 0 20px rgba(168, 85, 247, 0.6);
+  animation: claimPulse 1.2s infinite alternate;
+  transition: transform 0.1s;
+}
+
+@keyframes claimPulse {
+  from { box-shadow: 0 0 12px rgba(168, 85, 247, 0.5), 0 4px 0 #4c1d95; }
+  to   { box-shadow: 0 0 30px rgba(168, 85, 247, 1), 0 4px 0 #4c1d95; }
+}
+
+.claim-btn:hover { transform: translateY(-2px); }
+.claim-btn:active { transform: translateY(3px); border-bottom-width: 1px; }
+
+/* Info de próximo día */
+.daily-next-info {
+  font-family: 'Nunito', sans-serif;
+  font-size: 12px;
+  color: #c4b5fd;
+  text-align: center;
+  margin-top: 10px;
+  padding: 8px;
+  background: rgba(0,0,0,0.3);
+  border-radius: 8px;
+  border: 1px solid rgba(168, 85, 247, 0.3);
+}
+
+/* Animación de recompensa */
+@keyframes rewardPop {
+  0%   { transform: scale(0.5) rotate(-10deg); opacity: 0; }
+  60%  { transform: scale(1.2) rotate(5deg); opacity: 1; }
+  100% { transform: scale(1) rotate(0deg); opacity: 1; }
+}
+
+.reward-anim {
+  animation: rewardPop 0.5s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+}
