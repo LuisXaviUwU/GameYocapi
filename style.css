@@ -1087,6 +1087,21 @@
   .wheel-corner-label { display: none; }
 }
 
+@media (max-width: 900px) and (orientation: landscape) {
+  .wheel-corner-btn {
+    bottom: 10px;
+    right: 10px;
+    padding: 6px 8px;
+    font-size: 9px;
+    gap: 4px;
+    border-radius: 10px;
+    border-width: 2px;
+    border-bottom-width: 3px;
+  }
+  .wheel-corner-label { display: none; }
+  #wheelBtnCanvas { width: 32px !important; height: 32px !important; }
+}
+
 /* ========== Modal Ruleta ========== */
 @media (max-width: 600px) {
   #wheelModal.modal-overlay {
@@ -1285,6 +1300,21 @@
   .daily-reward-icon { font-size: 20px; }
 }
 
+@media (max-width: 900px) and (orientation: landscape) {
+  .daily-reward-corner-btn {
+    bottom: 10px;
+    left: 10px;
+    padding: 6px 8px;
+    font-size: 9px;
+    gap: 4px;
+    border-radius: 10px;
+    border-width: 2px;
+    border-bottom-width: 3px;
+  }
+  .daily-reward-label { display: none; }
+  .daily-reward-icon { font-size: 18px; }
+}
+
 @keyframes dailyPulse {
   0%, 100% { box-shadow: 0 0 14px rgba(168, 85, 247, 0.5), 0 4px 0 #4c1d95; }
   50%       { box-shadow: 0 0 28px rgba(168, 85, 247, 0.9), 0 4px 0 #4c1d95; }
@@ -1452,6 +1482,20 @@
   }
 }
 
+@media (max-width: 900px) and (orientation: landscape) {
+  .daily-days-grid {
+    grid-template-columns: repeat(7, 1fr);
+    gap: 4px;
+    margin-bottom: 8px;
+  }
+  .daily-day-card:last-child {
+    grid-column: auto;
+    max-width: none;
+    margin: 0;
+    width: auto;
+  }
+}
+
 @media (max-width: 380px) {
   .daily-days-grid {
     grid-template-columns: repeat(3, 1fr);
@@ -1479,6 +1523,14 @@
   .daily-day-card {
     padding: 8px 4px;
     border-radius: 10px;
+    border-width: 2px;
+  }
+}
+
+@media (max-width: 900px) and (orientation: landscape) {
+  .daily-day-card {
+    padding: 4px 2px;
+    border-radius: 8px;
     border-width: 2px;
   }
 }
@@ -1523,6 +1575,13 @@
   }
 }
 
+@media (max-width: 900px) and (orientation: landscape) {
+  .daily-day-num {
+    font-size: 7px;
+    margin-bottom: 2px;
+  }
+}
+
 .daily-day-img {
   width: 42px;
   height: 42px;
@@ -1540,6 +1599,14 @@
   }
 }
 
+@media (max-width: 900px) and (orientation: landscape) {
+  .daily-day-img {
+    width: 24px;
+    height: 24px;
+    margin-bottom: 2px;
+  }
+}
+
 .daily-day-reward {
   font-family: 'Nunito', sans-serif;
   font-size: 12px;
@@ -1552,6 +1619,12 @@
 @media (max-width: 600px) {
   .daily-day-reward {
     font-size: 10px;
+  }
+}
+
+@media (max-width: 900px) and (orientation: landscape) {
+  .daily-day-reward {
+    font-size: 7px;
   }
 }
 
