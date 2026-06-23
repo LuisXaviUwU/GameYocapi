@@ -783,7 +783,7 @@
       // ---------- HUD ----------
       
       function updateInventoryHud() {
-         const ids = ['shield', 'doubleJump', 'magnet', 'multi', 'multi4', 'multi6'];
+         const ids = ['shield', 'shield30', 'shield60', 'doubleJump', 'magnet', 'multi', 'multi4', 'multi6'];
          ids.forEach(id => {
             const el = document.getElementById('inv-' + id);
             if (el) {
@@ -807,9 +807,12 @@
         updateInventoryHud();
         
         // Activar
+        let buffKey = type;
+        if (type.startsWith('shield')) buffKey = 'shield';
+        
         const frames = seconds * 60;
-        activeBuffs[type] = (activeBuffs[type] || 0) + frames;
-        if (type === 'doubleJump') player.jumpsLeft = 2;
+        activeBuffs[buffKey] = (activeBuffs[buffKey] || 0) + frames;
+        if (buffKey === 'doubleJump') player.jumpsLeft = 2;
         updateBuffsHud();
         
         // Guardar en nube silenciosamente

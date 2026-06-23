@@ -60,11 +60,13 @@ async function loadPlayers() {
 
 const ITEM_ICONS = {
   shield: 'assets/inmortal.png',
+  shield30: 'assets/inmortal.png',
+  shield60: 'assets/inmortal.png',
   doubleJump: 'assets/jump.png',
   magnet: 'assets/iman.png',
   multi: 'assets/x2.png',
-  multi4: 'assets/x2.png',
-  multi6: 'assets/x2.png'
+  multi4: 'assets/x4.png',
+  multi6: 'assets/x6.png'
 };
 
 function renderTable(filter = '') {
@@ -109,10 +111,14 @@ function renderTable(filter = '') {
       <td>
         <div style="display:flex; gap:6px; flex-wrap:wrap;">
           <button onclick="addCoins('${p.twitch_user_id}', 100)" class="btn-action" style="background:#00c896; font-size:10px;">+100<img src="assets/coin.png" style="width:12px; vertical-align:middle;"></button>
-          <button onclick="giveItem('${p.twitch_user_id}', 'shield')" class="btn-action" style="background:#1565C0;" title="Dar Escudo">+<img src="assets/inmortal.png" style="width:14px; vertical-align:middle;"></button>
+          <button onclick="giveItem('${p.twitch_user_id}', 'shield')" class="btn-action" style="background:#1565C0;" title="Escudo 10s">+🛡10</button>
+          <button onclick="giveItem('${p.twitch_user_id}', 'shield30')" class="btn-action" style="background:#1565C0;" title="Escudo 30s">+🛡30</button>
+          <button onclick="giveItem('${p.twitch_user_id}', 'shield60')" class="btn-action" style="background:#1565C0;" title="Escudo 60s">+🛡60</button>
           <button onclick="giveItem('${p.twitch_user_id}', 'doubleJump')" class="btn-action" style="background:#2E7D32;" title="Dar Doble Salto">+<img src="assets/jump.png" style="width:14px; vertical-align:middle;"></button>
           <button onclick="giveItem('${p.twitch_user_id}', 'magnet')" class="btn-action" style="background:#6A1B9A;" title="Dar Imán">+<img src="assets/iman.png" style="width:14px; vertical-align:middle;"></button>
           <button onclick="giveItem('${p.twitch_user_id}', 'multi')" class="btn-action" style="background:#E65100;" title="Dar x2">+<img src="assets/x2.png" style="width:14px; vertical-align:middle;"></button>
+          <button onclick="giveItem('${p.twitch_user_id}', 'multi4')" class="btn-action" style="background:#E65100;" title="Dar x4">+<img src="assets/x4.png" style="width:14px; vertical-align:middle;"></button>
+          <button onclick="giveItem('${p.twitch_user_id}', 'multi6')" class="btn-action" style="background:#E65100;" title="Dar x6">+<img src="assets/x6.png" style="width:14px; vertical-align:middle;"></button>
         </div>
       </td>
     `;
