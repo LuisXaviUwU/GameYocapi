@@ -655,7 +655,9 @@
   display: flex;
   gap: 15px;
   margin-top: 15px;
-  height: 280px;
+  height: 55vh;
+  min-height: 150px;
+  max-height: 280px;
 }
 
 .store-sidebar {
@@ -665,9 +667,13 @@
   gap: 8px;
   border-right: 2px dashed #555;
   padding-right: 15px;
+  overflow-y: auto;
 }
 
 @media (max-width: 600px) {
+  .store-modal-box {
+    padding: 10px;
+  }
   .store-layout {
     flex-direction: column;
     height: auto;
@@ -677,20 +683,41 @@
     border-right: none;
     border-bottom: 2px dashed #555;
     padding-right: 0;
-    padding-bottom: 10px;
+    padding-bottom: 5px;
     flex-direction: row;
     flex-wrap: wrap;
     justify-content: center;
+    gap: 4px;
+    overflow-y: visible;
   }
   .store-tab {
-    padding: 8px;
-    font-size: 8px;
+    padding: 6px;
+    font-size: 7px;
     flex: 1 1 45%;
     text-align: center;
   }
   .store-content-area {
-    width: 100%;
-    max-height: 200px;
+    width: 100% !important;
+    max-height: 40vh;
+    padding-right: 5px;
+  }
+}
+
+@media (max-width: 900px) and (orientation: landscape) {
+  .store-modal-box {
+    padding: 10px;
+  }
+  .store-layout {
+    height: 60vh;
+    gap: 10px;
+  }
+  .store-sidebar {
+    gap: 4px;
+    padding-right: 10px;
+  }
+  .store-tab {
+    padding: 8px 4px;
+    font-size: 8px;
   }
 }
 
@@ -881,3 +908,82 @@
 #diff-hard.active   { background: #e53e3e; border-bottom-color: #9b2c2c; color: #fff; }
 
 #diff-extreme.active { background: #6B21A8; border-bottom-color: #4C1D95; color: #fff; }
+
+/* ---------- Botón Twitch en Menú ---------- */
+.twitch-corner-btn {
+  position: absolute;
+  top: 15px;
+  right: 15px;
+  background: #3a2c1d;
+  border: 3px solid #555;
+  border-radius: 8px;
+  padding: 8px 12px;
+  display: none; /* hidden by default, shown via JS if live or offline */
+  align-items: center;
+  gap: 8px;
+  text-decoration: none;
+  color: #fff;
+  font-family: 'Press Start 2P', monospace;
+  font-size: 10px;
+  transition: all 0.2s;
+  box-shadow: 0 4px 0 rgba(0,0,0,0.5);
+  z-index: 100;
+  opacity: 0.7;
+}
+
+.twitch-corner-btn.is-live {
+  background: var(--twitch);
+  border-color: #fff;
+  opacity: 1;
+  box-shadow: 0 4px 0 var(--twitch-dark), 0 0 15px 5px rgba(145, 70, 255, 0.6);
+  animation: twitchGlow 1.5s infinite alternate;
+}
+
+@keyframes twitchGlow {
+  from { box-shadow: 0 4px 0 var(--twitch-dark), 0 0 10px rgba(145, 70, 255, 0.4); }
+  to { box-shadow: 0 4px 0 var(--twitch-dark), 0 0 25px rgba(145, 70, 255, 0.9); }
+}
+
+.twitch-corner-btn:hover {
+  transform: translateY(2px);
+  box-shadow: 0 2px 0 var(--twitch-dark), 0 0 10px var(--twitch);
+}
+
+.twitch-icon {
+  display: inline-block;
+  width: 18px;
+  height: 18px;
+  background-color: #fff;
+  -webkit-mask: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M2.149 0l-1.612 4.119v16.836h5.731v3.045h3.224l3.045-3.045h4.657l6.806-6.806v-14.149h-21.851zm19.164 9.134l-4.298 4.298h-4.657l-3.045 3.045v-3.045h-4.298v-11.284h16.298v7.015z"/><path d="M11.463 6.090h-2.149v5.373h2.149v-5.373zm4.298 0h-2.149v5.373h2.149v-5.373z"/></svg>') no-repeat center / contain;
+  mask: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M2.149 0l-1.612 4.119v16.836h5.731v3.045h3.224l3.045-3.045h4.657l6.806-6.806v-14.149h-21.851zm19.164 9.134l-4.298 4.298h-4.657l-3.045 3.045v-3.045h-4.298v-11.284h16.298v7.015z"/><path d="M11.463 6.090h-2.149v5.373h2.149v-5.373zm4.298 0h-2.149v5.373h2.149v-5.373z"/></svg>') no-repeat center / contain;
+}
+
+.live-text {
+  color: #aaa;
+}
+
+.twitch-corner-btn.is-live .live-text {
+  color: #ff3333;
+  text-shadow: 1px 1px 0 #000;
+  animation: blinkLive 1s infinite;
+}
+
+@keyframes blinkLive {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.4; }
+}
+
+@media (max-width: 600px) {
+  .twitch-corner-btn {
+    top: 10px;
+    right: 10px;
+    padding: 6px;
+  }
+  .live-text {
+    display: none;
+  }
+  .twitch-icon {
+    width: 24px;
+    height: 24px;
+  }
+}

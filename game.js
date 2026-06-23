@@ -1575,3 +1575,26 @@
         }
       });
 
+      // ---------- Twitch Live Check ----------
+      async function checkTwitchLive() {
+        try {
+          const res = await fetch('https://decapi.me/twitch/uptime/yocapi_pr');
+          const text = await res.text();
+          const btn = document.getElementById('twitchLiveBtn');
+          if (btn) {
+            if (text.toLowerCase().includes('offline')) {
+              btn.classList.remove('is-live');
+              btn.style.display = 'flex'; 
+            } else {
+              btn.classList.add('is-live');
+              btn.style.display = 'flex';
+            }
+          }
+        } catch (e) {
+          console.error('Twitch check failed', e);
+        }
+      }
+      
+      checkTwitchLive();
+      setInterval(checkTwitchLive, 5 * 60 * 1000);
+
