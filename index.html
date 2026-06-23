@@ -53,6 +53,12 @@
             <span class="daily-reward-label">DIARIO</span>
             <span id="dailyRewardBadge" class="daily-reward-badge" style="display:none;">!</span>
           </button>
+          <!-- Botón Ruleta -->
+          <button id="wheelBtn" class="wheel-corner-btn" onclick="openWheelModal()" title="Ruleta de Premios">
+            <canvas id="wheelBtnCanvas" width="48" height="48"></canvas>
+            <span class="wheel-corner-label">RULETA</span>
+            <span id="wheelCooldownBadge" class="wheel-badge" style="display:none;">⏳</span>
+          </button>
         </div>
 
         <div id="overlay">
@@ -213,6 +219,28 @@
                 <span>🎮 JUEGO</span>
                 <input type="range" id="volGame" min="0" max="100" value="45" title="Volumen música juego">
               </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- ====== MODAL RULETA ====== -->
+        <div id="wheelModal" class="modal-overlay">
+          <div class="modal-box wheel-modal-box">
+            <button class="modal-close" onclick="closeModal('wheelModal')">X</button>
+            <h3>🎡 RULETA DE PREMIOS</h3>
+            <p class="wheel-subtitle">¡Gira la ruleta y gana increíbles premios!</p>
+
+            <div class="wheel-wrap">
+              <div class="wheel-pointer">▼</div>
+              <canvas id="wheelCanvas" width="320" height="320"></canvas>
+            </div>
+
+            <div id="wheelLoginMsg" class="week-note" style="margin:12px 0;">Inicia sesión con Twitch para girar la ruleta</div>
+
+            <div id="wheelContent">
+              <div id="wheelResult" class="wheel-result" style="display:none;"></div>
+              <button id="spinBtn" class="spin-btn" onclick="spinWheel()">🎰 ¡GIRAR!</button>
+              <div id="wheelCooldownInfo" class="wheel-cooldown-info" style="display:none;"></div>
             </div>
           </div>
         </div>

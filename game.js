@@ -2039,3 +2039,336 @@ if (document.readyState !== 'loading') {
   document.addEventListener('DOMContentLoaded', () => setTimeout(loadDailyState, 500));
 }
 
+
+/* ============================================================
+   RULETA DE PREMIOS — Sistema completo
+   ============================================================ */
+
+const WHEEL_SEGMENTS = [
+  { label: '100\nMonedas',   emoji: '🪙', color: '#f59e0b', type: 'coins',       amount: 100  },
+  { label: '1 Multi\nx2',    emoji: '✖2', color: '#3b82f6', type: 'multi',       amount: 1    },
+  { label: 'Escudo\n30s',    emoji: '🛡',  color: '#8b5cf6', type: 'shield30',    amount: 1    },
+  { label: 'Otra\nOport.',   emoji: '🔄',  color: '#6b7280', type: 'retry',       amount: 0    },
+  { label: '300\nMonedas',   emoji: '🪙',  color: '#f97316', type: 'coins',       amount: 300  },
+  { label: '2 Imanes',       emoji: '🧲',  color: '#ec4899', type: 'magnet',      amount: 2    },
+  { label: '2 Multi\nx4',    emoji: '✖4', color: '#10b981', type: 'multi4',      amount: 2    },
+  { label: 'Otra\nOport.',   emoji: '🔄',  color: '#6b7280', type: 'retry',       amount: 0    },
+  { label: '2000\nMonedas',  emoji: '💰',  color: '#eab308', type: 'coins',       amount: 2000 },
+  { label: '2 Multi\nx6',    emoji: '✖6', color: '#ef4444', type: 'multi6',      amount: 2    },
+];
+
+const WHEEL_COOLDOWN_MS = 3 * 60 * 60 * 1000; // 3 horas
+let wheelState = { lastSpinAt: 0 };
+let wheelSpinning = false;
+let wheelAngle = 0;        // ángulo actual (radianes)
+let wheelAnimId = null;
+let wheelCountdownTimer = null;
+
+// ── Dibuja la ruleta en un canvas ──────────────────────────────
+function drawWheel(canvas, angle) {
+  const ctx2 = canvas.getContext('2d');
+  const size = canvas.width;
+  const cx = size / 2, cy = size / 2, r = size / 2 - 4;
+  const total = WHEEL_SEGMENTS.length;
+  const arc = (Math.PI * 2) / total;
+
+  ctx2.clearRect(0, 0, size, size);
+
+  for (let i = 0; i < total; i++) {
+    const seg = WHEEL_SEGMENTS[i];
+    const startAngle = angle + i * arc - Math.PI / 2;
+    const endAngle   = startAngle + arc;
+
+    // Sector
+    ctx2.beginPath();
+    ctx2.moveTo(cx, cy);
+    ctx2.arc(cx, cy, r, startAngle, endAngle);
+    ctx2.closePath();
+    ctx2.fillStyle = seg.color;
+    ctx2.fill();
+    // Borde de sector
+    ctx2.strokeStyle = 'rgba(0,0,0,0.5)';
+    ctx2.lineWidth = 2;
+    ctx2.stroke();
+
+    // Texto
+    ctx2.save();
+    ctx2.translate(cx, cy);
+    ctx2.rotate(startAngle + arc / 2);
+    ctx2.textAlign = 'right';
+    ctx2.fillStyle = '#fff';
+    ctx2.font = `bold ${Math.max(8, size * 0.045)}px Nunito, sans-serif`;
+    ctx2.shadowColor = '#000';
+    ctx2.shadowBlur = 3;
+
+    // Emoji
+    ctx2.font = `${Math.max(10, size * 0.065)}px serif`;
+    ctx2.fillText(seg.emoji, r - 6, 5);
+
+    // Etiqueta multilinea
+    const lines = seg.label.split('\n');
+    ctx2.font = `bold ${Math.max(7, size * 0.042)}px Nunito, sans-serif`;
+    const textR = r - 28;
+    if (lines.length === 1) {
+      ctx2.fillText(lines[0], textR, 5);
+    } else {
+      ctx2.fillText(lines[0], textR, -3);
+      ctx2.fillText(lines[1], textR, 10);
+    }
+    ctx2.restore();
+  }
+
+  // Centro (círculo dorado)
+  ctx2.beginPath();
+  ctx2.arc(cx, cy, 18, 0, Math.PI * 2);
+  ctx2.fillStyle = '#f59e0b';
+  ctx2.fill();
+  ctx2.strokeStyle = '#78350f';
+  ctx2.lineWidth = 3;
+  ctx2.stroke();
+  // Capibara emoji en el centro
+  ctx2.font = '14px serif';
+  ctx2.textAlign = 'center';
+  ctx2.textBaseline = 'middle';
+  ctx2.fillText('🐹', cx, cy);
+}
+
+// ── Mini-ruleta en el botón de la esquina ─────────────────────
+function drawWheelBtn() {
+  const c = document.getElementById('wheelBtnCanvas');
+  if (!c) return;
+  drawWheel(c, wheelAngle);
+}
+
+// Animación suave del botón
+let wheelBtnAnimId = null;
+function animateWheelBtn() {
+  wheelAngle += 0.005;
+  drawWheelBtn();
+  wheelBtnAnimId = requestAnimationFrame(animateWheelBtn);
+}
+
+// ── Estado y persistencia ──────────────────────────────────────
+async function loadWheelState() {
+  const stored = localStorage.getItem('wheelState_v1');
+  if (stored) {
+    try { wheelState = JSON.parse(stored); } catch (e) {}
+  }
+  updateWheelUI();
+}
+
+async function saveWheelState() {
+  localStorage.setItem('wheelState_v1', JSON.stringify(wheelState));
+}
+
+// ── UI helpers ─────────────────────────────────────────────────
+function canSpinNow() {
+  return Date.now() - wheelState.lastSpinAt >= WHEEL_COOLDOWN_MS;
+}
+
+function msToHMS(ms) {
+  const h = Math.floor(ms / 3600000);
+  const m = Math.floor((ms % 3600000) / 60000);
+  const s = Math.floor((ms % 60000) / 1000);
+  return `${h}h ${m}m ${s}s`;
+}
+
+function updateWheelUI() {
+  const spinBtn      = document.getElementById('spinBtn');
+  const cdInfo       = document.getElementById('wheelCooldownInfo');
+  const badge        = document.getElementById('wheelCooldownBadge');
+  const loginMsg     = document.getElementById('wheelLoginMsg');
+  const wheelContent = document.getElementById('wheelContent');
+
+  if (!spinBtn) return;
+
+  if (!currentUser) {
+    if (loginMsg) loginMsg.style.display = 'block';
+    if (wheelContent) wheelContent.style.display = 'none';
+    if (badge) badge.style.display = 'none';
+    return;
+  }
+  if (loginMsg) loginMsg.style.display = 'none';
+  if (wheelContent) wheelContent.style.display = 'block';
+
+  if (canSpinNow()) {
+    spinBtn.disabled = false;
+    spinBtn.textContent = '🎰 ¡GIRAR!';
+    if (cdInfo) cdInfo.style.display = 'none';
+    if (badge) badge.style.display = 'flex';
+  } else {
+    spinBtn.disabled = true;
+    const remaining = WHEEL_COOLDOWN_MS - (Date.now() - wheelState.lastSpinAt);
+    spinBtn.textContent = `⏳ ${msToHMS(remaining)}`;
+    if (cdInfo) {
+      cdInfo.style.display = 'block';
+      cdInfo.innerHTML = `⏳ Próximo giro en <b>${msToHMS(remaining)}</b>`;
+    }
+    if (badge) badge.style.display = 'none';
+  }
+}
+
+// Countdown que actualiza cada segundo mientras el modal está abierto
+function startWheelCountdown() {
+  if (wheelCountdownTimer) clearInterval(wheelCountdownTimer);
+  wheelCountdownTimer = setInterval(() => {
+    updateWheelUI();
+    if (canSpinNow()) clearInterval(wheelCountdownTimer);
+  }, 1000);
+}
+
+// ── Abrir modal ───────────────────────────────────────────────
+function openWheelModal() {
+  const canvas = document.getElementById('wheelCanvas');
+  if (canvas) drawWheel(canvas, wheelAngle);
+  updateWheelUI();
+  startWheelCountdown();
+  openModal('wheelModal');
+}
+
+// ── Animación de giro ─────────────────────────────────────────
+function spinWheel() {
+  if (wheelSpinning || !canSpinNow() || !currentUser) return;
+
+  // Elegir segmento ganador (ponderado: retry tiene menor peso)
+  const weights = WHEEL_SEGMENTS.map(s => s.type === 'retry' ? 0.5 : 1);
+  const total = weights.reduce((a, b) => a + b, 0);
+  let rand = Math.random() * total;
+  let winIdx = 0;
+  for (let i = 0; i < weights.length; i++) {
+    rand -= weights[i];
+    if (rand <= 0) { winIdx = i; break; }
+  }
+
+  // Ángulo final: el puntero apunta al TOPE (ángulo 0 = -π/2)
+  // El centro del segmento ganador debe quedar en el tope
+  const arcSize = (Math.PI * 2) / WHEEL_SEGMENTS.length;
+  // Giramos varios rounds + la corrección para que el centro del segmento ganador quede arriba
+  const extraRounds = 5 + Math.floor(Math.random() * 3); // 5-7 vueltas
+  const targetOffset = -(winIdx * arcSize + arcSize / 2);
+  const targetAngle = extraRounds * Math.PI * 2 + targetOffset;
+
+  // Manejo de segmento "Otra Oportunidad" (re-spin inmediato después de animación)
+  const isRetry = WHEEL_SEGMENTS[winIdx].type === 'retry';
+
+  wheelSpinning = true;
+  const spinBtn = document.getElementById('spinBtn');
+  if (spinBtn) { spinBtn.disabled = true; spinBtn.textContent = '⏳ Girando...'; }
+
+  const startAngle = wheelAngle % (Math.PI * 2);
+  const delta = targetAngle - startAngle;
+  const duration = 4000 + Math.random() * 1000; // 4-5s
+  const startTime = performance.now();
+
+  const canvas = document.getElementById('wheelCanvas');
+
+  function easeOut(t) { return 1 - Math.pow(1 - t, 4); }
+
+  function animFrame(now) {
+    const elapsed = now - startTime;
+    const t = Math.min(elapsed / duration, 1);
+    wheelAngle = startAngle + delta * easeOut(t);
+
+    if (canvas) drawWheel(canvas, wheelAngle);
+
+    if (t < 1) {
+      wheelAnimId = requestAnimationFrame(animFrame);
+    } else {
+      // Animación terminada
+      wheelSpinning = false;
+
+      if (isRetry) {
+        // Otra Oportunidad: no consume el cooldown, solo anima resultado
+        showWheelResult('🔄 ¡Otra Oportunidad! Gira de nuevo.', true);
+        if (spinBtn) { spinBtn.disabled = false; spinBtn.textContent = '🎰 ¡GIRAR DE NUEVO!'; }
+      } else {
+        // Premio real: guardar timestamp y aplicar premio
+        wheelState.lastSpinAt = Date.now();
+        saveWheelState();
+        applyWheelPrize(WHEEL_SEGMENTS[winIdx]);
+        updateWheelUI();
+        startWheelCountdown();
+      }
+    }
+  }
+  requestAnimationFrame(animFrame);
+}
+
+// ── Aplicar premio ─────────────────────────────────────────────
+async function applyWheelPrize(seg) {
+  let msg = '';
+  switch (seg.type) {
+    case 'coins':
+      await syncWallet(seg.amount);
+      msg = `🪙 +${seg.amount} Monedas`;
+      break;
+    case 'multi':
+      playerInventory.multi = (playerInventory.multi || 0) + seg.amount;
+      updateInventoryHud();
+      await syncWallet(0, true);
+      msg = `✖2 +${seg.amount} Multiplicador x2`;
+      break;
+    case 'multi4':
+      playerInventory.multi4 = (playerInventory.multi4 || 0) + seg.amount;
+      updateInventoryHud();
+      await syncWallet(0, true);
+      msg = `✖4 +${seg.amount} Multiplicador x4`;
+      break;
+    case 'multi6':
+      playerInventory.multi6 = (playerInventory.multi6 || 0) + seg.amount;
+      updateInventoryHud();
+      await syncWallet(0, true);
+      msg = `✖6 +${seg.amount} Multiplicador x6`;
+      break;
+    case 'shield30':
+      playerInventory.shield30 = (playerInventory.shield30 || 0) + seg.amount;
+      updateInventoryHud();
+      await syncWallet(0, true);
+      msg = `🛡 +${seg.amount} Escudo 30s`;
+      break;
+    case 'magnet':
+      playerInventory.magnet = (playerInventory.magnet || 0) + seg.amount;
+      updateInventoryHud();
+      await syncWallet(0, true);
+      msg = `🧲 +${seg.amount} Imán`;
+      break;
+  }
+  showWheelResult(`🎉 ¡Ganaste!\n${msg}`, false);
+  showRewardToast(msg);
+}
+
+function showWheelResult(msg, isRetry) {
+  const el = document.getElementById('wheelResult');
+  if (!el) return;
+  el.style.display = 'block';
+  el.style.animation = 'none';
+  void el.offsetWidth; // reflow para reiniciar animación
+  el.style.animation = '';
+  el.style.borderColor = isRetry ? '#6b7280' : '#f59e0b';
+  el.innerHTML = msg.replace(/\n/g, '<br>');
+}
+
+// ── Dibujo inicial y listeners ─────────────────────────────────
+document.addEventListener('DOMContentLoaded', () => {
+  // Dibujar mini-rueda en botón
+  drawWheelBtn();
+  animateWheelBtn();
+  // Cargar estado
+  setTimeout(loadWheelState, 600);
+});
+
+// Si el DOM ya cargó
+if (document.readyState !== 'loading') {
+  drawWheelBtn();
+  if (!wheelBtnAnimId) animateWheelBtn();
+  setTimeout(loadWheelState, 600);
+}
+
+// Sincronizar estado al iniciar sesión
+sb.auth.onAuthStateChange((_evt, session) => {
+  if (session?.user) setTimeout(loadWheelState, 400);
+  else {
+    wheelState = { lastSpinAt: 0 };
+    updateWheelUI();
+  }
+});
