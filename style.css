@@ -1891,28 +1891,6 @@
   image-rendering: pixelated;
   filter: drop-shadow(0 0 4px rgba(0,0,0,0.5));
 }
-
-/* ============================================================
-   SISTEMA DE COFRES (CSS)
-   ============================================================ */
-
-.chest-cards-container {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 12px;
-  width: 100%;
-}
-
-@media (max-width: 500px) {
-  .chest-cards-container {
-    grid-template-columns: 1fr;
-  }
-}
-
-.chest-card {
-  background: rgba(0,0,0,0.4);
-  border: 2px solid #555;
-  border-radius: 12px;
   overflow: hidden;
   display: flex;
   flex-direction: column;
