@@ -162,20 +162,36 @@ function renderGroundTile() {
   }
 }
 renderGroundTile();
-function drawSprite(ctx, spriteArr, x, y, w, h) {
-  const rows = spriteArr.length;
-  const cols = spriteArr[0].length;
-  const pw = w / cols;
-  const ph = h / rows;
-  for (let r = 0; r < rows; r++) {
-    for (let c = 0; c < cols; c++) {
-      const color = SPRITE_COLORS[spriteArr[r][c]];
-      if (color) {
-        ctx.fillStyle = color;
-        ctx.fillRect(x + c * pw, y + r * ph, pw + 0.5, ph + 0.5);
+const preRenderedSprites = new Map();
+
+function initAllPreRenderedSprites() {
+  const allSprites = [ROCK_SPRITE, LOG_SPRITE, BIRD_F1, BIRD_F2];
+  for (const arr of allSprites) {
+    const scale = PIXEL_SIZE * 2;
+    const cols = arr[0].length;
+    const rows = arr.length;
+    const canvas = document.createElement('canvas');
+    canvas.width = cols * scale;
+    canvas.height = rows * scale;
+    const tCtx = canvas.getContext('2d');
+    for (let r = 0; r < rows; r++) {
+      for (let c = 0; c < cols; c++) {
+        const color = SPRITE_COLORS[arr[r][c]];
+        if (color) {
+          tCtx.fillStyle = color;
+          tCtx.fillRect(Math.floor(c * scale), Math.floor(r * scale), Math.ceil(scale) + 1, Math.ceil(scale) + 1);
+        }
       }
     }
+    preRenderedSprites.set(arr, canvas);
   }
+}
+// Renderizamos al cargar
+initAllPreRenderedSprites();
+
+function drawSprite(ctx, spriteArr, x, y, w, h) {
+  const img = preRenderedSprites.get(spriteArr);
+  if (img) ctx.drawImage(img, x, y, w, h);
 }
 
 // ---------- imágenes powerup ----------
@@ -958,41 +974,54 @@ function getCloudTintColor(cycleProgress) {
 
 
 // Pre-render clouds to fix grid lines
-const preRenderedClouds = {};
+const baseCloudsMap = new Map();
 
-function getCloudImage(sType, tint) {
-  const key = sType[0] + tint;
-  if (preRenderedClouds[key]) return preRenderedClouds[key];
-  
-  const tempCanvas = document.createElement('canvas');
-  const w = sType[0].length * PIXEL_SIZE * 2;
-  const h = sType.length * PIXEL_SIZE * 2;
-  tempCanvas.width = w;
-  tempCanvas.height = h;
-  const tCtx = tempCanvas.getContext('2d');
-  
-  const pw = w / sType[0].length;
-  const ph = h / sType.length;
-  
-  for (let r = 0; r < sType.length; r++) {
-    for (let c = 0; c < sType[0].length; c++) {
-      const color = SPRITE_COLORS[sType[r][c]];
-      if (color) {
-        tCtx.fillStyle = color;
-        // Overlap to prevent internal grid lines
-        tCtx.fillRect(Math.floor(c * pw), Math.floor(r * ph), Math.ceil(pw) + 1, Math.ceil(ph) + 1);
+function initBaseClouds() {
+  for (const sType of CLOUD_SPRITES) {
+    const tempCanvas = document.createElement('canvas');
+    const w = sType[0].length * PIXEL_SIZE * 2;
+    const h = sType.length * PIXEL_SIZE * 2;
+    tempCanvas.width = w;
+    tempCanvas.height = h;
+    const tCtx = tempCanvas.getContext('2d');
+    const pw = w / sType[0].length;
+    const ph = h / sType.length;
+    
+    for (let r = 0; r < sType.length; r++) {
+      for (let c = 0; c < sType[0].length; c++) {
+        const color = SPRITE_COLORS[sType[r][c]];
+        if (color) {
+          tCtx.fillStyle = color;
+          tCtx.fillRect(Math.floor(c * pw), Math.floor(r * ph), Math.ceil(pw) + 1, Math.ceil(ph) + 1);
+        }
       }
     }
+    baseCloudsMap.set(sType, tempCanvas);
+  }
+}
+initBaseClouds();
+
+const cloudTintCanvas = document.createElement('canvas');
+const cloudTintCtx = cloudTintCanvas.getContext('2d');
+
+function getCloudImage(sType, tint) {
+  const baseCanvas = baseCloudsMap.get(sType);
+  if (!tint || tint === 'rgba(0,0,0,0)') return baseCanvas;
+  
+  if (cloudTintCanvas.width !== baseCanvas.width) {
+    cloudTintCanvas.width = baseCanvas.width;
+    cloudTintCanvas.height = baseCanvas.height;
   }
   
-  if (tint) {
-    tCtx.globalCompositeOperation = 'source-atop';
-    tCtx.fillStyle = tint;
-    tCtx.fillRect(0, 0, w, h);
-  }
+  cloudTintCtx.globalCompositeOperation = 'source-over';
+  cloudTintCtx.clearRect(0, 0, cloudTintCanvas.width, cloudTintCanvas.height);
+  cloudTintCtx.drawImage(baseCanvas, 0, 0);
   
-  preRenderedClouds[key] = tempCanvas;
-  return tempCanvas;
+  cloudTintCtx.globalCompositeOperation = 'source-atop';
+  cloudTintCtx.fillStyle = tint;
+  cloudTintCtx.fillRect(0, 0, cloudTintCanvas.width, cloudTintCanvas.height);
+  
+  return cloudTintCanvas;
 }
 
 function drawBackground() {
