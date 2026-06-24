@@ -1655,6 +1655,8 @@ function renderDynamicStore() {
               `).join('')}
             </div>`;
   }).join('');
+  // Siempre re-agregar la pestaña de cofres al final
+  injectCofresTab();
 }
 
 // ---------- Cargar leaderboard ----------
@@ -2459,3 +2461,264 @@ function renderInventoryModal() {
   }
 }
 
+
+/* ============================================================
+   SISTEMA DE COFRES
+   ============================================================ */
+
+const CHEST_POOLS = {
+  free: {
+    name: 'Gratuito',
+    cost: 0,
+    cooldownMs: 24 * 60 * 60 * 1000,
+    rarities: [
+      { name: 'common',    label: 'Común',      weight: 70, qty: 1 },
+      { name: 'epic',      label: 'Épico',       weight: 22, qty: 1 },
+      { name: 'legendary', label: 'Legendario',  weight: 8,  qty: 1 }
+    ]
+  },
+  common: {
+    name: 'Común',
+    cost: 300,
+    cooldownMs: 0,
+    rarities: [
+      { name: 'common',    label: 'Común',      weight: 70, qty: 2 },
+      { name: 'epic',      label: 'Épico',       weight: 22, qty: 1 },
+      { name: 'legendary', label: 'Legendario',  weight: 8,  qty: 1 }
+    ]
+  },
+  epic: {
+    name: 'Épico',
+    cost: 800,
+    cooldownMs: 0,
+    rarities: [
+      { name: 'epic',      label: 'Épico',       weight: 75, qty: 2 },
+      { name: 'legendary', label: 'Legendario',  weight: 25, qty: 1 }
+    ]
+  },
+  legendary: {
+    name: 'Legendario',
+    cost: 2000,
+    cooldownMs: 0,
+    rarities: [
+      { name: 'legendary', label: 'Legendario', weight: 100, qty: 2 }
+    ]
+  }
+};
+
+const CHEST_ITEMS = {
+  common: [
+    { type: 'shield',     name: 'Escudo 10s',       img: 'assets/inmortal.png' },
+    { type: 'doubleJump', name: 'Doble Salto 15s',  img: 'assets/jump.png'     },
+    { type: 'magnet',     name: 'Imán 15s',          img: 'assets/iman.png'     },
+    { type: 'multi',      name: 'Multiplicador x2',  img: 'assets/x2.png'       }
+  ],
+  epic: [
+    { type: 'shield30', name: 'Escudo 30s',        img: 'assets/inmortal.png' },
+    { type: 'multi4',   name: 'Multiplicador x4',  img: 'assets/x4.png'       }
+  ],
+  legendary: [
+    { type: 'shield60', name: 'Escudo 60s',        img: 'assets/inmortal.png' },
+    { type: 'multi6',   name: 'Multiplicador x6',  img: 'assets/x6.png'       }
+  ]
+};
+
+const CHEST_RARITY_COLORS = {
+  common:    { color: '#9ca3af', label: 'COMÚN',      glow: 'rgba(156,163,175,0.5)' },
+  epic:      { color: '#a855f7', label: 'ÉPICO',      glow: 'rgba(168,85,247,0.7)'  },
+  legendary: { color: '#f59e0b', label: 'LEGENDARIO', glow: 'rgba(245,158,11,0.7)'  }
+};
+
+let freeChestLastOpen = parseInt(localStorage.getItem('freeChestLastOpen') || '0');
+let freeChestIntervalId = null;
+
+function canOpenFreeChest() {
+  return Date.now() - freeChestLastOpen >= CHEST_POOLS.free.cooldownMs;
+}
+
+function updateFreeChestUI() {
+  const btn = document.getElementById('freeChestBtn');
+  const timerEl = document.getElementById('freeChestTimer');
+  if (!btn) return;
+
+  if (canOpenFreeChest()) {
+    btn.disabled = false;
+    btn.innerHTML = '🎁 ABRIR';
+    if (timerEl) timerEl.style.display = 'none';
+  } else {
+    btn.disabled = true;
+    const remaining = CHEST_POOLS.free.cooldownMs - (Date.now() - freeChestLastOpen);
+    const h = Math.floor(remaining / 3600000);
+    const m = Math.floor((remaining % 3600000) / 60000);
+    const s = Math.floor((remaining % 60000) / 1000);
+    const timeStr = `${h}h ${m}m ${s}s`;
+    btn.innerHTML = `⏳ ${timeStr}`;
+    if (timerEl) { timerEl.style.display = 'block'; timerEl.textContent = `⏱ ${timeStr}`; }
+  }
+}
+
+function startFreeChestTimer() {
+  if (freeChestIntervalId) clearInterval(freeChestIntervalId);
+  if (canOpenFreeChest()) return;
+  freeChestIntervalId = setInterval(() => {
+    updateFreeChestUI();
+    if (canOpenFreeChest()) { clearInterval(freeChestIntervalId); freeChestIntervalId = null; }
+  }, 1000);
+}
+
+function injectCofresTab() {
+  // Agregar botón al sidebar si no existe
+  const sidebar = document.querySelector('.store-sidebar');
+  if (sidebar && !document.getElementById('tabBtn-cofres')) {
+    const btn = document.createElement('button');
+    btn.id = 'tabBtn-cofres';
+    btn.className = 'store-tab';
+    btn.textContent = 'Cofres';
+    btn.onclick = () => showStoreTab('cofres');
+    sidebar.appendChild(btn);
+  }
+  // Agregar contenido al content-area si no existe
+  const area = document.querySelector('.store-content-area');
+  if (area && !document.getElementById('tab-cofres')) {
+    const div = document.createElement('div');
+    div.id = 'tab-cofres';
+    div.className = 'store-tab-content';
+    div.innerHTML = `
+      <div class="chest-cards-container">
+        <div class="chest-card chest-free">
+          <div class="chest-card-top">
+            <div class="chest-img-wrap"><img src="assets/gratis.png" class="chest-img"></div>
+            <div class="chest-card-details"><div class="chest-card-name">GRATUITO</div><div class="chest-card-price free">GRATIS &middot; 24h</div></div>
+            <div class="chest-btn-area"><button class="chest-open-btn btn-free" id="freeChestBtn" onclick="openChest('free')">🎁 ABRIR</button><div class="chest-timer-small" id="freeChestTimer" style="display:none;"></div></div>
+          </div>
+          <div class="chest-odds">
+            <div class="odds-row"><span class="rarity-tag common">70% COMÚN</span><div class="rarity-icons-list"><img src="assets/inmortal.png"><img src="assets/jump.png"><img src="assets/iman.png"><img src="assets/x2.png"></div><span class="qty-badge">x1</span></div>
+            <div class="odds-row"><span class="rarity-tag epic">22% ÉPICO</span><div class="rarity-icons-list"><img src="assets/inmortal.png"><img src="assets/x4.png"></div><span class="qty-badge">x1</span></div>
+            <div class="odds-row"><span class="rarity-tag legendary">8% LEGENDARIO</span><div class="rarity-icons-list"><img src="assets/inmortal.png"><img src="assets/x6.png"></div><span class="qty-badge">x1</span></div>
+          </div>
+        </div>
+        <div class="chest-card chest-common">
+          <div class="chest-card-top">
+            <div class="chest-img-wrap"><img src="assets/raro.png" class="chest-img"></div>
+            <div class="chest-card-details"><div class="chest-card-name">COMÚN</div><div class="chest-card-price"><img src="assets/coin.png" style="width:14px;vertical-align:middle;margin-right:3px;"> 300</div></div>
+            <div class="chest-btn-area"><button class="chest-open-btn btn-common" onclick="openChest('common')">📦 ABRIR</button></div>
+          </div>
+          <div class="chest-odds">
+            <div class="odds-row"><span class="rarity-tag common">70% COMÚN</span><div class="rarity-icons-list"><img src="assets/inmortal.png"><img src="assets/jump.png"><img src="assets/iman.png"><img src="assets/x2.png"></div><span class="qty-badge gold">x2</span></div>
+            <div class="odds-row"><span class="rarity-tag epic">22% ÉPICO</span><div class="rarity-icons-list"><img src="assets/inmortal.png"><img src="assets/x4.png"></div><span class="qty-badge">x1</span></div>
+            <div class="odds-row"><span class="rarity-tag legendary">8% LEGENDARIO</span><div class="rarity-icons-list"><img src="assets/inmortal.png"><img src="assets/x6.png"></div><span class="qty-badge">x1</span></div>
+          </div>
+        </div>
+        <div class="chest-card chest-epic">
+          <div class="chest-card-top">
+            <div class="chest-img-wrap"><img src="assets/epico.png" class="chest-img"></div>
+            <div class="chest-card-details"><div class="chest-card-name">ÉPICO</div><div class="chest-card-price"><img src="assets/coin.png" style="width:14px;vertical-align:middle;margin-right:3px;"> 800</div></div>
+            <div class="chest-btn-area"><button class="chest-open-btn btn-epic" onclick="openChest('epic')">💜 ABRIR</button></div>
+          </div>
+          <div class="chest-odds">
+            <div class="odds-row"><span class="rarity-tag epic">75% ÉPICO</span><div class="rarity-icons-list"><img src="assets/inmortal.png"><img src="assets/x4.png"></div><span class="qty-badge gold">x2</span></div>
+            <div class="odds-row"><span class="rarity-tag legendary">25% LEGENDARIO</span><div class="rarity-icons-list"><img src="assets/inmortal.png"><img src="assets/x6.png"></div><span class="qty-badge">x1</span></div>
+          </div>
+        </div>
+        <div class="chest-card chest-legendary">
+          <div class="chest-card-top">
+            <div class="chest-img-wrap"><img src="assets/legendario.png" class="chest-img"></div>
+            <div class="chest-card-details"><div class="chest-card-name">LEGENDARIO</div><div class="chest-card-price"><img src="assets/coin.png" style="width:14px;vertical-align:middle;margin-right:3px;"> 2000</div></div>
+            <div class="chest-btn-area"><button class="chest-open-btn btn-legendary" onclick="openChest('legendary')">⭐ ABRIR</button></div>
+          </div>
+          <div class="chest-odds">
+            <div class="odds-row"><span class="rarity-tag legendary">100% LEGENDARIO</span><div class="rarity-icons-list"><img src="assets/inmortal.png"><img src="assets/x6.png"></div><span class="qty-badge gold">x2</span></div>
+          </div>
+        </div>
+      </div>`;
+    area.appendChild(div);
+  }
+  updateFreeChestUI();
+  startFreeChestTimer();
+}
+
+async function openChest(type) {
+  if (!currentUser) return alert('Debes iniciar sesión con Twitch para abrir cofres.');
+
+  const pool = CHEST_POOLS[type];
+  if (!pool) return;
+
+  // Cooldown del cofre gratuito
+  if (type === 'free' && !canOpenFreeChest()) {
+    return alert('¡El cofre gratuito ya fue abierto hoy! Vuelve mañana.');
+  }
+
+  // Verificar monedas para cofres de pago
+  if (pool.cost > 0) {
+    if (totalCoins < pool.cost) return alert(`No tienes monedas suficientes. Necesitas ${pool.cost} 🪙`);
+    totalCoins -= pool.cost;
+    document.getElementById('coinBalanceDisplay').textContent = totalCoins;
+  }
+
+  // Sortear rareza
+  const totalWeight = pool.rarities.reduce((sum, r) => sum + r.weight, 0);
+  let rand = Math.random() * totalWeight;
+  let selectedRarity = pool.rarities[pool.rarities.length - 1];
+  for (const rarity of pool.rarities) {
+    rand -= rarity.weight;
+    if (rand <= 0) { selectedRarity = rarity; break; }
+  }
+
+  // Sortear ítem dentro de la rareza
+  const items = CHEST_ITEMS[selectedRarity.name];
+  const item = items[Math.floor(Math.random() * items.length)];
+  const qty = selectedRarity.qty;
+
+  // Aplicar al inventario
+  playerInventory[item.type] = (playerInventory[item.type] || 0) + qty;
+  updateInventoryHud();
+
+  // Sincronizar con la DB
+  if (pool.cost > 0) {
+    await syncWallet(-pool.cost, true);
+  } else {
+    await syncWallet(0, true);
+  }
+
+  // Guardar timestamp del cofre gratuito
+  if (type === 'free') {
+    freeChestLastOpen = Date.now();
+    localStorage.setItem('freeChestLastOpen', String(freeChestLastOpen));
+    updateFreeChestUI();
+    startFreeChestTimer();
+  }
+
+  // Mostrar resultado
+  showChestResult(item, qty, selectedRarity.name);
+}
+
+function showChestResult(item, qty, rarityKey) {
+  const rc = CHEST_RARITY_COLORS[rarityKey];
+
+  const rarityEl = document.getElementById('chestResultRarity');
+  const imgEl    = document.getElementById('chestResultImg');
+  const nameEl   = document.getElementById('chestResultName');
+  const qtyEl    = document.getElementById('chestResultQty');
+  const box      = document.querySelector('#chestResultModal .chest-result-box');
+
+  if (rarityEl) { rarityEl.textContent = rc.label; rarityEl.style.color = rc.color; }
+  if (imgEl)    { imgEl.src = item.img; imgEl.style.filter = `drop-shadow(0 0 18px ${rc.color})`; }
+  if (nameEl)   nameEl.textContent = item.name;
+  if (qtyEl)    qtyEl.textContent  = 'x' + qty;
+  if (box)      { box.style.borderColor = rc.color; box.style.boxShadow = `0 0 40px ${rc.glow}, 0 10px 30px rgba(0,0,0,0.9)`; }
+
+  // Reiniciar animaciones
+  [imgEl, qtyEl, rarityEl].forEach(el => {
+    if (!el) return;
+    el.style.animation = 'none';
+    void el.offsetWidth;
+    el.style.animation = '';
+  });
+
+  openModal('chestResultModal');
+  showRewardToast(`+${qty} ${item.name} (${rc.label})`);
+}
+
+// Inicializar UI de cofre gratuito al cargar
+updateFreeChestUI();
+startFreeChestTimer();
