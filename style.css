@@ -645,18 +645,23 @@
 
 /* ---------- Diseño especial para la tienda ---------- */
 .store-modal-box {
-  max-width: 650px !important;
-  width: 95%;
+  max-width: 95vw !important;
+  width: 95vw;
+  height: 90vh;
+  max-height: 90vh !important;
   padding: 15px;
+  display: flex;
+  flex-direction: column;
 }
 
 .store-layout {
   display: flex;
   gap: 15px;
   margin-top: 15px;
-  height: 55vh;
+  flex-grow: 1;
+  height: auto;
   min-height: 150px;
-  max-height: 280px;
+  max-height: none;
 }
 
 .store-sidebar {
@@ -672,10 +677,13 @@
 @media (max-width: 600px) {
   .store-modal-box {
     padding: 10px;
+    height: 95vh;
+    max-height: 95vh !important;
   }
   .store-layout {
     flex-direction: column;
     height: auto;
+    overflow-y: hidden;
   }
   .store-sidebar {
     width: 100%;
@@ -697,7 +705,9 @@
   }
   .store-content-area {
     width: 100% !important;
-    max-height: 40vh;
+    max-height: none;
+    flex-grow: 1;
+    overflow-y: auto;
     padding-right: 5px;
   }
 }
@@ -705,9 +715,11 @@
 @media (max-width: 900px) and (orientation: landscape) {
   .store-modal-box {
     padding: 10px;
+    height: 95vh;
+    max-height: 95vh !important;
   }
   .store-layout {
-    height: 60vh;
+    height: auto;
     gap: 10px;
   }
   .store-sidebar {

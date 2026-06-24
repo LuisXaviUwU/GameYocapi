@@ -2470,7 +2470,7 @@ const CHEST_POOLS = {
   free: {
     name: 'Gratuito',
     cost: 0,
-    cooldownMs: 24 * 60 * 60 * 1000,
+    cooldownMs: 3 * 60 * 60 * 1000,
     rarities: [
       { name: 'common',    label: 'Común',      weight: 70, qty: 1 },
       { name: 'epic',      label: 'Épico',       weight: 22, qty: 1 },
@@ -2479,7 +2479,7 @@ const CHEST_POOLS = {
   },
   common: {
     name: 'Común',
-    cost: 300,
+    cost: 500,
     cooldownMs: 0,
     rarities: [
       { name: 'common',    label: 'Común',      weight: 70, qty: 2 },
@@ -2489,7 +2489,7 @@ const CHEST_POOLS = {
   },
   epic: {
     name: 'Épico',
-    cost: 800,
+    cost: 1000,
     cooldownMs: 0,
     rarities: [
       { name: 'epic',      label: 'Épico',       weight: 75, qty: 2 },
@@ -2498,7 +2498,7 @@ const CHEST_POOLS = {
   },
   legendary: {
     name: 'Legendario',
-    cost: 2000,
+    cost: 2500,
     cooldownMs: 0,
     rarities: [
       { name: 'legendary', label: 'Legendario', weight: 100, qty: 2 }
@@ -2588,7 +2588,7 @@ function injectCofresTab() {
         <div class="chest-card chest-free">
           <div class="chest-card-top">
             <div class="chest-img-wrap"><img src="assets/gratis.png" class="chest-img"></div>
-            <div class="chest-card-details"><div class="chest-card-name">GRATUITO</div><div class="chest-card-price free">GRATIS &middot; 24h</div></div>
+            <div class="chest-card-details"><div class="chest-card-name">GRATUITO</div><div class="chest-card-price free">GRATIS &middot; 3h</div></div>
             <div class="chest-btn-area"><button class="chest-open-btn btn-free" id="freeChestBtn" onclick="openChest('free')">🎁 ABRIR</button><div class="chest-timer-small" id="freeChestTimer" style="display:none;"></div></div>
           </div>
           <div class="chest-odds">
@@ -2600,7 +2600,7 @@ function injectCofresTab() {
         <div class="chest-card chest-common">
           <div class="chest-card-top">
             <div class="chest-img-wrap"><img src="assets/raro.png" class="chest-img"></div>
-            <div class="chest-card-details"><div class="chest-card-name">COMÚN</div><div class="chest-card-price"><img src="assets/coin.png" style="width:14px;vertical-align:middle;margin-right:3px;"> 300</div></div>
+            <div class="chest-card-details"><div class="chest-card-name">COMÚN</div><div class="chest-card-price"><img src="assets/coin.png" style="width:14px;vertical-align:middle;margin-right:3px;"> 500</div></div>
             <div class="chest-btn-area"><button class="chest-open-btn btn-common" onclick="openChest('common')">📦 ABRIR</button></div>
           </div>
           <div class="chest-odds">
@@ -2612,7 +2612,7 @@ function injectCofresTab() {
         <div class="chest-card chest-epic">
           <div class="chest-card-top">
             <div class="chest-img-wrap"><img src="assets/epico.png" class="chest-img"></div>
-            <div class="chest-card-details"><div class="chest-card-name">ÉPICO</div><div class="chest-card-price"><img src="assets/coin.png" style="width:14px;vertical-align:middle;margin-right:3px;"> 800</div></div>
+            <div class="chest-card-details"><div class="chest-card-name">ÉPICO</div><div class="chest-card-price"><img src="assets/coin.png" style="width:14px;vertical-align:middle;margin-right:3px;"> 1000</div></div>
             <div class="chest-btn-area"><button class="chest-open-btn btn-epic" onclick="openChest('epic')">💜 ABRIR</button></div>
           </div>
           <div class="chest-odds">
@@ -2623,7 +2623,7 @@ function injectCofresTab() {
         <div class="chest-card chest-legendary">
           <div class="chest-card-top">
             <div class="chest-img-wrap"><img src="assets/legendario.png" class="chest-img"></div>
-            <div class="chest-card-details"><div class="chest-card-name">LEGENDARIO</div><div class="chest-card-price"><img src="assets/coin.png" style="width:14px;vertical-align:middle;margin-right:3px;"> 2000</div></div>
+            <div class="chest-card-details"><div class="chest-card-name">LEGENDARIO</div><div class="chest-card-price"><img src="assets/coin.png" style="width:14px;vertical-align:middle;margin-right:3px;"> 2500</div></div>
             <div class="chest-btn-area"><button class="chest-open-btn btn-legendary" onclick="openChest('legendary')">⭐ ABRIR</button></div>
           </div>
           <div class="chest-odds">
