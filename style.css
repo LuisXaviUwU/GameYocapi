@@ -645,9 +645,9 @@
 
 /* ---------- Diseño especial para la tienda ---------- */
 .store-modal-box {
-  max-width: 95vw !important;
-  width: 95vw;
-  height: 90vh;
+  max-width: 850px !important;
+  width: 95%;
+  height: auto;
   max-height: 90vh !important;
   padding: 15px;
   display: flex;
@@ -677,7 +677,7 @@
 @media (max-width: 600px) {
   .store-modal-box {
     padding: 10px;
-    height: 95vh;
+    height: auto;
     max-height: 95vh !important;
   }
   .store-layout {
@@ -715,7 +715,7 @@
 @media (max-width: 900px) and (orientation: landscape) {
   .store-modal-box {
     padding: 10px;
-    height: 95vh;
+    height: auto;
     max-height: 95vh !important;
   }
   .store-layout {
