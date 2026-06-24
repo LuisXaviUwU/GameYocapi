@@ -2538,13 +2538,11 @@ function canOpenFreeChest() {
 
 function updateFreeChestUI() {
   const btn = document.getElementById('freeChestBtn');
-  const timerEl = document.getElementById('freeChestTimer');
   if (!btn) return;
 
   if (canOpenFreeChest()) {
     btn.disabled = false;
     btn.innerHTML = '🎁 ABRIR';
-    if (timerEl) timerEl.style.display = 'none';
   } else {
     btn.disabled = true;
     const remaining = CHEST_POOLS.free.cooldownMs - (Date.now() - freeChestLastOpen);
@@ -2553,7 +2551,6 @@ function updateFreeChestUI() {
     const s = Math.floor((remaining % 60000) / 1000);
     const timeStr = `${h}h ${m}m ${s}s`;
     btn.innerHTML = `⏳ ${timeStr}`;
-    if (timerEl) { timerEl.style.display = 'block'; timerEl.textContent = `⏱ ${timeStr}`; }
   }
 }
 
@@ -2589,7 +2586,7 @@ function injectCofresTab() {
           <div class="chest-card-top">
             <div class="chest-img-wrap"><img src="assets/gratis.png" class="chest-img"></div>
             <div class="chest-card-details"><div class="chest-card-name">GRATUITO</div><div class="chest-card-price free">GRATIS &middot; 3h</div></div>
-            <div class="chest-btn-area"><button class="chest-open-btn btn-free" id="freeChestBtn" onclick="openChest('free')">🎁 ABRIR</button><div class="chest-timer-small" id="freeChestTimer" style="display:none;"></div></div>
+            <div class="chest-btn-area"><button class="chest-open-btn btn-free" id="freeChestBtn" onclick="openChest('free')">🎁 ABRIR</button></div>
           </div>
           <div class="chest-odds">
             <div class="odds-row"><span class="rarity-tag common">70% COMÚN</span><div class="rarity-icons-list"><img src="assets/inmortal.png"><img src="assets/jump.png"><img src="assets/iman.png"><img src="assets/x2.png"></div><span class="qty-badge">x1</span></div>
