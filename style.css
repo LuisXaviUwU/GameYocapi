@@ -1619,6 +1619,13 @@
 }
 
 /* Grid de 7 días — Desktop: 7 cols, Tablet: 4 cols, Mobile: 3 cols o 4 cols */
+.chest-cards-container {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  width: 100%;
+}
+
 .daily-days-grid {
   display: grid;
   grid-template-columns: repeat(7, 1fr);
