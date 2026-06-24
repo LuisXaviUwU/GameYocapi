@@ -2405,3 +2405,57 @@ sb.auth.onAuthStateChange((_evt, session) => {
     updateWheelUI();
   }
 });
+
+// ---------- Inventario Modal ----------
+function openInventoryModal() {
+  openModal('inventoryModal');
+  renderInventoryModal();
+}
+
+function renderInventoryModal() {
+  const grid = document.getElementById('inventoryGrid');
+  if (!grid) return;
+  
+  if (!currentUser) {
+    document.getElementById('inventoryAuthMsg').style.display = 'block';
+    document.getElementById('inventoryContent').style.display = 'none';
+    return;
+  } else {
+    document.getElementById('inventoryAuthMsg').style.display = 'none';
+    document.getElementById('inventoryContent').style.display = 'block';
+  }
+  
+  const itemsInfo = {
+    shield: { name: 'Escudo 10s', img: 'assets/inmortal.png' },
+    shield30: { name: 'Escudo 30s', img: 'assets/inmortal.png' },
+    shield60: { name: 'Escudo 60s', img: 'assets/inmortal.png' },
+    doubleJump: { name: 'Doble Salto', img: 'assets/jump.png' },
+    magnet: { name: 'Imán 15s', img: 'assets/iman.png' },
+    multi: { name: 'x2 Puntos', img: 'assets/x2.png' },
+    multi4: { name: 'x4 Puntos', img: 'assets/x4.png' },
+    multi6: { name: 'x6 Puntos', img: 'assets/x6.png' }
+  };
+  
+  let html = '';
+  let hasItems = false;
+  for (const [key, info] of Object.entries(itemsInfo)) {
+    const qty = playerInventory[key] || 0;
+    if (qty > 0) {
+      hasItems = true;
+      html += `
+        <div style="background: rgba(0,0,0,0.5); border: 2px solid var(--gold); border-radius: 8px; padding: 10px; display: flex; flex-direction: column; align-items: center; box-shadow: inset 0 0 10px rgba(0,0,0,0.8);">
+          <img src="${info.img}" style="width: 48px; image-rendering: pixelated; margin-bottom: 8px; filter: drop-shadow(0 4px 6px rgba(0,0,0,0.5));">
+          <div style="color: #fff; font-size: 10px; margin-bottom: 5px; font-family: 'Press Start 2P', monospace; text-align: center;">${info.name}</div>
+          <div style="color: var(--gold); font-size: 14px; font-weight: bold; font-family: 'Press Start 2P', monospace;">x${qty}</div>
+        </div>
+      `;
+    }
+  }
+  
+  if (!hasItems) {
+    grid.innerHTML = `<div style="grid-column: 1 / -1; color: #aaa; font-size: 12px; font-family: 'Press Start 2P', monospace; padding: 20px;">Tu inventario está vacío.</div>`;
+  } else {
+    grid.innerHTML = html;
+  }
+}
+

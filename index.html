@@ -59,6 +59,11 @@
             <span class="wheel-corner-label">RULETA</span>
             <span id="wheelCooldownBadge" class="wheel-badge" style="display:none;">⏱</span>
           </button>
+          <!-- Botón Inventario -->
+          <button id="inventoryBtn" class="inventory-corner-btn" onclick="openInventoryModal()" title="Inventario">
+            <span class="daily-reward-icon">🎒</span>
+            <span class="inventory-corner-label">INVENTARIO</span>
+          </button>
         </div>
 
         <div id="overlay">
@@ -240,6 +245,20 @@
             <div id="wheelContent">
               <div id="wheelResult" class="wheel-result" style="display:none;"></div>
               <button id="spinBtn" class="spin-btn" onclick="spinWheel()">🎰 ¡GIRAR!</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- ====== MODAL INVENTARIO ====== -->
+        <div id="inventoryModal" class="modal-overlay">
+          <div class="modal-box store-modal-box">
+            <button class="modal-close" onclick="closeModal('inventoryModal')">X</button>
+            <h3>🎒 INVENTARIO</h3>
+            <div id="inventoryAuthMsg" class="week-note">Inicia sesión para ver tu inventario</div>
+            <div id="inventoryContent" style="display:none; text-align: center; margin-top: 20px;">
+              <div id="inventoryGrid" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(110px, 1fr)); gap: 12px; max-height: 50vh; overflow-y: auto; padding-right: 10px;">
+                <!-- Items llenados por JS -->
+              </div>
             </div>
           </div>
         </div>
