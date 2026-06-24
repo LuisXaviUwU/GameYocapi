@@ -1621,7 +1621,7 @@
 /* Grid de 7 días — Desktop: 7 cols, Tablet: 4 cols, Mobile: 3 cols o 4 cols */
 .chest-cards-container {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 240px), 1fr));
   gap: 12px;
   width: 100%;
 }
@@ -1882,52 +1882,6 @@
 @media (max-width: 600px) {
   .daily-next-info {
     font-size: 13px;
-    padding: 10px 8px;
-  }
-}
-
-/* Animación de recompensa */
-@keyframes rewardPop {
-  0%   { transform: scale(0.5) rotate(-10deg); opacity: 0; }
-  60%  { transform: scale(1.2) rotate(5deg); opacity: 1; }
-  100% { transform: scale(1) rotate(0deg); opacity: 1; }
-}
-
-.reward-anim {
-  animation: rewardPop 0.5s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
-}
-
-.corner-btn-icon {
-  width: 24px;
-  height: 24px;
-  vertical-align: middle;
-  image-rendering: pixelated;
-  filter: drop-shadow(0 0 4px rgba(0,0,0,0.5));
-}
-  overflow: hidden;
-  display: flex;
-  flex-direction: column;
-  transition: transform 0.2s, box-shadow 0.2s, border-color 0.2s;
-  position: relative;
-}
-
-.chest-card:hover {
-  transform: translateY(-3px);
-}
-
-/* Colores por rareza de cofre */
-.chest-free      { border-color: #6b7280; box-shadow: inset 0 0 20px rgba(107,114,128,0.2); }
-.chest-common    { border-color: #9ca3af; box-shadow: inset 0 0 20px rgba(156,163,175,0.2); }
-.chest-epic      { border-color: #a855f7; box-shadow: inset 0 0 20px rgba(168,85,247,0.2); }
-.chest-legendary { border-color: #f59e0b; box-shadow: inset 0 0 20px rgba(245,158,11,0.2); }
-
-.chest-free:hover      { border-color: #9ca3af; box-shadow: 0 4px 15px rgba(107,114,128,0.4); }
-.chest-common:hover    { border-color: #d1d5db; box-shadow: 0 4px 15px rgba(156,163,175,0.4); }
-.chest-epic:hover      { border-color: #d8b4fe; box-shadow: 0 4px 15px rgba(168,85,247,0.5); }
-.chest-legendary:hover { border-color: #fde68a; box-shadow: 0 4px 15px rgba(245,158,11,0.5); }
-
-.chest-card-top {
-  display: flex;
   align-items: center;
   padding: 12px;
   background: rgba(0,0,0,0.6);
@@ -1977,6 +1931,140 @@
   background: rgba(245, 158, 11, 0.2);
   color: var(--gold);
   border: 1px solid rgba(245, 158, 11, 0.5);
+}
+
+
+.chest-card-details {
+  flex-grow: 1;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+}
+.chest-card-name {
+  font-family: 'Press Start 2P', monospace;
+  font-size: 12px;
+  color: #fff;
+  margin-bottom: 4px;
+}
+.chest-card-price {
+  font-size: 11px;
+  color: var(--gold);
+  font-weight: bold;
+}
+.chest-card-price.free {
+  color: #a78bfa;
+}
+.chest-btn-area {
+  display: flex;
+  align-items: center;
+}
+.chest-open-btn {
+  font-family: 'Press Start 2P', monospace;
+  font-size: 10px;
+  padding: 8px 12px;
+  border-radius: 6px;
+  border: none;
+  border-bottom: 4px solid #b88600;
+  background: var(--gold);
+  color: #000;
+  cursor: pointer;
+  transition: transform 0.1s;
+}
+.chest-open-btn:active {
+  transform: translateY(3px);
+  border-bottom-width: 1px;
+}
+.chest-open-btn.btn-free {
+  background: #a855f7;
+  border-bottom-color: #6b21a8;
+  color: #fff;
+}
+.chest-open-btn.btn-common {
+  background: #9ca3af;
+  border-bottom-color: #4b5563;
+  color: #000;
+}
+.chest-open-btn.btn-epic {
+  background: #d8b4fe;
+  border-bottom-color: #9333ea;
+  color: #000;
+}
+.chest-open-btn.btn-legendary {
+  background: #fde68a;
+  border-bottom-color: #d97706;
+  color: #000;
+}
+.chest-odds {
+  padding: 10px 12px;
+  background: rgba(0,0,0,0.4);
+  font-family: 'Press Start 2P', monospace;
+  font-size: 8px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.odds-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 4px;
+}
+.rarity-tag {
+  width: 95px;
+  flex-shrink: 0;
+}
+@media (max-width: 600px) {
+  .chest-card-top {
+    flex-direction: column;
+    text-align: center;
+    gap: 8px;
+    padding: 10px;
+  }
+  .chest-btn-area {
+    width: 100%;
+    justify-content: center;
+  }
+  .chest-open-btn {
+    width: 100%;
+    font-size: 11px;
+    padding: 10px;
+  }
+  .rarity-tag {
+    width: 100%;
+    text-align: left;
+    margin-bottom: 2px;
+  }
+  .odds-row {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+  .rarity-icons-list {
+    margin-bottom: 4px;
+  }
+}
+@media (max-width: 900px) and (orientation: landscape) {
+  .chest-card-top {
+    padding: 8px;
+    gap: 8px;
+  }
+  .chest-card-name {
+    font-size: 10px;
+  }
+  .chest-card-price {
+    font-size: 9px;
+  }
+  .chest-open-btn {
+    font-size: 8px;
+    padding: 6px 8px;
+  }
+  .chest-odds {
+    padding: 6px 8px;
+    font-size: 7px;
+  }
+  .rarity-tag {
+    width: 85px;
+  }
 }
 
 /* ====== MODAL RESULTADO DE COFRE ====== */
