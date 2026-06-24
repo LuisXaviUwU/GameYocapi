@@ -986,7 +986,7 @@ function initBaseClouds() {
     const tCtx = tempCanvas.getContext('2d');
     const pw = w / sType[0].length;
     const ph = h / sType.length;
-    
+
     for (let r = 0; r < sType.length; r++) {
       for (let c = 0; c < sType[0].length; c++) {
         const color = SPRITE_COLORS[sType[r][c]];
@@ -1007,20 +1007,20 @@ const cloudTintCtx = cloudTintCanvas.getContext('2d');
 function getCloudImage(sType, tint) {
   const baseCanvas = baseCloudsMap.get(sType);
   if (!tint || tint === 'rgba(0,0,0,0)') return baseCanvas;
-  
+
   if (cloudTintCanvas.width !== baseCanvas.width) {
     cloudTintCanvas.width = baseCanvas.width;
     cloudTintCanvas.height = baseCanvas.height;
   }
-  
+
   cloudTintCtx.globalCompositeOperation = 'source-over';
   cloudTintCtx.clearRect(0, 0, cloudTintCanvas.width, cloudTintCanvas.height);
   cloudTintCtx.drawImage(baseCanvas, 0, 0);
-  
+
   cloudTintCtx.globalCompositeOperation = 'source-atop';
   cloudTintCtx.fillStyle = tint;
   cloudTintCtx.fillRect(0, 0, cloudTintCanvas.width, cloudTintCanvas.height);
-  
+
   return cloudTintCanvas;
 }
 
@@ -1030,7 +1030,7 @@ function drawBackground() {
   // Inicia exactamente en 0.0 que ahora es día
   const cycleProgress = (globalFrame % CYCLE_LENGTH) / CYCLE_LENGTH;
   const currentSky = getSkyColor(cycleProgress);
-  
+
   ctx.fillStyle = currentSky;
   ctx.fillRect(0, 0, W, H);
 
@@ -1060,12 +1060,12 @@ function drawBackground() {
   // Nubes pixel art (usando offscreen canvas para evitar lineas de grid)
   for (const c of clouds) {
     const sType = c.sprite || CLOUD_SPRITES[0];
-    
+
     // Dibujar sombra
     ctx.globalAlpha = 0.15;
     const shadowImg = getCloudImage(sType, 'rgba(0,0,0,1)');
     ctx.drawImage(shadowImg, c.x + 3, c.y + 4, c.w, c.h);
-    
+
     // Dibujar nube con o sin tinte
     ctx.globalAlpha = 1;
     const cloudImg = getCloudImage(sType, cloudTint);
@@ -1074,7 +1074,7 @@ function drawBackground() {
 
   // Suelo pixel art
   const scrollOffset = state === 'playing' ? (frame * speed) : (globalFrame * 1.5);
-  
+
   // Base sólida color verde y café abajo
   ctx.fillStyle = '#5a9030';
   ctx.fillRect(0, GROUND_Y, W, 24);
@@ -1085,7 +1085,7 @@ function drawBackground() {
   const gw = groundCanvas.width;
   const numTiles = Math.ceil(W / gw) + 1;
   const offX = -(scrollOffset % gw);
-  
+
   for (let i = 0; i < numTiles; i++) {
     ctx.drawImage(groundCanvas, offX + i * gw, GROUND_Y);
   }
@@ -2074,16 +2074,16 @@ if (document.readyState !== 'loading') {
    ============================================================ */
 
 const WHEEL_SEGMENTS = [
-  { label: '100\nMonedas',   img: 'coin.png', emoji: '🪙', color: '#f59e0b', type: 'coins',       amount: 100  },
-  { label: '1 Multi\nx2',    img: 'x2.png', emoji: '✖2', color: '#3b82f6', type: 'multi',       amount: 1    },
-  { label: 'Escudo\n30s',    img: 'inmortal.png', emoji: '🛡',  color: '#8b5cf6', type: 'shield30',    amount: 1    },
-  { label: 'Otra\nOport.',   img: null, emoji: '🔄',  color: '#6b7280', type: 'retry',       amount: 0    },
-  { label: '300\nMonedas',   img: 'coin.png', emoji: '🪙',  color: '#f97316', type: 'coins',       amount: 300  },
-  { label: '2 Imanes',       img: 'iman.png', emoji: '🧲',  color: '#ec4899', type: 'magnet',      amount: 2    },
-  { label: '2 Multi\nx4',    img: 'x4.png', emoji: '✖4', color: '#10b981', type: 'multi4',      amount: 2    },
-  { label: 'Otra\nOport.',   img: null, emoji: '🔄',  color: '#6b7280', type: 'retry',       amount: 0    },
-  { label: '2000\nMonedas',  img: 'coin.png', emoji: '💰',  color: '#eab308', type: 'coins',       amount: 2000 },
-  { label: '2 Multi\nx6',    img: 'x6.png', emoji: '✖6', color: '#ef4444', type: 'multi6',      amount: 2    },
+  { label: '100', img: 'coin.png', emoji: '🪙', color: '#f59e0b', type: 'coins', amount: 100 },
+  { label: 'x1', img: 'x2.png', emoji: '✖2', color: '#3b82f6', type: 'multi', amount: 1 },
+  { label: '30s', img: 'inmortal.png', emoji: '🛡', color: '#8b5cf6', type: 'shield30', amount: 1 },
+  { label: 'Otra', img: null, emoji: '🔄', color: '#6b7280', type: 'retry', amount: 0 },
+  { label: '300', img: 'coin.png', emoji: '🪙', color: '#f97316', type: 'coins', amount: 300 },
+  { label: 'x2', img: 'iman.png', emoji: '🧲', color: '#ec4899', type: 'magnet', amount: 2 },
+  { label: 'x2', img: 'x4.png', emoji: '✖4', color: '#10b981', type: 'multi4', amount: 2 },
+  { label: 'Otra', img: null, emoji: '🔄', color: '#6b7280', type: 'retry', amount: 0 },
+  { label: '2000', img: 'coin.png', emoji: '💰', color: '#eab308', type: 'coins', amount: 2000 },
+  { label: 'x2', img: 'x6.png', emoji: '✖6', color: '#ef4444', type: 'multi6', amount: 2 },
 ];
 
 const wheelImages = {};
@@ -2113,7 +2113,7 @@ function drawWheel(canvas, angle) {
   for (let i = 0; i < total; i++) {
     const seg = WHEEL_SEGMENTS[i];
     const startAngle = angle + i * arc - Math.PI / 2;
-    const endAngle   = startAngle + arc;
+    const endAngle = startAngle + arc;
 
     // Sector
     ctx2.beginPath();
@@ -2139,17 +2139,19 @@ function drawWheel(canvas, angle) {
 
     // Emoji o Imagen PNG
     const imgSize = Math.max(16, size * 0.08);
+    let imageStart = r - 10 - imgSize;
     if (seg.img && wheelImages[seg.img] && wheelImages[seg.img].complete) {
-      ctx2.drawImage(wheelImages[seg.img], r - 10 - imgSize, -imgSize/2, imgSize, imgSize);
+      ctx2.drawImage(wheelImages[seg.img], imageStart, -imgSize / 2, imgSize, imgSize);
     } else {
       ctx2.font = `${Math.max(10, size * 0.065)}px serif`;
       ctx2.fillText(seg.emoji, r - 6, 5);
+      imageStart = r - 30; // Approx emoji start
     }
 
     // Etiqueta multilinea
     const lines = seg.label.split('\n');
     ctx2.font = `bold ${Math.max(7, size * 0.042)}px Nunito, sans-serif`;
-    const textR = r - 28;
+    const textR = imageStart - 6;
     if (lines.length === 1) {
       ctx2.fillText(lines[0], textR, 5);
     } else {
@@ -2193,7 +2195,7 @@ function animateWheelBtn() {
 async function loadWheelState() {
   const stored = localStorage.getItem('wheelState_v1');
   if (stored) {
-    try { wheelState = JSON.parse(stored); } catch (e) {}
+    try { wheelState = JSON.parse(stored); } catch (e) { }
   }
   updateWheelUI();
 }
@@ -2215,9 +2217,9 @@ function msToHMS(ms) {
 }
 
 function updateWheelUI() {
-  const spinBtn      = document.getElementById('spinBtn');
-  const badge        = document.getElementById('wheelCooldownBadge');
-  const loginMsg     = document.getElementById('wheelLoginMsg');
+  const spinBtn = document.getElementById('spinBtn');
+  const badge = document.getElementById('wheelCooldownBadge');
+  const loginMsg = document.getElementById('wheelLoginMsg');
   const wheelContent = document.getElementById('wheelContent');
 
   if (!spinBtn) return;
@@ -2385,17 +2387,13 @@ function showWheelResult(msg, isRetry) {
 
 // ── Dibujo inicial y listeners ─────────────────────────────────
 document.addEventListener('DOMContentLoaded', () => {
-  // Dibujar mini-rueda en botón
-  drawWheelBtn();
-  animateWheelBtn();
+  // Cargar estado
   // Cargar estado
   setTimeout(loadWheelState, 600);
 });
 
 // Si el DOM ya cargó
 if (document.readyState !== 'loading') {
-  drawWheelBtn();
-  if (!wheelBtnAnimId) animateWheelBtn();
   setTimeout(loadWheelState, 600);
 }
 

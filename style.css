@@ -1153,13 +1153,12 @@
   align-items: center;
   justify-content: center;
   margin: 0 auto 16px auto;
-  width: 320px;
-  height: 340px;
+  width: 100%;
+  max-width: 320px;
 }
 
 @media (max-width: 420px) {
-  .wheel-wrap { width: 280px; height: 300px; }
-  #wheelCanvas { width: 280px !important; height: 280px !important; }
+  /* dimensiones fluidas */
 }
 
 @media (max-width: 900px) and (orientation: landscape) {
@@ -1189,14 +1188,16 @@
   }
   .wheel-wrap {
     grid-area: wheel;
-    width: 220px;
-    height: 230px;
+    width: 100%;
+    max-width: 220px;
+    max-height: 60vh;
+    aspect-ratio: 1;
     margin: 0 auto;
   }
   #wheelCanvas {
-    width: 220px !important;
-    height: 220px !important;
-    margin-top: 10px;
+    max-width: 220px;
+    max-height: 60vh;
+    margin-top: 5px;
   }
   #wheelLoginMsg {
     grid-area: content;
@@ -1239,6 +1240,9 @@
   display: block;
   margin-top: 20px;
   cursor: pointer;
+  width: 100% !important;
+  height: auto !important;
+  aspect-ratio: 1;
 }
 
 /* Botón Girar */
