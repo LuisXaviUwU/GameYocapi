@@ -1495,8 +1495,10 @@ function showLeaderboardTab(tabId) {
     document.querySelectorAll('[id^="lbTabBtn-"]').forEach(btn => btn.classList.remove('active'));
     document.querySelectorAll('[id^="lbTab-"]').forEach(content => content.classList.remove('active'));
 
-    document.getElementById('lbTabBtn-' + tabId).classList.add('active');
-    document.getElementById('lbTab-' + tabId).classList.add('active');
+    const btn = document.getElementById('lbTabBtn-' + tabId);
+    const content = document.getElementById('lbTab-' + tabId);
+    if (btn) btn.classList.add('active');
+    if (content) content.classList.add('active');
 }
 
 function closeModal(id) {
@@ -1652,10 +1654,17 @@ function updateWeekRange() {
     const sunday = new Date(monday); sunday.setDate(monday.getDate() + 6);
     const fmt = d => d.toLocaleDateString('es-MX', { day: 'numeric', month: 'short' });
     document.getElementById('weekRange').textContent = `${fmt(monday)} – ${fmt(sunday)}`;
+
+    const prevMonday = new Date(monday); prevMonday.setDate(monday.getDate() - 7);
+    const prevSunday = new Date(monday); prevSunday.setDate(monday.getDate() - 1);
+    const pastWeekRange = document.getElementById('pastWeekRange');
+    if (pastWeekRange) pastWeekRange.textContent = `${fmt(prevMonday)} – ${fmt(prevSunday)}`;
+    return { monday, prevMonday };
 }
 
 async function loadLeaderboard() {
-    updateWeekRange();
+    const { monday, prevMonday } = updateWeekRange();
+    loadPreviousWeekWinner(prevMonday, monday);
     const list = document.getElementById('leaderboardList');
     const { data, error } = await sb
         .from('current_week_leaderboard')
@@ -1677,6 +1686,40 @@ async function loadLeaderboard() {
     list.innerHTML = data.map((row, i) =>
         `<li><span>#${i + 1} ${row.twitch_username}</span><span>${row.best_score}</span></li>`
     ).join('');
+
+}
+
+async function loadPreviousWeekWinner(prevMonday, monday) {
+    const nameEl = document.getElementById('pastWinnerName');
+    const scoreEl = document.getElementById('pastWinnerScore');
+    if (!nameEl || !scoreEl) return;
+
+    nameEl.textContent = 'Cargando...';
+    scoreEl.textContent = '';
+
+    const { data, error } = await sb
+        .from('weekly_winners_history')
+        .select('twitch_username, best_score, week_start')
+        .gte('week_start', prevMonday.toISOString())
+        .lt('week_start', monday.toISOString())
+        .order('best_score', { ascending: false })
+        .limit(1);
+
+    if (error) {
+        console.error('Error cargando ganador anterior:', error);
+        nameEl.textContent = 'Sin historial';
+        scoreEl.textContent = 'No se pudo cargar';
+        return;
+    }
+
+    if (!data || data.length === 0) {
+        nameEl.textContent = 'Sin ganador';
+        scoreEl.textContent = 'No hay puntajes de la semana pasada';
+        return;
+    }
+
+    nameEl.textContent = data[0].twitch_username;
+    scoreEl.textContent = `Puntos: ${data[0].best_score}`;
 }
 
 checkSession();

@@ -419,17 +419,9 @@
             <h3>LEADERBOARD
             </h3>
 
-            <div class="store-layout" style="margin-top: 10px; flex-direction: column;">
-              <div style="display: flex; gap: 8px; justify-content: center; margin-bottom: 10px;">
-                <button id="lbTabBtn-current" class="store-tab active"
-                  style="flex:1; text-align:center; padding: 10px 5px;" onclick="showLeaderboardTab('current')">ACTUAL
-                </button>
-                <button id="lbTabBtn-past" class="store-tab" style="flex:1; text-align:center; padding: 10px 5px;"
-                  onclick="showLeaderboardTab('past')">GANADOR ANT.
-                </button>
-              </div>
-
-              <div id="lbTab-current" class="store-tab-content active" style="width: 100%;">
+            <div class="leaderboard-sections">
+              <section class="leaderboard-section leaderboard-current" id="lbTab-current">
+                <div class="leaderboard-section-title">SEMANA ACTUAL</div>
                 <div class="lb-period" id="weekRange">
                 </div>
                 <ul id="leaderboardList">
@@ -439,28 +431,27 @@
                 </ul>
                 <div class="week-note">Se reinicia cada lunes.
                 </div>
-              </div>
+              </section>
 
-              <div id="lbTab-past" class="store-tab-content" style="width: 100%;">
+              <section class="leaderboard-section leaderboard-past" id="lbTab-past">
+                <div class="leaderboard-section-title">GANADOR ANTERIOR</div>
                 <div class="lb-period" id="pastWeekRange">
                   Semana Pasada
                 </div>
-                <div id="pastWinnerDisplay"
-                  style="margin-top: 15px; padding: 15px; background: rgba(255, 204, 0, 0.1); border: 2px solid var(--gold); border-radius: 8px;">
-                  <h4
-                    style="color: var(--gold); margin-top: 0; font-family: 'Press Start 2P', monospace; font-size: 10px;">
+                <div id="pastWinnerDisplay" class="past-winner-card">
+                  <h4>
                     1er LUGAR</h4>
-                  <div id="pastWinnerName" style="font-size: 14px; font-weight: bold; margin: 10px 0; color: #fff;">???
+                  <div id="pastWinnerName" class="past-winner-name">???
                   </div>
-                  <div id="pastWinnerScore" style="font-size: 10px; color: #ccc;">Puntos: 0</div>
+                  <div id="pastWinnerScore" class="past-winner-score">Puntos: 0</div>
                 </div>
-              </div>
+              </section>
             </div>
 
           </div>
         </div>
         <div id="authModal" class="modal-overlay">
-          <div class="modal-box">
+          <div class="modal-box settings-modal-box">
             <button class="modal-close" onclick="closeModal('authModal')">X
             </button>
             <h3>SETTINGS
@@ -469,12 +460,13 @@
             </span>
             <button id="twitchLoginBtn">CONECTAR CON TWITCH
             </button>
-            <div style="margin-top: 25px; border-top: 2px dashed #555; padding-top: 20px;">
+            <div class="settings-grid">
+            <section class="settings-section settings-difficulty">
               <h4
                 style="font-family: 'Press Start 2P', monospace; font-size: 12px; color: var(--gold); margin-top: 0; margin-bottom: 12px;">
                 DIFICULTAD
               </h4>
-              <div style="display:flex; gap:6px; justify-content:center; flex-wrap:wrap; margin-bottom: 0;">
+              <div class="difficulty-grid">
                 <button id="diff-easy" class="diff-btn active" onclick="setDifficulty('easy')">FÁCIL<br>
                   <span style="font-size:8px;font-family:monospace">10 monedas</span>
                 </button>
@@ -488,8 +480,8 @@
                   <span style="font-size:8px;font-family:monospace">100 monedas</span>
                 </button>
               </div>
-            </div>
-            <div style="margin-top: 20px; border-top: 2px dashed #555; padding-top: 20px;">
+            </section>
+            <section class="settings-section settings-volume">
               <h4
                 style="font-family: 'Press Start 2P', monospace; font-size: 12px; color: var(--gold); margin-top: 0; margin-bottom: 15px;">
                 VOLUMEN
@@ -502,6 +494,7 @@
                 <span>JUEGO</span>
                 <input type="range" id="volGame" min="0" max="100" value="45" title="Volumen música juego">
               </div>
+            </section>
             </div>
           </div>
         </div>
