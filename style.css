@@ -999,6 +999,272 @@
   margin-top: 5px;
 }
 
+@media (max-width: 600px) {
+  #storeModal {
+    align-items: stretch;
+    justify-content: center;
+    padding: 6px;
+  }
+
+  #storeModal .store-modal-box {
+    width: 100%;
+    max-height: 94vh !important;
+    padding: 10px;
+    overflow: hidden;
+  }
+
+  #storeModal .store-modal-box h3 {
+    font-size: 12px;
+    margin-bottom: 6px;
+  }
+
+  #storeContent.store-layout {
+    min-height: 0;
+    flex: 1 1 auto;
+    gap: 8px;
+    margin-top: 8px;
+    overflow: hidden;
+  }
+
+  #storeModal .store-sidebar {
+    flex-wrap: nowrap;
+    justify-content: flex-start;
+    gap: 5px;
+    padding-bottom: 8px;
+    overflow-x: auto;
+    scrollbar-width: thin;
+  }
+
+  #storeModal .store-tab {
+    flex: 0 0 auto;
+    min-width: 104px;
+    padding: 8px 9px;
+    font-size: 7px;
+    white-space: nowrap;
+  }
+
+  #storeModal .store-content-area {
+    min-height: 0;
+    max-height: calc(94vh - 170px);
+    overflow-y: auto;
+    padding-right: 4px;
+  }
+
+  #storeModal .store-tab-content.active {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 8px;
+  }
+
+  #storeModal #tab-cofres.store-tab-content.active {
+    display: block;
+  }
+
+  #storeModal .store-category-hero {
+    gap: 8px;
+    padding: 8px;
+  }
+
+  #storeModal .store-category-hero img {
+    width: 42px;
+    height: 42px;
+  }
+
+  #storeModal .store-category-title {
+    font-size: 9px;
+  }
+
+  #storeModal .store-category-description {
+    font-size: 9px;
+  }
+
+  #storeModal .store-item {
+    min-height: 108px;
+    padding: 9px 7px;
+    gap: 7px;
+  }
+
+  #storeModal .store-item-main,
+  #storeModal .store-item > span {
+    font-size: 8px;
+    line-height: 1.35;
+  }
+
+  #storeModal .store-item-img {
+    width: 32px;
+    height: 32px;
+  }
+
+  #storeModal .store-item button {
+    min-width: 78px;
+    padding: 7px 8px;
+    font-size: 8px;
+  }
+
+  #storeModal .chest-cards-container {
+    grid-template-columns: 1fr;
+    gap: 8px;
+  }
+
+  #storeModal .chest-card-top {
+    padding: 9px;
+    gap: 8px;
+  }
+
+  #storeModal .chest-img-wrap {
+    width: 48px;
+    height: 48px;
+  }
+
+  #storeModal .chest-card-name {
+    font-size: 10px;
+  }
+
+  #storeModal .chest-card-price {
+    font-size: 10px;
+  }
+
+  #storeModal .chest-open-btn {
+    padding: 7px 9px;
+    font-size: 8px;
+  }
+
+  #storeModal .chest-odds {
+    padding: 8px 9px;
+    font-size: 7px;
+    gap: 5px;
+  }
+}
+
+@media (max-width: 900px) and (orientation: landscape) {
+  #storeModal {
+    align-items: center;
+    justify-content: center;
+    padding: 6px;
+  }
+
+  #storeModal .store-modal-box {
+    width: min(96vw, 820px);
+    max-height: 92vh !important;
+    padding: 10px 12px;
+    overflow: hidden;
+  }
+
+  #storeModal .store-modal-box h3 {
+    font-size: 12px;
+    margin-bottom: 4px;
+  }
+
+  #storeContent.store-layout {
+    min-height: 0;
+    flex: 1 1 auto;
+    gap: 8px;
+    margin-top: 8px;
+    overflow: hidden;
+  }
+
+  #storeModal .store-sidebar {
+    flex-wrap: nowrap;
+    justify-content: flex-start;
+    padding-bottom: 7px;
+    gap: 5px;
+    overflow-x: auto;
+  }
+
+  #storeModal .store-tab {
+    flex: 0 0 auto;
+    min-width: 112px;
+    padding: 7px 10px;
+    font-size: 7px;
+  }
+
+  #storeModal .store-content-area {
+    min-height: 0;
+    max-height: calc(92vh - 132px);
+    overflow-y: auto;
+    padding-right: 4px;
+  }
+
+  #storeModal .store-tab-content.active {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 8px;
+  }
+
+  #storeModal #tab-cofres.store-tab-content.active {
+    display: block;
+  }
+
+  #storeModal .store-category-hero {
+    padding: 7px 10px;
+  }
+
+  #storeModal .store-category-hero img {
+    width: 42px;
+    height: 42px;
+  }
+
+  #storeModal .store-category-title {
+    font-size: 10px;
+  }
+
+  #storeModal .store-category-description {
+    font-size: 9px;
+  }
+
+  #storeModal .store-item {
+    min-height: 100px;
+    padding: 8px;
+    gap: 7px;
+  }
+
+  #storeModal .store-item-main,
+  #storeModal .store-item > span {
+    min-height: 40px;
+    font-size: 8px;
+    line-height: 1.35;
+  }
+
+  #storeModal .store-item-img {
+    width: 30px;
+    height: 30px;
+  }
+
+  #storeModal .store-item button {
+    min-width: 76px;
+    padding: 7px 8px;
+    font-size: 8px;
+  }
+
+  #storeModal .chest-cards-container {
+    grid-template-columns: repeat(2, minmax(260px, 1fr));
+    gap: 8px;
+  }
+
+  #storeModal .chest-card-top {
+    padding: 8px;
+    gap: 8px;
+  }
+
+  #storeModal .chest-img-wrap {
+    width: 46px;
+    height: 46px;
+  }
+
+  #storeModal .chest-card-name {
+    font-size: 10px;
+  }
+
+  #storeModal .chest-open-btn {
+    padding: 7px 9px;
+    font-size: 8px;
+  }
+
+  #storeModal .chest-odds {
+    padding: 8px;
+    font-size: 7px;
+    gap: 5px;
+  }
+}
+
 /* ---------- Inventario (Mochila) ---------- */
 #inventoryHud {
   position: absolute;
