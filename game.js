@@ -9,6 +9,179 @@ const GROUND_Y = H - 80;
 
 const CAPI_IMG = new Image();
 CAPI_IMG.src = 'assets/capibara.png';
+CAPI_IMG.onload = () => {
+    rebuildTintedCapibara();
+    drawSkinPreview();
+};
+
+const SKIN_STORAGE_KEY = 'capibaraSkinColor_v1';
+const SKIN_NAME_STORAGE_KEY = 'capibaraSkinName_v1';
+const SKIN_PRESETS = [
+    { name: 'BLANCO', color: '#f8fafc' },
+    { name: 'PLATA', color: '#cbd5e1' },
+    { name: 'GRIS', color: '#64748b' },
+    { name: 'CARBON', color: '#334155' },
+    { name: 'NEGRO', color: '#111827' },
+    { name: 'MARFIL', color: '#fff7ed' },
+    { name: 'BEIGE', color: '#f5e6ca' },
+    { name: 'CHAMPAN', color: '#f7e7ce' },
+    { name: 'PIEL', color: '#f2c6a0' },
+    { name: 'DURAZNO', color: '#ffb38a' },
+    { name: 'CHOCOLATE', color: '#78350f' },
+    { name: 'MARRON', color: '#6f4e37' },
+    { name: 'CAFE', color: '#92400e' },
+    { name: 'CANELA', color: '#b45309' },
+    { name: 'BRONCE', color: '#a16207' },
+    { name: 'DORADO', color: '#f59e0b' },
+    { name: 'AMARILLO', color: '#facc15' },
+    { name: 'MOSTAZA', color: '#ca8a04' },
+    { name: 'PASTEL AMARILLO', color: '#fef08a' },
+    { name: 'LIMA', color: '#a3e635' },
+    { name: 'VERDE CLARO', color: '#86efac' },
+    { name: 'VERDE', color: '#22c55e' },
+    { name: 'ESMERALDA', color: '#10b981' },
+    { name: 'MENTA', color: '#34d399' },
+    { name: 'AQUA', color: '#22d3ee' },
+    { name: 'TEAL', color: '#0f766e' },
+    { name: 'TURQUESA', color: '#14b8a6' },
+    { name: 'CYAN', color: '#06b6d4' },
+    { name: 'CELESTE', color: '#38bdf8' },
+    { name: 'AZUL CLARO', color: '#60a5fa' },
+    { name: 'AZUL', color: '#3b82f6' },
+    { name: 'AZUL REY', color: '#1d4ed8' },
+    { name: 'MARINO', color: '#172554' },
+    { name: 'AZUL OSCURO', color: '#1e3a8a' },
+    { name: 'INDIGO', color: '#4f46e5' },
+    { name: 'VIOLETA', color: '#7c3aed' },
+    { name: 'MORADO', color: '#8b5cf6' },
+    { name: 'LILA', color: '#a78bfa' },
+    { name: 'LAVANDA', color: '#c084fc' },
+    { name: 'MAGENTA', color: '#d946ef' },
+    { name: 'FUCSIA', color: '#e879f9' },
+    { name: 'ROSA CLARO', color: '#f9a8d4' },
+    { name: 'ROSA', color: '#ec4899' },
+    { name: 'CHICLE', color: '#f472b6' },
+    { name: 'PASTEL ROSA', color: '#fbcfe8' },
+    { name: 'SALMON', color: '#fb7185' },
+    { name: 'MELOCOTON', color: '#fdba74' },
+    { name: 'ROJO', color: '#ef4444' },
+    { name: 'ROJO OSCURO', color: '#991b1b' },
+    { name: 'CARMESI', color: '#dc2626' },
+    { name: 'CORAL', color: '#f43f5e' },
+    { name: 'NARANJA', color: '#f97316' },
+    { name: 'MANDARINA', color: '#fb923c' },
+    { name: 'CREMA', color: '#fde68a' },
+    { name: 'ARENA', color: '#d6b07a' },
+    { name: 'OLIVA', color: '#84cc16' },
+    { name: 'BOSQUE', color: '#15803d' },
+    { name: 'JADE', color: '#059669' },
+    { name: 'OCEANO', color: '#0e7490' },
+    { name: 'HIELO', color: '#67e8f9' },
+    { name: 'CIELO', color: '#7dd3fc' },
+    { name: 'ELECTRICO', color: '#2563eb' },
+    { name: 'NOCHE', color: '#312e81' },
+    { name: 'UVA', color: '#6d28d9' },
+    { name: 'BERENJENA', color: '#581c87' },
+    { name: 'FRAMBUESA', color: '#be185d' },
+    { name: 'VINO', color: '#9f1239' },
+    { name: 'LADRILLO', color: '#b91c1c' },
+    { name: 'COBRE', color: '#c2410c' },
+    { name: 'MIEL', color: '#eab308' },
+    { name: 'NEON VERDE', color: '#39ff14' },
+    { name: 'NEON CYAN', color: '#00ffff' },
+    { name: 'NEON AZUL', color: '#0066ff' },
+    { name: 'NEON ROSA', color: '#ff2bd6' },
+    { name: 'NEON ROJO', color: '#ff1744' }
+];
+let selectedSkinColor = localStorage.getItem(SKIN_STORAGE_KEY) || 'original';
+let selectedSkinName = localStorage.getItem(SKIN_NAME_STORAGE_KEY) || 'ORIGINAL';
+let tintedCapiCanvas = null;
+
+function rebuildTintedCapibara() {
+    tintedCapiCanvas = null;
+    if (selectedSkinColor === 'original' || !CAPI_IMG.complete || !CAPI_IMG.naturalWidth) return;
+    if (!/^#[0-9a-f]{6}$/i.test(selectedSkinColor)) return;
+
+    const skinCanvas = document.createElement('canvas');
+    skinCanvas.width = CAPI_IMG.naturalWidth;
+    skinCanvas.height = CAPI_IMG.naturalHeight;
+    const skinCtx = skinCanvas.getContext('2d');
+
+    skinCtx.drawImage(CAPI_IMG, 0, 0);
+
+    skinCtx.globalCompositeOperation = 'source-atop';
+    skinCtx.globalAlpha = 0.72;
+    skinCtx.fillStyle = selectedSkinColor;
+    skinCtx.fillRect(0, 0, skinCanvas.width, skinCanvas.height);
+
+    skinCtx.globalAlpha = 0.46;
+    skinCtx.globalCompositeOperation = 'multiply';
+    skinCtx.drawImage(CAPI_IMG, 0, 0);
+
+    skinCtx.globalAlpha = 0.28;
+    skinCtx.globalCompositeOperation = 'screen';
+    skinCtx.drawImage(CAPI_IMG, 0, 0);
+
+    skinCtx.globalAlpha = 1;
+    skinCtx.globalCompositeOperation = 'destination-in';
+    skinCtx.drawImage(CAPI_IMG, 0, 0);
+    skinCtx.globalCompositeOperation = 'source-over';
+
+    tintedCapiCanvas = skinCanvas;
+}
+
+function getCapiSpriteImage() {
+    return tintedCapiCanvas || CAPI_IMG;
+}
+
+function setCapibaraSkin(color, name) {
+    selectedSkinColor = color || 'original';
+    selectedSkinName = name || 'PERSONALIZADO';
+    localStorage.setItem(SKIN_STORAGE_KEY, selectedSkinColor);
+    localStorage.setItem(SKIN_NAME_STORAGE_KEY, selectedSkinName);
+    rebuildTintedCapibara();
+    renderSkinPresetButtons();
+    drawSkinPreview();
+}
+
+function renderSkinPresetButtons() {
+    const grid = document.getElementById('skinPresetGrid');
+    if (!grid) return;
+    grid.innerHTML = SKIN_PRESETS.map((preset) => {
+        const active = selectedSkinColor.toLowerCase() === preset.color.toLowerCase() ? ' active' : '';
+        return `<button class="skin-swatch${active}" style="--skin-color:${preset.color}" onclick="setCapibaraSkin('${preset.color}', '${preset.name}')" aria-label="${preset.name}" title="${preset.name}"><span></span></button>`;
+    }).join('');
+}
+
+function drawSkinPreview() {
+    const preview = document.getElementById('skinPreviewCanvas');
+    const label = document.getElementById('skinColorName');
+    const picker = document.getElementById('skinCustomColor');
+    if (label) label.textContent = selectedSkinName;
+    if (picker && selectedSkinColor !== 'original') picker.value = selectedSkinColor;
+    if (!preview) return;
+
+    const pCtx = preview.getContext('2d');
+    pCtx.clearRect(0, 0, preview.width, preview.height);
+    pCtx.fillStyle = 'rgba(255,255,255,0.08)';
+    pCtx.fillRect(0, 0, preview.width, preview.height);
+    pCtx.fillStyle = 'rgba(0,0,0,0.2)';
+    pCtx.beginPath();
+    pCtx.ellipse(92, 112, 58, 12, 0, 0, Math.PI * 2);
+    pCtx.fill();
+
+    const sprite = getCapiSpriteImage();
+    if (!CAPI_IMG.complete || !CAPI_IMG.naturalWidth) return;
+    const frame = { x: 226, y: 191, w: 156, h: 129 };
+    pCtx.imageSmoothingEnabled = false;
+    pCtx.drawImage(sprite, frame.x, frame.y, frame.w, frame.h, 20, 18, 140, 116);
+}
+
+function openSkinModal() {
+    renderSkinPresetButtons();
+    drawSkinPreview();
+    openModal('skinModal');
+}
 
 const SPRITE_COLORS = {
     '.': null,
@@ -1150,17 +1323,19 @@ function drawCapibara() {
             }
         }
 
+        const capiSprite = getCapiSpriteImage();
+
         if (drawShield) {
             const shieldPulse = 10 + Math.sin(frame * 0.2) * 8;
             ctx.shadowColor = shieldColor;
             ctx.shadowBlur = shieldPulse;
-            ctx.drawImage(CAPI_IMG, fData.x, fData.y, fData.w, fData.h, dx, dy, drawW, drawH);
-            ctx.drawImage(CAPI_IMG, fData.x, fData.y, fData.w, fData.h, dx, dy, drawW, drawH);
-            ctx.drawImage(CAPI_IMG, fData.x, fData.y, fData.w, fData.h, dx, dy, drawW, drawH);
+            ctx.drawImage(capiSprite, fData.x, fData.y, fData.w, fData.h, dx, dy, drawW, drawH);
+            ctx.drawImage(capiSprite, fData.x, fData.y, fData.w, fData.h, dx, dy, drawW, drawH);
+            ctx.drawImage(capiSprite, fData.x, fData.y, fData.w, fData.h, dx, dy, drawW, drawH);
             ctx.shadowBlur = 0;
         }
 
-        ctx.drawImage(CAPI_IMG, fData.x, fData.y, fData.w, fData.h, dx, dy, drawW, drawH);
+        ctx.drawImage(capiSprite, fData.x, fData.y, fData.w, fData.h, dx, dy, drawW, drawH);
     } else {
         ctx.fillStyle = '#6e4a28';
         ctx.fillRect(x, by, w, bodyH);
@@ -2133,9 +2308,15 @@ sb.auth.onAuthStateChange((_evt, session) => {
 
 // Cargar al inicio
 if (document.readyState !== 'loading') {
+    renderSkinPresetButtons();
+    drawSkinPreview();
     setTimeout(loadDailyState, 500);
 } else {
-    document.addEventListener('DOMContentLoaded', () => setTimeout(loadDailyState, 500));
+    document.addEventListener('DOMContentLoaded', () => {
+        renderSkinPresetButtons();
+        drawSkinPreview();
+        setTimeout(loadDailyState, 500);
+    });
 }
 
 

@@ -84,6 +84,9 @@
             <span class="live-text">EN DIRECTO</span>
           </a>
           <a href="dashboard.html" id="adminDashboardBtn" class="admin-corner-btn" style="display:none;">ADMIN PANEL</a>
+          <button id="skinBtn" class="skin-corner-btn" onclick="openSkinModal()" title="Cambiar color del capibara">
+            <img src="assets/capibara.png" class="corner-btn-icon skin-corner-icon">
+          </button>
           <!-- Botón Sesión Diaria -->
           <button id="dailyRewardBtn" class="daily-reward-corner-btn" onclick="openDailyReward()" title="Sesión Diaria">
             <img src="assets/regalo.png" class="corner-btn-icon">
@@ -562,6 +565,33 @@
           </div>
         </div>
         <!-- ====== MODAL SESIÓN DIARIA ====== -->
+        <div id="skinModal" class="modal-overlay">
+          <div class="modal-box skin-modal-box">
+            <button class="modal-close" onclick="closeModal('skinModal')">X
+            </button>
+            <h3>ASPECTO
+            </h3>
+            <div class="skin-layout">
+              <div class="skin-preview-panel">
+                <canvas id="skinPreviewCanvas" width="180" height="140" aria-label="Vista previa del capibara">
+                </canvas>
+                <div id="skinColorName" class="skin-color-name">ORIGINAL
+                </div>
+              </div>
+              <div class="skin-controls">
+                <div id="skinPresetGrid" class="skin-preset-grid">
+                  <!-- Colores generados por JS -->
+                </div>
+                <label class="skin-custom-picker" for="skinCustomColor">
+                  <span>COLOR LIBRE</span>
+                  <input id="skinCustomColor" type="color" value="#4fb6ff" oninput="setCapibaraSkin(this.value, 'PERSONALIZADO')">
+                </label>
+                <button class="skin-reset-btn" onclick="setCapibaraSkin('original', 'ORIGINAL')">ORIGINAL
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
         <div id="dailyRewardModal" class="modal-overlay">
           <div class="modal-box daily-modal-box">
             <button class="modal-close" onclick="closeModal('dailyRewardModal')">X
