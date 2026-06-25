@@ -1,4 +1,4 @@
-﻿/* ============================================================
+/* ============================================================
  CAPIBARA RUNNER - lógica del juego
  ============================================================ */
 
@@ -1489,6 +1489,14 @@ function showStoreTab(tabId) {
 
     document.getElementById('tabBtn-' + tabId).classList.add('active');
     document.getElementById('tab-' + tabId).classList.add('active');
+}
+
+function showLeaderboardTab(tabId) {
+    document.querySelectorAll('[id^="lbTabBtn-"]').forEach(btn => btn.classList.remove('active'));
+    document.querySelectorAll('[id^="lbTab-"]').forEach(content => content.classList.remove('active'));
+
+    document.getElementById('lbTabBtn-' + tabId).classList.add('active');
+    document.getElementById('lbTab-' + tabId).classList.add('active');
 }
 
 function closeModal(id) {

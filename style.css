@@ -2317,3 +2317,30 @@
   from { opacity: 0; transform: translateY(10px); }
   to { opacity: 1; transform: translateY(0); }
 }
+
+/* Fix for Settings Modal in Horizontal */
+@media (max-width: 900px) and (orientation: landscape) {
+  #authModal .modal-box {
+    max-height: 95vh;
+    overflow-y: auto;
+    padding: 10px 15px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+  }
+  #authModal h3 {
+    margin-bottom: 5px;
+  }
+  #authModal .diff-btn {
+    padding: 6px 8px;
+    min-width: 60px;
+    font-size: 8px;
+  }
+  #authModal .vol-row {
+    margin-bottom: 8px !important;
+  }
+  .leaderboard-modal-box {
+    max-height: 95vh;
+    overflow-y: auto;
+  }
+}
