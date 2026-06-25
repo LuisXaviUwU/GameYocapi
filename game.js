@@ -1595,6 +1595,50 @@ async function buyBuff(type, cost, seconds) {
 
     // Guardar en DB (usamos syncWallet enviando monedas negativas)
     await syncWallet(-cost, true);
+    showPurchaseResult(type, seconds);
+}
+
+function getStoreItemInfo(type, seconds = 0) {
+    const items = [...CHEST_ITEMS.common, ...CHEST_ITEMS.epic, ...CHEST_ITEMS.legendary];
+    const found = items.find(item => item.type === type);
+    if (found) return found;
+
+    const fallbackNames = {
+        shield: `Escudo ${seconds || 10}s`,
+        shield30: 'Escudo 30s',
+        shield60: 'Escudo 60s',
+        doubleJump: `Doble Salto ${seconds || 15}s`,
+        magnet: `ImÃ¡n ${seconds || 15}s`,
+        multi: 'Multiplicador x2',
+        multi4: 'Multiplicador x4',
+        multi6: 'Multiplicador x6'
+    };
+    const fallbackImgs = {
+        shield: 'assets/inmortal.png',
+        shield30: 'assets/inmortal.png',
+        shield60: 'assets/inmortal.png',
+        doubleJump: 'assets/jump.png',
+        magnet: 'assets/iman.png',
+        multi: 'assets/x2.png',
+        multi4: 'assets/x4.png',
+        multi6: 'assets/x6.png'
+    };
+    return {
+        type,
+        name: fallbackNames[type] || type,
+        img: fallbackImgs[type] || 'assets/coin.png'
+    };
+}
+
+function getStoreRarityForType(type) {
+    if (['shield60', 'multi6'].includes(type)) return 'legendary';
+    if (['shield30', 'multi4'].includes(type)) return 'epic';
+    return 'common';
+}
+
+function showPurchaseResult(type, seconds) {
+    const item = getStoreItemInfo(type, seconds);
+    showChestResult(item, 1, getStoreRarityForType(type), 'COMPRA REALIZADA');
 }
 
 // ---------- Tienda dinámica desde DB ----------
@@ -1636,9 +1680,9 @@ function renderDynamicStore() {
         const items = storeConfig.filter(i => i.tab === tab);
         const first = items[0];
         return `
- <div id="tab-${tab}" class="store-tab-content${idx === 0 ? ' active' : ''}"><div style="text-align:center; margin-bottom:20px;"><img src="${first.image || 'assets/coin.png'}" style="width:80px; image-rendering:pixelated; filter:drop-shadow(0 4px 6px rgba(0,0,0,0.5));"><div style="color:var(--gold); margin-top:10px; font-size:14px; font-weight:bold;">${tab.toUpperCase()}</div><div style="font-size:10px; color:#ccc; margin-top:5px;">${first.description || ''}</div></div>
+ <div id="tab-${tab}" class="store-tab-content${idx === 0 ? ' active' : ''}"><div class="store-category-hero"><img src="${first.image || 'assets/coin.png'}" alt=""><div><div class="store-category-title">${tab.toUpperCase()}</div><div class="store-category-description">${first.description || ''}</div></div></div>
  ${items.map(item => `
- <div class="store-item"><span>${item.label}</span><button onclick="buyBuff('${item.type}', ${item.price}, ${item.seconds})">${item.price}</button></div>
+ <div class="store-item"><div class="store-item-main"><img class="store-item-img" src="${item.image || first.image || 'assets/coin.png'}" alt=""><span>${item.label}</span></div><button onclick="buyBuff('${item.type}', ${item.price}, ${item.seconds})">${item.price}</button></div>
  `).join('')}
  </div>`;
     }).join('');
@@ -2583,6 +2627,15 @@ function startFreeChestTimer() {
     }, 1000);
 }
 
+function playChestCardAnimation(type) {
+    const card = document.querySelector(`.chest-${type}`);
+    if (!card) return;
+    card.classList.remove('opening');
+    void card.offsetWidth;
+    card.classList.add('opening');
+    setTimeout(() => card.classList.remove('opening'), 650);
+}
+
 function injectCofresTab() {
     // Agregar botón al sidebar si no existe
     const sidebar = document.querySelector('.store-sidebar');
@@ -2627,6 +2680,7 @@ async function openChest(type) {
     }
 
     // Sortear rareza
+    playChestCardAnimation(type);
     const totalWeight = pool.rarities.reduce((sum, r) => sum + r.weight, 0);
     let rand = Math.random() * totalWeight;
     let selectedRarity = pool.rarities[pool.rarities.length - 1];
@@ -2663,15 +2717,17 @@ async function openChest(type) {
     showChestResult(item, qty, selectedRarity.name);
 }
 
-function showChestResult(item, qty, rarityKey) {
+function showChestResult(item, qty, rarityKey, title = 'COFRE ABIERTO') {
     const rc = CHEST_RARITY_COLORS[rarityKey];
 
+    const titleEl = document.getElementById('chestResultTitle');
     const rarityEl = document.getElementById('chestResultRarity');
     const imgEl = document.getElementById('chestResultImg');
     const nameEl = document.getElementById('chestResultName');
     const qtyEl = document.getElementById('chestResultQty');
     const box = document.querySelector('#chestResultModal .chest-result-box');
 
+    if (titleEl) titleEl.textContent = title;
     if (rarityEl) { rarityEl.textContent = rc.label; rarityEl.style.color = rc.color; }
     if (imgEl) { imgEl.src = item.img; imgEl.style.filter = `drop-shadow(0 0 18px ${rc.color})`; }
     if (nameEl) nameEl.textContent = item.name;

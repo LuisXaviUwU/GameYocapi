@@ -603,13 +603,64 @@
     /* Tienda en Modal */
     .store-item {
       display: flex;
+      flex-direction: column;
       justify-content: space-between;
       align-items: center;
-      background: rgba(255, 255, 255, 0.1);
-      padding: 8px 10px;
+      gap: 10px;
+      background: rgba(0, 0, 0, 0.36);
+      border: 2px solid rgba(255, 255, 255, 0.1);
       border-radius: 8px;
-      margin-bottom: 8px;
-      font-size: 14px;
+      min-height: 116px;
+      padding: 12px 10px;
+      color: #fff;
+      text-align: center;
+      box-shadow: inset 0 0 16px rgba(0,0,0,0.35);
+      transition: transform 0.12s, border-color 0.12s, box-shadow 0.12s;
+    }
+
+    .store-item:hover {
+      transform: translateY(-2px);
+      border-color: rgba(242, 183, 5, 0.75);
+      box-shadow: 0 6px 16px rgba(0,0,0,0.28), inset 0 0 16px rgba(242,183,5,0.08);
+    }
+
+    .store-item-main {
+      min-height: 52px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+      font-family: 'Press Start 2P', monospace;
+      font-size: 10px;
+      line-height: 1.45;
+    }
+
+    .store-item > span {
+      min-height: 44px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-family: 'Press Start 2P', monospace;
+      font-size: 10px;
+      line-height: 1.45;
+      color: #fff;
+    }
+
+    .store-item-img {
+      width: 38px;
+      height: 38px;
+      object-fit: contain;
+      image-rendering: pixelated;
+      filter: drop-shadow(0 4px 6px rgba(0,0,0,0.5));
+    }
+
+    .store-item button {
+      min-width: 92px;
+      margin: 0;
+      padding: 8px 12px;
+      border-radius: 8px;
+      font-size: 10px;
     }
 
     .store-item button {
@@ -773,14 +824,15 @@
   width: 95%;
   height: auto;
   max-height: 90vh !important;
-  padding: 15px;
+  padding: 16px;
   display: flex;
   flex-direction: column;
 }
 
 .store-layout {
   display: flex;
-  gap: 15px;
+  flex-direction: column;
+  gap: 12px;
   margin-top: 15px;
   flex-grow: 1;
   height: auto;
@@ -789,13 +841,16 @@
 }
 
 .store-sidebar {
-  width: 35%;
+  width: 100%;
   display: flex;
-  flex-direction: column;
-  gap: 8px;
-  border-right: 2px dashed #555;
-  padding-right: 15px;
-  overflow-y: auto;
+  flex-direction: row;
+  gap: 6px;
+  border-right: none;
+  border-bottom: 2px dashed #555;
+  padding-right: 0;
+  padding-bottom: 10px;
+  overflow-x: auto;
+  overflow-y: hidden;
 }
 
 @media (max-width: 600px) {
@@ -810,16 +865,9 @@
     overflow-y: hidden;
   }
   .store-sidebar {
-    width: 100%;
-    border-right: none;
-    border-bottom: 2px dashed #555;
-    padding-right: 0;
-    padding-bottom: 5px;
-    flex-direction: row;
     flex-wrap: wrap;
     justify-content: center;
     gap: 4px;
-    overflow-y: visible;
   }
   .store-tab {
     padding: 6px;
@@ -848,7 +896,6 @@
   }
   .store-sidebar {
     gap: 4px;
-    padding-right: 10px;
   }
   .store-tab {
     padding: 8px 4px;
@@ -863,11 +910,13 @@
   color: #fff;
   border: 2px solid var(--capi-dark);
   border-radius: 6px;
-  padding: 12px 8px;
+  padding: 10px 12px;
   cursor: pointer;
-  text-align: left;
+  text-align: center;
   transition: all 0.1s;
   margin-top: 0;
+  flex: 1 0 max-content;
+  min-width: 112px;
 }
 
 .store-tab:hover {
@@ -882,7 +931,7 @@
 }
 
 .store-content-area {
-  width: 65%;
+  width: 100%;
   height: 100%;
   text-align: left;
   overflow-y: auto;
@@ -906,7 +955,48 @@
   display: none;
 }
 .store-tab-content.active {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(170px, 1fr));
+  gap: 12px;
+  align-items: stretch;
+}
+
+#tab-cofres.store-tab-content.active {
   display: block;
+}
+
+.store-category-hero {
+  grid-column: 1 / -1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 14px;
+  text-align: left;
+  background: rgba(0,0,0,0.26);
+  border: 2px solid rgba(255,255,255,0.08);
+  border-radius: 8px;
+  padding: 10px;
+}
+
+.store-category-hero img {
+  width: 56px;
+  height: 56px;
+  object-fit: contain;
+  image-rendering: pixelated;
+  filter: drop-shadow(0 4px 6px rgba(0,0,0,0.5));
+}
+
+.store-category-title {
+  color: var(--gold);
+  font-family: 'Press Start 2P', monospace;
+  font-size: 12px;
+  font-weight: bold;
+}
+
+.store-category-description {
+  color: #ccc;
+  font-size: 10px;
+  margin-top: 5px;
 }
 
 /* ---------- Inventario (Mochila) ---------- */
@@ -2121,6 +2211,14 @@
   transform: translateY(-3px);
 }
 
+.chest-card.opening {
+  animation: chestOpenShake 0.58s cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+
+.chest-card.opening .chest-img {
+  animation: chestLidPop 0.58s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
 /* Colores por rareza de cofre */
 .chest-free      { border-color: #6b7280; box-shadow: inset 0 0 20px rgba(107,114,128,0.2); }
 .chest-common    { border-color: #9ca3af; box-shadow: inset 0 0 20px rgba(156,163,175,0.2); }
@@ -2507,4 +2605,19 @@
   #leaderboardList {
     max-height: 170px;
   }
+}
+
+@keyframes chestOpenShake {
+  0% { transform: translateY(0) rotate(0deg); filter: brightness(1); }
+  18% { transform: translateY(-5px) rotate(-2deg); filter: brightness(1.15); }
+  36% { transform: translateY(2px) rotate(2deg); filter: brightness(1.3); }
+  58% { transform: translateY(-3px) rotate(-1deg); filter: brightness(1.18); }
+  100% { transform: translateY(0) rotate(0deg); filter: brightness(1); }
+}
+
+@keyframes chestLidPop {
+  0% { transform: scale(1); }
+  35% { transform: scale(1.18) translateY(-4px); }
+  70% { transform: scale(0.96) translateY(2px); }
+  100% { transform: scale(1); }
 }
