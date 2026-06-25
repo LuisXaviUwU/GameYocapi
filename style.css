@@ -221,23 +221,50 @@
 
     #hud {
       position: absolute;
-      top: 10px;
-      left: 10px;
-      right: 10px;
-      display: flex;
-      justify-content: space-between;
-      align-items: flex-start;
+      top: 12px;
+      left: 12px;
+      right: auto;
+      display: none;
+      justify-content: flex-start;
+      align-items: center;
+      gap: 8px;
       font-family: 'Press Start 2P', monospace;
-      font-size: clamp(9px, 1.6vw, 13px);
+      font-size: clamp(9px, 1.25vw, 13px);
       color: #fff;
       text-shadow: 2px 2px 0 #00000055;
       pointer-events: none;
+      z-index: 20;
     }
 
-    #score {
-      background: #00000055;
-      padding: 6px 10px;
+    #gameWrap.is-playing #hud {
+      display: flex;
+    }
+
+    #score,
+    #sessionCoinsDisplay {
+      min-height: 34px;
+      background: rgba(12, 10, 28, 0.78);
+      border: 2px solid rgba(255, 255, 255, 0.08);
+      box-shadow: 0 3px 0 rgba(0, 0, 0, 0.35);
+      padding: 7px 11px;
       border-radius: 8px;
+      display: flex;
+      align-items: center;
+      white-space: nowrap;
+    }
+
+    #sessionCoinsDisplay {
+      gap: 7px;
+      min-width: 76px;
+      justify-content: center;
+      color: var(--gold);
+    }
+
+    #sessionCoinsDisplay img {
+      width: 26px;
+      height: 26px;
+      image-rendering: pixelated;
+      flex: 0 0 auto;
     }
 
     #buffs {
@@ -788,31 +815,39 @@
 /* ---------- Inventario (Mochila) ---------- */
 #inventoryHud {
   position: absolute;
-  top: 10px;
-  left: 50%;
-  transform: translateX(-50%);
+  top: 12px;
+  right: 12px;
+  left: auto;
+  transform: none;
   display: flex;
   flex-direction: row;
-  gap: 8px;
-  z-index: 10;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 7px;
+  max-width: calc(100% - 265px);
+  z-index: 20;
   pointer-events: none;
   font-family: 'Press Start 2P', monospace;
-  font-size: 10px;
+  font-size: clamp(8px, 1vw, 10px);
   display: none; /* Se muestra solo al jugar */
 }
 
 .inv-slot {
-  background: rgba(0,0,0,0.6);
+  min-width: 92px;
+  height: 34px;
+  background: rgba(12, 10, 28, 0.78);
   border: 2px solid var(--gold);
   border-radius: 8px;
-  padding: 8px;
+  padding: 5px 8px;
   color: white;
   display: flex;
   align-items: center;
-  gap: 10px;
+  justify-content: space-between;
+  gap: 7px;
   cursor: pointer;
   pointer-events: auto;
   transition: transform 0.1s;
+  box-shadow: 0 3px 0 rgba(0,0,0,0.35);
 }
 
 .inv-slot:active {
@@ -822,14 +857,17 @@
 .inv-key {
   background: #fff;
   color: #000;
-  padding: 2px 6px;
+  min-width: 24px;
+  padding: 2px 5px;
   border-radius: 4px;
   font-size: 8px;
+  line-height: 1;
+  text-align: center;
 }
 
 .inv-icon {
-  width: 20px;
-  height: 20px;
+  width: 22px;
+  height: 22px;
   image-rendering: pixelated;
 }
 
@@ -839,49 +877,100 @@
 }
 
 @media (max-width: 600px) {
+  #hud {
+    top: 8px;
+    left: 8px;
+    right: 8px;
+    justify-content: space-between;
+    gap: 6px;
+    font-size: 9px;
+  }
+  #score,
+  #sessionCoinsDisplay {
+    min-height: 30px;
+    padding: 6px 8px;
+  }
+  #sessionCoinsDisplay {
+    min-width: 64px;
+  }
+  #sessionCoinsDisplay img {
+    width: 22px;
+    height: 22px;
+  }
   #inventoryHud {
     flex-direction: row;
     flex-wrap: wrap;
     justify-content: center;
     top: auto;
-    bottom: 110px;
-    left: 50%;
-    transform: translateX(-50%);
-    width: 90%;
+    right: 8px;
+    bottom: 96px;
+    left: 8px;
+    transform: none;
+    width: auto;
+    max-width: none;
+    gap: 6px;
   }
   .inv-slot {
-    padding: 8px;
-    gap: 6px;
+    min-width: 58px;
+    height: 34px;
+    padding: 5px 7px;
+    gap: 5px;
   }
   .inv-key {
     display: none; /* Ocultar teclas en movil */
   }
   .inv-icon {
-    width: 24px;
-    height: 24px;
+    width: 22px;
+    height: 22px;
   }
   .inv-qty {
-    font-size: 12px;
+    font-size: 10px;
   }
 }
 
 @media (max-width: 900px) and (orientation: landscape) {
+  #hud {
+    top: 8px;
+    left: 8px;
+    gap: 6px;
+    font-size: 9px;
+  }
+  #score,
+  #sessionCoinsDisplay {
+    min-height: 30px;
+    padding: 6px 8px;
+  }
+  #sessionCoinsDisplay img {
+    width: 22px;
+    height: 22px;
+  }
   #inventoryHud {
     top: auto;
-    bottom: 20px;
-    left: 50%;
-    transform: translateX(-50%);
+    right: 110px;
+    bottom: 12px;
+    left: 110px;
+    transform: none;
     flex-direction: row;
     flex-wrap: wrap;
     justify-content: center;
-    max-width: 60%;
+    max-width: none;
+    gap: 6px;
   }
   .inv-slot {
-    padding: 6px 10px;
+    min-width: 58px;
+    height: 34px;
+    padding: 4px 7px;
+    gap: 5px;
+  }
+  .inv-key {
+    display: none;
   }
   .inv-icon {
     width: 22px;
     height: 22px;
+  }
+  .inv-qty {
+    font-size: 10px;
   }
 }
 
