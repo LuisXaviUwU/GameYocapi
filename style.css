@@ -2767,6 +2767,132 @@
 .chest-close-btn:hover { background: #4b5563; transform: translateY(-2px); }
 .chest-close-btn:active { transform: translateY(2px); border-bottom-width: 0px; margin-bottom: 4px; }
 
+@media (max-width: 600px) {
+  #chestResultModal {
+    padding: 8px;
+  }
+
+  #chestResultModal .chest-result-box {
+    width: min(92vw, 360px);
+    max-height: 90vh;
+    overflow-y: auto;
+    padding: 14px;
+  }
+
+  #chestResultTitle {
+    font-size: 11px;
+    margin-bottom: 10px;
+  }
+
+  .chest-result-animation {
+    margin: 14px 0;
+  }
+
+  .chest-result-rarity-badge {
+    font-size: 8px;
+    margin-bottom: 10px;
+    padding: 5px 9px;
+  }
+
+  .chest-result-img {
+    width: 82px;
+    height: 82px;
+  }
+
+  .chest-result-name {
+    font-size: 16px;
+    margin-top: 10px;
+  }
+
+  .chest-result-qty {
+    font-size: 12px;
+  }
+
+  .chest-close-btn {
+    font-size: 10px;
+    padding: 11px 16px;
+  }
+}
+
+@media (max-width: 900px) and (orientation: landscape) {
+  #chestResultModal {
+    padding: 6px;
+    justify-content: center;
+  }
+
+  #chestResultModal .chest-result-box {
+    width: min(88vw, 560px);
+    max-width: 560px;
+    max-height: 88vh;
+    overflow-y: auto;
+    padding: 12px 16px;
+  }
+
+  #chestResultModal .modal-close {
+    top: -8px;
+    right: -8px;
+    padding: 4px 8px;
+    font-size: 11px;
+  }
+
+  #chestResultTitle {
+    font-size: 11px;
+    margin: 0 28px 8px;
+    line-height: 1.45;
+  }
+
+  .chest-result-animation {
+    min-height: 92px;
+    display: grid;
+    grid-template-columns: 108px minmax(0, 1fr);
+    grid-template-areas:
+      "img rarity"
+      "img name"
+      "img qty";
+    column-gap: 14px;
+    row-gap: 5px;
+    align-items: center;
+    justify-items: center;
+    margin: 8px 0 10px;
+  }
+
+  .chest-result-rarity-badge {
+    grid-area: rarity;
+    font-size: 8px;
+    margin: 0;
+    padding: 5px 9px;
+  }
+
+  .chest-result-img {
+    grid-area: img;
+    width: 88px;
+    height: 88px;
+  }
+
+  .chest-result-name {
+    grid-area: name;
+    font-size: 17px;
+    line-height: 1.1;
+    margin-top: 0;
+    overflow-wrap: anywhere;
+  }
+
+  .chest-result-qty {
+    grid-area: qty;
+    font-size: 12px;
+    margin-top: 0;
+  }
+
+  .chest-close-btn {
+    width: min(260px, 100%);
+    margin: 6px auto 0;
+    display: block;
+    font-size: 9px;
+    padding: 10px 14px;
+    border-bottom-width: 3px;
+  }
+}
+
 @keyframes chestItemPop {
   0% { transform: scale(0) rotate(-20deg) translateY(50px); opacity: 0; }
   60% { transform: scale(1.2) rotate(10deg) translateY(-10px); opacity: 1; }
