@@ -145,6 +145,15 @@
             <span>AGACHAR</span>
           </div>
         </div>
+        <!-- Overlay indicador de zonas touch -->
+        <div id="touchZoneHint" style="display:none; position:absolute; inset:0; pointer-events:none; z-index:50;">
+          <div style="position:absolute; left:0; top:0; width:50%; height:100%; background:rgba(100,180,255,0.12); border-right:2px dashed rgba(255,255,255,0.25); display:flex; align-items:center; justify-content:center;">
+            <span style="font-family:'Press Start 2P',monospace; font-size:10px; color:rgba(255,255,255,0.7); text-shadow:1px 1px 2px #000;">SALTAR</span>
+          </div>
+          <div style="position:absolute; right:0; top:0; width:50%; height:100%; background:rgba(255,150,80,0.12); display:flex; align-items:center; justify-content:center;">
+            <span style="font-family:'Press Start 2P',monospace; font-size:10px; color:rgba(255,255,255,0.7); text-shadow:1px 1px 2px #000;">BAJAR</span>
+          </div>
+        </div>
         <!-- Modals Integrados -->
         <div id="storeModal" class="modal-overlay">
           <div class="modal-box store-modal-box">
@@ -578,8 +587,8 @@
                     <br><span style="font-size:8px;font-family:monospace">SALTAR / AGACHAR</span>
                   </button>
                   <button id="ctrlBtn-touch" class="diff-btn" onclick="applyControlMode('touch')">
-                    SWIPE
-                    <br><span style="font-size:8px;font-family:monospace">↑ saltar  ↓ agachar</span>
+                    ZONAS
+                    <br><span style="font-size:8px;font-family:monospace">IZQ: saltar | DER: bajar</span>
                   </button>
                 </div>
               </section>

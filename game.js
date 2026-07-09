@@ -851,75 +851,78 @@ btnDuck.addEventListener('touchcancel', e => {
     duckEnd();
 });
 
-// --- Modo TOUCH: gestos de swipe ---
-// Swipe arriba / Tap corto  = saltar
-// Swipe abajo en aire       = caída rápida (sin agacharse)
-// Swipe abajo en suelo      = agacharse (mientras el dedo esté abajo)
-const SWIPE_THRESHOLD = 20; // píxeles mínimos para considerar un swipe (reducido para más reactividad)
-let touchStartY = 0;
-let touchStartX = 0;
-let swipeHandled = false; // ¿ya se ejecutó la acción del gesto?
-let isDucking = false;    // ¿estamos agachados por swipe?
+// --- Modo TOUCH: Zonas Izquierda / Derecha ---
+// Izquierda (tap)   = saltar
+// Derecha  (tap)    = caer si está en el aire
+// Mantener cualquiera (180ms+) = agacharse mientras se tenga presionado
+const HOLD_MS = 180; // ms de espera para activar agacharse
+let touchZone = null;      // 'left' | 'right'
+let holdTimer = null;
+let isHoldDucking = false;
 
 canvas.addEventListener('touchstart', e => {
     e.preventDefault();
-    const t = e.touches[0];
-    touchStartY = t.clientY;
-    touchStartX = t.clientX;
-    swipeHandled = false;
-    isDucking = false;
+    if (controlMode !== 'touch') return;
+    if (state !== 'playing') return;
+
+    const touch = e.touches[0];
+    const rect = canvas.getBoundingClientRect();
+    const relX = touch.clientX - rect.left;
+    touchZone = relX < rect.width / 2 ? 'left' : 'right';
+    isHoldDucking = false;
+
+    // Iniciar timer: si sigue presionado → agacharse
+    if (holdTimer) clearTimeout(holdTimer);
+    holdTimer = setTimeout(() => {
+        isHoldDucking = true;
+        duckStart();
+    }, HOLD_MS);
 }, { passive: false });
 
 canvas.addEventListener('touchmove', e => {
     e.preventDefault();
-    if (controlMode !== 'touch') return;
-    if (state !== 'playing') return;
-    if (swipeHandled) return;
-
-    const deltaY = e.touches[0].clientY - touchStartY;
-
-    if (deltaY < -SWIPE_THRESHOLD) {
-        // Swipe hacia arriba → saltar
-        swipeHandled = true;
-        jump();
-    } else if (deltaY > 12) {
-        // Swipe hacia abajo — umbral mínimo para máxima reactividad
-        swipeHandled = true;
-        const inAir = player.jumping || player.vy < 0 || player.y < GROUND_Y - player.h - 2;
-        if (inAir) {
-            // En el aire → teletransporte al suelo (instantáneo)
-            fallDown();
-        } else {
-            // En el suelo → agacharse
-            isDucking = true;
-            duckStart();
-        }
+    // Cancelar hold si el dedo se mueve mucho (no es un hold intencional)
+    if (!isHoldDucking && holdTimer) {
+        const touch = e.touches[0];
+        const rect = canvas.getBoundingClientRect();
+        const relX = touch.clientX - rect.left;
+        // Actualizar zona si el dedo cruzó al otro lado
+        touchZone = relX < rect.width / 2 ? 'left' : 'right';
     }
 }, { passive: false });
 
 canvas.addEventListener('touchend', e => {
     e.preventDefault();
 
-    // Si estaba agachado por swipe, levantarse al soltar
-    if (isDucking) {
+    // Limpiar timer de hold
+    if (holdTimer) { clearTimeout(holdTimer); holdTimer = null; }
+
+    // Si estaba agachado por hold → levantarse
+    if (isHoldDucking) {
         duckEnd();
-        isDucking = false;
-        swipeHandled = true; // no ejecutar salto al soltar
+        isHoldDucking = false;
+        touchZone = null;
+        return;
     }
 
-    if (controlMode !== 'touch') return;
-    if (state !== 'playing') return;
+    if (controlMode !== 'touch') { touchZone = null; return; }
+    if (state !== 'playing') { touchZone = null; return; }
 
-    // Si no fue un swipe (tap corto) → saltar
-    if (!swipeHandled) {
+    // Tap corto → acción según zona
+    if (touchZone === 'left') {
         jump();
+    } else if (touchZone === 'right') {
+        const inAir = player.jumping || player.vy < 0 || player.y < GROUND_Y - player.h - 2;
+        if (inAir) fallDown();
     }
-    swipeHandled = false;
+
+    touchZone = null;
 }, { passive: false });
 
 canvas.addEventListener('touchcancel', e => {
-    if (isDucking) { duckEnd(); isDucking = false; }
-    swipeHandled = false;
+    if (holdTimer) { clearTimeout(holdTimer); holdTimer = null; }
+    if (isHoldDucking) { duckEnd(); isHoldDucking = false; }
+    touchZone = null;
 });
 
 document.getElementById('startBtn').addEventListener('click', startGame);
@@ -936,7 +939,23 @@ function startGame() {
     countdownTimer = COUNTDOWN_FPS;
     document.getElementById('overlay').classList.add('hidden');
     document.getElementById('extraMenuButtons').style.display = 'none';
-    // Detener lobby y arrancar música de juego al terminar el countdown
+
+    // Mostrar overlay de zonas touch brevemente al iniciar
+    if (controlMode === 'touch') {
+        const hint = document.getElementById('touchZoneHint');
+        if (hint) {
+            hint.style.display = 'block';
+            hint.style.opacity = '1';
+            setTimeout(() => {
+                hint.style.transition = 'opacity 0.8s';
+                hint.style.opacity = '0';
+                setTimeout(() => {
+                    hint.style.display = 'none';
+                    hint.style.transition = '';
+                }, 800);
+            }, 2000);
+        }
+    }
 }
 
 function beginPlay() {
