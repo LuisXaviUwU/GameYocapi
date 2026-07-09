@@ -784,12 +784,14 @@ function duckStart() {
 }
 function duckEnd() { player.ducking = false; }
 
-// Caída rápida sin agacharse (para swipe abajo en el aire)
+// Caída instantánea (swipe abajo en el aire) — teletransporta al suelo
 function fallDown() {
     if (state !== 'playing') return;
-    if (player.jumping || player.vy < 0) {
-        player.vy = 25; // caída muy rápida, casi instantánea
-        player.jumping = false; // permite que aterrice inmediatamente
+    if (player.jumping || player.vy < 0 || player.y < GROUND_Y - player.h - 2) {
+        player.y = GROUND_Y - player.h; // al suelo inmediatamente
+        player.vy = 0;
+        player.jumping = false;
+        player.jumpsLeft = activeBuffs.doubleJump ? 2 : 1;
     }
 }
 
@@ -881,10 +883,11 @@ canvas.addEventListener('touchmove', e => {
         swipeHandled = true;
         jump();
     } else if (deltaY > 12) {
-        // Swipe hacia abajo — umbral más bajo para máxima reactividad
+        // Swipe hacia abajo — umbral mínimo para máxima reactividad
         swipeHandled = true;
-        if (player.jumping || player.vy < 0 || player.y < GROUND_Y - player.h - 2) {
-            // En el aire → caída instantánea
+        const inAir = player.jumping || player.vy < 0 || player.y < GROUND_Y - player.h - 2;
+        if (inAir) {
+            // En el aire → teletransporte al suelo (instantáneo)
             fallDown();
         } else {
             // En el suelo → agacharse
