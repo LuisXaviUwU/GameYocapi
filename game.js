@@ -909,17 +909,15 @@ canvas.addEventListener('touchmove', e => {
     e.preventDefault();
     if (controlMode !== 'touch' || state !== 'playing') return;
 
-    const rect = canvas.getBoundingClientRect();
-    
     for (let i = 0; i < e.changedTouches.length; i++) {
         const touch = e.changedTouches[i];
         const touchData = activeTouches[touch.identifier];
         
         if (touchData && !touchData.isHoldDucking) {
-            // Si el dedo se movió mucho, cancelar el timer de agacharse
+            // Si el dedo se mueve MUCHO (más de 50px), asumimos que no es un hold intencional
             const dx = touch.clientX - touchData.startX;
             const dy = touch.clientY - touchData.startY;
-            if (Math.abs(dx) > 15 || Math.abs(dy) > 15) {
+            if (Math.abs(dx) > 50 || Math.abs(dy) > 50) {
                 clearTimeout(touchData.timer);
             }
         }
@@ -2190,9 +2188,9 @@ async function syncWallet(addedCoins, forceSave = false) {
     const payload = {
         twitch_user_id: uid,
         twitch_username: username,
-        balance: totalCoins,
-        xp: typeof xp !== 'undefined' ? xp : 0,
-        level: typeof level !== 'undefined' ? level : 1,
+        balance: Math.round(totalCoins),
+        xp: typeof xp !== 'undefined' ? Math.round(xp) : 0,
+        level: typeof level !== 'undefined' ? Math.round(level) : 1,
         missions: typeof missionsManager !== 'undefined' ? missionsManager.serialize() : null,
         inventory: playerInventory,
         updated_at: new Date().toISOString()
