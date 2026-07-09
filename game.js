@@ -678,6 +678,29 @@ document.getElementById('volGame').addEventListener('input', function () {
     if (!lobbyActive && currentAudio) currentAudio.volume = gameVolume;
 });
 
+// --- Sistema de control móvil (Botones vs Touch) ---
+let controlMode = localStorage.getItem('capi_controlMode') || 'buttons';
+
+function applyControlMode(mode) {
+    controlMode = mode;
+    localStorage.setItem('capi_controlMode', mode);
+    const mobileControls = document.getElementById('mobileControls');
+    const btnButtons = document.getElementById('ctrlBtn-buttons');
+    const btnTouch = document.getElementById('ctrlBtn-touch');
+    if (mode === 'touch') {
+        mobileControls.dataset.ctrlHidden = 'true';
+        mobileControls.style.display = 'none';
+    } else {
+        delete mobileControls.dataset.ctrlHidden;
+        mobileControls.style.display = '';
+    }
+    if (btnButtons) btnButtons.classList.toggle('active', mode === 'buttons');
+    if (btnTouch) btnTouch.classList.toggle('active', mode === 'touch');
+}
+
+// Aplicar al cargar
+applyControlMode(controlMode);
+
 let bgProps = [];
 let stars = [];
 
@@ -784,10 +807,9 @@ window.addEventListener('keyup', e => {
 });
 
 // Mobile: el canvas solo registra toque para desbloquear audio
-canvas.addEventListener('touchstart', e => { e.preventDefault(); }, { passive: false });
 canvas.addEventListener('mousedown', jump);
 
-// --- Botones dedicados para móvil ---
+// --- Botones dedicados para móvil (modo BOTONES) ---
 const btnJump = document.getElementById('btnJump');
 const btnDuck = document.getElementById('btnDuck');
 
@@ -817,6 +839,35 @@ btnDuck.addEventListener('touchcancel', e => {
     btnDuck.classList.remove('pressed');
     duckEnd();
 });
+
+// --- Modo TOUCH: toque simple = saltar, doble toque = agacharse ---
+let lastTapTime = 0;
+let duckTimer = null;
+
+canvas.addEventListener('touchstart', e => {
+    e.preventDefault();
+    if (controlMode !== 'touch') return;
+    if (state !== 'playing') return;
+
+    const now = Date.now();
+    const timeSinceLast = now - lastTapTime;
+
+    if (timeSinceLast < 300) {
+        // Doble toque → agacharse
+        if (duckTimer) { clearTimeout(duckTimer); duckTimer = null; }
+        duckStart();
+        // Auto-levantarse después de 600ms (suelo) o al aterrizar (aire)
+        duckTimer = setTimeout(() => {
+            duckEnd();
+            duckTimer = null;
+        }, 600);
+        lastTapTime = 0; // reset para no triple-tap
+    } else {
+        // Toque simple → saltar
+        jump();
+        lastTapTime = now;
+    }
+}, { passive: false });
 
 document.getElementById('startBtn').addEventListener('click', startGame);
 
@@ -1895,7 +1946,10 @@ function openModal(id) {
 
 function setDifficulty(d) {
     difficulty = d;
-    document.querySelectorAll('.diff-btn').forEach(b => b.classList.remove('active'));
+    ['easy', 'medium', 'hard', 'extreme'].forEach(lvl => {
+        const b = document.getElementById('diff-' + lvl);
+        if (b) b.classList.remove('active');
+    });
     const el = document.getElementById('diff-' + d);
     if (el) el.classList.add('active');
 }

@@ -567,6 +567,22 @@
                 </h4>
                 <button id="fullscreenBtn" style="width:100%; font-family:'Press Start 2P',monospace; font-size:9px; background:var(--capi-dark); color:#fff; border:none; border-bottom:3px solid #3a1e0a; padding:12px 14px; border-radius:8px; cursor:pointer; letter-spacing:1px;">PANTALLA COMPLETA</button>
               </section>
+              <section class="settings-section settings-controlmode">
+                <h4
+                  style="font-family: 'Press Start 2P', monospace; font-size: 12px; color: var(--gold); margin-top: 0; margin-bottom: 15px;">
+                  CONTROLES MÓVIL
+                </h4>
+                <div class="difficulty-grid">
+                  <button id="ctrlBtn-buttons" class="diff-btn active" onclick="applyControlMode('buttons')">
+                    BOTONES
+                    <br><span style="font-size:8px;font-family:monospace">SALTAR / AGACHAR</span>
+                  </button>
+                  <button id="ctrlBtn-touch" class="diff-btn" onclick="applyControlMode('touch')">
+                    TOUCH
+                    <br><span style="font-size:8px;font-family:monospace">1 toque / 2 toques</span>
+                  </button>
+                </div>
+              </section>
             </div>
           </div>
         </div>

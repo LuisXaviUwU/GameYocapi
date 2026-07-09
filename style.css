@@ -950,6 +950,11 @@
       #gameWrap:-webkit-full-screen.is-playing #mobileControls {
         display: block;
       }
+
+      /* Modo TOUCH: nunca mostrar botones aunque esté jugando */
+      #mobileControls[data-ctrl-hidden="true"] {
+        display: none !important;
+      }
     }
 
     .mob-btn {
