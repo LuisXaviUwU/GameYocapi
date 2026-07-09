@@ -784,6 +784,14 @@ function duckStart() {
 }
 function duckEnd() { player.ducking = false; }
 
+// Caída rápida sin agacharse (para swipe abajo en el aire)
+function fallDown() {
+    if (state !== 'playing') return;
+    if (player.jumping || player.vy < 0) {
+        player.vy = 8; // impulso hacia abajo, sin activar ducking
+    }
+}
+
 // Mapa dinámico de tecla → {id, seconds} según qué slots están visibles
 // Se reconstruye cada vez que cambia el inventario (en updateInventoryHud)
 let keySlotMap = {}; // e.g. { 'Digit1': { id: 'multi', seconds: 15 }, ... }
@@ -840,34 +848,75 @@ btnDuck.addEventListener('touchcancel', e => {
     duckEnd();
 });
 
-// --- Modo TOUCH: toque simple = saltar, doble toque = agacharse ---
-let lastTapTime = 0;
-let duckTimer = null;
+// --- Modo TOUCH: gestos de swipe ---
+// Swipe arriba / Tap corto  = saltar
+// Swipe abajo en aire       = caída rápida (sin agacharse)
+// Swipe abajo en suelo      = agacharse (mientras el dedo esté abajo)
+const SWIPE_THRESHOLD = 30; // píxeles mínimos para considerar un swipe
+let touchStartY = 0;
+let touchStartX = 0;
+let swipeHandled = false; // ¿ya se ejecutó la acción del gesto?
+let isDucking = false;    // ¿estamos agachados por swipe?
 
 canvas.addEventListener('touchstart', e => {
     e.preventDefault();
+    const t = e.touches[0];
+    touchStartY = t.clientY;
+    touchStartX = t.clientX;
+    swipeHandled = false;
+    isDucking = false;
+}, { passive: false });
+
+canvas.addEventListener('touchmove', e => {
+    e.preventDefault();
+    if (controlMode !== 'touch') return;
+    if (state !== 'playing') return;
+    if (swipeHandled) return;
+
+    const deltaY = e.touches[0].clientY - touchStartY;
+
+    if (deltaY < -SWIPE_THRESHOLD) {
+        // Swipe hacia arriba → saltar
+        swipeHandled = true;
+        jump();
+    } else if (deltaY > SWIPE_THRESHOLD) {
+        // Swipe hacia abajo
+        swipeHandled = true;
+        if (player.jumping || player.vy < 0) {
+            // En el aire → solo caída rápida
+            fallDown();
+        } else {
+            // En el suelo → agacharse
+            isDucking = true;
+            duckStart();
+        }
+    }
+}, { passive: false });
+
+canvas.addEventListener('touchend', e => {
+    e.preventDefault();
+
+    // Si estaba agachado por swipe, levantarse al soltar
+    if (isDucking) {
+        duckEnd();
+        isDucking = false;
+        swipeHandled = true; // no ejecutar salto al soltar
+    }
+
     if (controlMode !== 'touch') return;
     if (state !== 'playing') return;
 
-    const now = Date.now();
-    const timeSinceLast = now - lastTapTime;
-
-    if (timeSinceLast < 300) {
-        // Doble toque → agacharse
-        if (duckTimer) { clearTimeout(duckTimer); duckTimer = null; }
-        duckStart();
-        // Auto-levantarse después de 600ms (suelo) o al aterrizar (aire)
-        duckTimer = setTimeout(() => {
-            duckEnd();
-            duckTimer = null;
-        }, 600);
-        lastTapTime = 0; // reset para no triple-tap
-    } else {
-        // Toque simple → saltar
+    // Si no fue un swipe (tap corto) → saltar
+    if (!swipeHandled) {
         jump();
-        lastTapTime = now;
     }
+    swipeHandled = false;
 }, { passive: false });
+
+canvas.addEventListener('touchcancel', e => {
+    if (isDucking) { duckEnd(); isDucking = false; }
+    swipeHandled = false;
+});
 
 document.getElementById('startBtn').addEventListener('click', startGame);
 
