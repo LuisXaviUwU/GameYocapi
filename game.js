@@ -788,7 +788,8 @@ function duckEnd() { player.ducking = false; }
 function fallDown() {
     if (state !== 'playing') return;
     if (player.jumping || player.vy < 0) {
-        player.vy = 8; // impulso hacia abajo, sin activar ducking
+        player.vy = 25; // caída muy rápida, casi instantánea
+        player.jumping = false; // permite que aterrice inmediatamente
     }
 }
 
@@ -852,7 +853,7 @@ btnDuck.addEventListener('touchcancel', e => {
 // Swipe arriba / Tap corto  = saltar
 // Swipe abajo en aire       = caída rápida (sin agacharse)
 // Swipe abajo en suelo      = agacharse (mientras el dedo esté abajo)
-const SWIPE_THRESHOLD = 30; // píxeles mínimos para considerar un swipe
+const SWIPE_THRESHOLD = 20; // píxeles mínimos para considerar un swipe (reducido para más reactividad)
 let touchStartY = 0;
 let touchStartX = 0;
 let swipeHandled = false; // ¿ya se ejecutó la acción del gesto?
@@ -879,11 +880,11 @@ canvas.addEventListener('touchmove', e => {
         // Swipe hacia arriba → saltar
         swipeHandled = true;
         jump();
-    } else if (deltaY > SWIPE_THRESHOLD) {
-        // Swipe hacia abajo
+    } else if (deltaY > 12) {
+        // Swipe hacia abajo — umbral más bajo para máxima reactividad
         swipeHandled = true;
-        if (player.jumping || player.vy < 0) {
-            // En el aire → solo caída rápida
+        if (player.jumping || player.vy < 0 || player.y < GROUND_Y - player.h - 2) {
+            // En el aire → caída instantánea
             fallDown();
         } else {
             // En el suelo → agacharse
