@@ -851,78 +851,118 @@ btnDuck.addEventListener('touchcancel', e => {
     duckEnd();
 });
 
-// --- Modo TOUCH: Zonas Izquierda / Derecha ---
+// --- Modo TOUCH: Zonas Izquierda / Derecha (Soporte Multi-touch) ---
 // Izquierda (tap)   = saltar
 // Derecha  (tap)    = caer si está en el aire
 // Mantener cualquiera (180ms+) = agacharse mientras se tenga presionado
 const HOLD_MS = 180; // ms de espera para activar agacharse
-let touchZone = null;      // 'left' | 'right'
-let holdTimer = null;
-let isHoldDucking = false;
+
+// Objeto para rastrear cada toque independiente por su identifier
+const activeTouches = {};
+
+function updateDuckState() {
+    // Revisa si AL MENOS UN toque está en estado "ducking"
+    let anyDucking = false;
+    for (const id in activeTouches) {
+        if (activeTouches[id].isHoldDucking) {
+            anyDucking = true;
+            break;
+        }
+    }
+    if (anyDucking && !player.ducking) {
+        duckStart();
+    } else if (!anyDucking && player.ducking) {
+        duckEnd();
+    }
+}
 
 canvas.addEventListener('touchstart', e => {
     e.preventDefault();
-    if (controlMode !== 'touch') return;
-    if (state !== 'playing') return;
+    if (controlMode !== 'touch' || state !== 'playing') return;
 
-    const touch = e.touches[0];
     const rect = canvas.getBoundingClientRect();
-    const relX = touch.clientX - rect.left;
-    touchZone = relX < rect.width / 2 ? 'left' : 'right';
-    isHoldDucking = false;
-
-    // Iniciar timer: si sigue presionado → agacharse
-    if (holdTimer) clearTimeout(holdTimer);
-    holdTimer = setTimeout(() => {
-        isHoldDucking = true;
-        duckStart();
-    }, HOLD_MS);
+    
+    for (let i = 0; i < e.changedTouches.length; i++) {
+        const touch = e.changedTouches[i];
+        const relX = touch.clientX - rect.left;
+        const zone = relX < rect.width / 2 ? 'left' : 'right';
+        
+        const touchData = {
+            zone: zone,
+            isHoldDucking: false,
+            startX: touch.clientX,
+            startY: touch.clientY,
+            timer: null
+        };
+        
+        // Iniciar timer para agacharse
+        touchData.timer = setTimeout(() => {
+            touchData.isHoldDucking = true;
+            updateDuckState();
+        }, HOLD_MS);
+        
+        activeTouches[touch.identifier] = touchData;
+    }
 }, { passive: false });
 
 canvas.addEventListener('touchmove', e => {
     e.preventDefault();
-    // Cancelar hold si el dedo se mueve mucho (no es un hold intencional)
-    if (!isHoldDucking && holdTimer) {
-        const touch = e.touches[0];
-        const rect = canvas.getBoundingClientRect();
-        const relX = touch.clientX - rect.left;
-        // Actualizar zona si el dedo cruzó al otro lado
-        touchZone = relX < rect.width / 2 ? 'left' : 'right';
+    if (controlMode !== 'touch' || state !== 'playing') return;
+
+    const rect = canvas.getBoundingClientRect();
+    
+    for (let i = 0; i < e.changedTouches.length; i++) {
+        const touch = e.changedTouches[i];
+        const touchData = activeTouches[touch.identifier];
+        
+        if (touchData && !touchData.isHoldDucking) {
+            // Si el dedo se movió mucho, cancelar el timer de agacharse
+            const dx = touch.clientX - touchData.startX;
+            const dy = touch.clientY - touchData.startY;
+            if (Math.abs(dx) > 15 || Math.abs(dy) > 15) {
+                clearTimeout(touchData.timer);
+            }
+        }
     }
 }, { passive: false });
 
 canvas.addEventListener('touchend', e => {
     e.preventDefault();
-
-    // Limpiar timer de hold
-    if (holdTimer) { clearTimeout(holdTimer); holdTimer = null; }
-
-    // Si estaba agachado por hold → levantarse
-    if (isHoldDucking) {
-        duckEnd();
-        isHoldDucking = false;
-        touchZone = null;
-        return;
+    
+    for (let i = 0; i < e.changedTouches.length; i++) {
+        const touch = e.changedTouches[i];
+        const touchData = activeTouches[touch.identifier];
+        
+        if (touchData) {
+            clearTimeout(touchData.timer);
+            
+            if (!touchData.isHoldDucking && controlMode === 'touch' && state === 'playing') {
+                // Fue un tap corto -> ejecutar acción según zona
+                if (touchData.zone === 'left') {
+                    jump();
+                } else if (touchData.zone === 'right') {
+                    const inAir = player.jumping || player.vy < 0 || player.y < GROUND_Y - player.h - 2;
+                    if (inAir) fallDown();
+                }
+            }
+            
+            delete activeTouches[touch.identifier];
+        }
     }
-
-    if (controlMode !== 'touch') { touchZone = null; return; }
-    if (state !== 'playing') { touchZone = null; return; }
-
-    // Tap corto → acción según zona
-    if (touchZone === 'left') {
-        jump();
-    } else if (touchZone === 'right') {
-        const inAir = player.jumping || player.vy < 0 || player.y < GROUND_Y - player.h - 2;
-        if (inAir) fallDown();
-    }
-
-    touchZone = null;
+    
+    updateDuckState(); // Actualizar por si se soltó el dedo que agachaba
 }, { passive: false });
 
 canvas.addEventListener('touchcancel', e => {
-    if (holdTimer) { clearTimeout(holdTimer); holdTimer = null; }
-    if (isHoldDucking) { duckEnd(); isHoldDucking = false; }
-    touchZone = null;
+    for (let i = 0; i < e.changedTouches.length; i++) {
+        const touch = e.changedTouches[i];
+        const touchData = activeTouches[touch.identifier];
+        if (touchData) {
+            clearTimeout(touchData.timer);
+            delete activeTouches[touch.identifier];
+        }
+    }
+    updateDuckState();
 });
 
 document.getElementById('startBtn').addEventListener('click', startGame);
