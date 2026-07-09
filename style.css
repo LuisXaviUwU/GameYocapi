@@ -241,22 +241,6 @@
       background: #5a3018;
     }
 
-    #gamePanel.fullscreen-mode #fullscreenBtn {
-      position: absolute;
-      bottom: 40px;
-      left: 50%;
-      transform: translateX(-50%);
-      margin: 0;
-      z-index: 100;
-    }
-
-    @media (max-width: 600px) {
-      #gamePanel.fullscreen-mode #fullscreenBtn {
-        bottom: auto;
-        top: 15px;
-      }
-    }
-
     canvas {
       display: block;
       image-rendering: pixelated;
