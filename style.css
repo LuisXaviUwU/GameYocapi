@@ -250,6 +250,13 @@
       z-index: 100;
     }
 
+    @media (max-width: 600px) {
+      #gamePanel.fullscreen-mode #fullscreenBtn {
+        bottom: auto;
+        top: 15px;
+      }
+    }
+
     canvas {
       display: block;
       image-rendering: pixelated;
