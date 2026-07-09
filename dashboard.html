@@ -1,0 +1,280 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>CAPI RUN - ADMIN DASHBOARD</title>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <link rel="stylesheet" href="style.css">
+  <style>
+    body {
+      background: #1a1a1a;
+      color: #fff;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 20px;
+      font-family: 'Nunito', sans-serif;
+    }
+    .admin-container {
+      width: 100%;
+      max-width: 1200px;
+      background: #2b2013;
+      border: 4px solid var(--gold);
+      border-radius: 12px;
+      padding: 20px;
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.8);
+      display: none; /* Se oculta hasta validar admin */
+    }
+    .admin-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 20px;
+      border-bottom: 2px dashed #555;
+      padding-bottom: 10px;
+    }
+    .admin-header h1 {
+      color: var(--gold);
+      text-shadow: 2px 2px 0px #000;
+      margin: 0;
+      font-size: 20px;
+    }
+    .admin-login {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      height: 60vh;
+      text-align: center;
+    }
+    .admin-login h2 {
+      font-family: 'Press Start 2P', monospace;
+      color: var(--gold);
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 10px;
+      background: rgba(0,0,0,0.4);
+    }
+    th, td {
+      border: 1px solid #555;
+      padding: 10px;
+      text-align: left;
+    }
+    th {
+      background: var(--gold);
+      color: #000;
+      font-family: 'Press Start 2P', monospace;
+      font-size: 10px;
+    }
+    .btn-action {
+      background: #00c896;
+      border: none;
+      border-bottom: 3px solid #008f6b;
+      color: #fff;
+      padding: 6px 12px;
+      border-radius: 6px;
+      cursor: pointer;
+      font-family: 'Press Start 2P', monospace;
+      font-size: 8px;
+      margin-top: 0;
+      margin-right: 4px;
+    }
+    .btn-action:active {
+      transform: translateY(2px);
+      border-bottom-width: 1px;
+    }
+    .btn-danger {
+      background: #e53e3e;
+      border-bottom-color: #9b2c2c;
+    }
+    .input-coin {
+      width: 60px;
+      padding: 4px;
+      background: #111;
+      border: 1px solid var(--gold);
+      color: #fff;
+      font-family: monospace;
+    }
+    .inventory-badges {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 4px;
+    }
+    .inv-badge {
+      background: rgba(255,255,255,0.1);
+      padding: 4px 6px;
+      border-radius: 4px;
+      font-size: 10px;
+      display: flex;
+      align-items: center;
+      gap: 4px;
+    }
+    .inv-badge img {
+      width: 16px;
+      height: 16px;
+      image-rendering: pixelated;
+    }
+    #searchBox {
+      padding: 8px;
+      width: 300px;
+      background: #111;
+      border: 2px solid var(--gold);
+      color: #fff;
+      border-radius: 6px;
+    }
+    .back-btn {
+      background: #444;
+      border-bottom: 3px solid #222;
+      color: white;
+      text-decoration: none;
+      padding: 8px 12px;
+      border-radius: 6px;
+      font-family: 'Press Start 2P', monospace;
+      font-size: 8px;
+    }
+    .btn-action-big {
+      background: #00c896;
+      border: none;
+      border-bottom: 3px solid #008f6b;
+      color: #fff;
+      padding: 10px 6px;
+      border-radius: 6px;
+      cursor: pointer;
+      font-family: 'Press Start 2P', monospace;
+      font-size: 9px;
+      text-align: center;
+      line-height: 1.6;
+      transition: transform 0.1s;
+    }
+    .btn-action-big:active { transform: translateY(2px); border-bottom-width: 1px; }
+    .dash-tabs {
+      display: flex;
+      gap: 8px;
+      margin-bottom: 20px;
+      border-bottom: 2px solid var(--gold);
+      padding-bottom: 10px;
+    }
+    .dash-tab {
+      background: #444;
+      border: 2px solid #666;
+      border-radius: 6px 6px 0 0;
+      color: #fff;
+      font-family: 'Press Start 2P', monospace;
+      font-size: 8px;
+      padding: 8px 12px;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+    .dash-tab.active {
+      background: var(--gold);
+      color: #000;
+      border-color: var(--gold);
+    }
+    .dash-section { display: none; }
+    .dash-section.active { display: block; }
+    .store-editor-row {
+      display: flex;
+      gap: 8px;
+      align-items: center;
+      flex-wrap: wrap;
+      border: 1px solid #444;
+      border-radius: 8px;
+      padding: 10px;
+      margin-bottom: 8px;
+      background: rgba(0,0,0,0.3);
+    }
+    .store-editor-row input, .store-editor-row select {
+      background: #111;
+      border: 1px solid var(--gold);
+      color: #fff;
+      padding: 5px 8px;
+      border-radius: 4px;
+      font-family: monospace;
+    }
+    .store-editor-row label {
+      font-size: 10px;
+      color: #aaa;
+      display: flex;
+      flex-direction: column;
+      gap: 3px;
+    }
+    .store-preview-img {
+      width: 32px;
+      height: 32px;
+      object-fit: contain;
+      image-rendering: pixelated;
+    }
+  </style>
+</head>
+
+<body>
+
+  <div id="loginArea" class="admin-login">
+    <h2>DASHBOARD ADMIN</h2>
+    <p>Conecta con Twitch para verificar acceso.</p>
+    <button id="twitchLoginBtn" class="menu-btn" style="width: auto; background: var(--twitch); border-color: var(--twitch-dark);">CONECTAR CON TWITCH</button>
+    <br>
+    <a href="index.html" class="back-btn">VOLVER AL JUEGO</a>
+  </div>
+
+  <div id="adminArea" class="admin-container" style="display:none;">
+    <div class="admin-header">
+      <h1>🛠 PANEL DE CONTROL</h1>
+      <div style="display: flex; gap: 10px; align-items: center;">
+        <span id="adminName" style="color:var(--gold); font-weight:bold;"></span>
+        <button id="logoutBtn" class="btn-action btn-danger">SALIR</button>
+      </div>
+    </div>
+
+    <!-- Nav tabs -->
+    <div class="dash-tabs">
+      <button class="dash-tab active" onclick="switchDashTab('players')">👥 Jugadores</button>
+      <button class="dash-tab" onclick="switchDashTab('store')">🛒 Tienda</button>
+    </div>
+
+    <!-- JUGADORES -->
+    <div id="dash-players" class="dash-section active">
+      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
+        <input type="text" id="searchBox" placeholder="Buscar jugador por nombre...">
+        <button id="refreshBtn" class="btn-action" style="background:var(--river); border-color:var(--river-dark);">🔄 ACTUALIZAR</button>
+      </div>
+      <div style="overflow-x: auto;">
+        <table id="playersTable">
+          <thead>
+            <tr>
+              <th>Usuario</th>
+              <th>Monedas</th>
+              <th>Inventario</th>
+              <th>Acciones Rápidas</th>
+            </tr>
+          </thead>
+          <tbody id="playersList"></tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- TIENDA -->
+    <div id="dash-store" class="dash-section">
+      <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:15px;">
+        <h2 style="color:var(--gold); margin:0; font-size:14px;">🛒 EDITOR DE TIENDA</h2>
+        <div style="display:flex; gap:8px;">
+          <button onclick="addStoreItem()" class="btn-action" style="background:#00c896;">+ NUEVO ÍTEM</button>
+          <button onclick="loadStoreItems()" class="btn-action" style="background:var(--river); border-color:var(--river-dark);">🔄 RECARGAR</button>
+        </div>
+      </div>
+      <p style="font-size:10px; color:#aaa; margin-bottom:15px;">
+        Edita los ítems de la tienda. Los cambios se guardan en Supabase y aparecen en el juego al instante.<br>
+        <strong style="color:var(--gold);">Columnas de Supabase necesarias en tabla <code>store_config</code>:</strong>
+        id (int8, PK autoincrement), tab (text), type (text), label (text), description (text), image (text), seconds (int4), price (int4), enabled (bool)
+      </p>
+      <div id="storeItemsList"></div>
+    </div>
+  </div>
+
+  <script src="dashboard.js"></script>
+</body>
+</html>
