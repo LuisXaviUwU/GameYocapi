@@ -2914,7 +2914,7 @@ async function loadDailyState() {
                 .from('daily_rewards')
                 .select('week_start, days_claimed, last_claimed_date')
                 .eq('twitch_user_id', currentUser.id)
-                .single();
+                .maybeSingle();
 
             if (!error && data) {
                 let shouldSave = false;
@@ -2969,7 +2969,6 @@ async function loadDailyState() {
 
 async function saveDailyState() {
     localStorage.setItem('dailyReward_v1', JSON.stringify(dailyState));
-
     if (!currentUser) return;
     try {
         const uid = currentUser.id;
@@ -2978,12 +2977,13 @@ async function saveDailyState() {
             twitch_user_id: uid,
             twitch_username: username,
             week_start: dailyState.weekStart,
-            days_claimed: dailyState.daysClaimed,
-            last_claimed_date: dailyState.lastClaimedDate,
+            days_claimed: dailyState.daysClaimed || [],
+            last_claimed_date: dailyState.lastClaimedDate || null,
             updated_at: new Date().toISOString()
         };
-        await sb.from('daily_rewards').upsert(payload, { onConflict: 'twitch_user_id' });
-    } catch (e) { }
+        const { error } = await sb.from('daily_rewards').upsert(payload);
+        if (error) console.warn('daily_rewards upsert:', error.message);
+    } catch (e) { /* localStorage fallback ok */ }
 }
 
 // Badge de notificación (!) cuando hay recompensa disponible
