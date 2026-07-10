@@ -2153,7 +2153,7 @@ async function syncWeeklyTracker(finalScore) {
         .select('raw_score, deducted')
         .eq('twitch_user_id', uid)
         .eq('week_start', weekStartStr)
-        .single();
+        .maybeSingle();
 
     const newRaw = Math.max(finalScore, existing?.raw_score || 0);
 
