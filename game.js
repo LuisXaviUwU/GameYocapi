@@ -563,7 +563,9 @@ let multiplier = 1;
 let scoreLog = []; // eventos para validar en backend
 let sessionCoins = 0;
 let totalCoins = 0;
-let playerInventory = { shield: 0, shield30: 0, shield60: 0, doubleJump: 0, magnet: 0, multi: 0, multi4: 0, multi6: 0 };
+let playerInventory = { shield: 0, shield30: 0, shield60: 0, doubleJump: 0, magnet: 0, multi: 0, multi4: 0, multi6: 0, attack_top1: 0, attack_top3: 0, attack_top10: 0, protection_1h: 0, protection_3h: 0, protection_8h: 0 };
+let myProtection = null; // { expires_at, duration_hours } o null
+let protectionInterval = null;
 let difficulty = 'easy'; // 'easy', 'medium', 'hard'
 const DIFFICULTY_CONFIG = {
     easy: { baseSpeed: 7.0, maxSpeedAdd: 5.0, rampFrames: 2400, coinValue: 10, obstacleMin: 90, obstacleRand: 80, label: 'FÁCIL', flyingEnemies: false, diffMult: 1.0 },
@@ -2095,6 +2097,11 @@ function showLeaderboardTab(tabId) {
     const content = document.getElementById('lbTab-' + tabId);
     if (btn) btn.classList.add('active');
     if (content) content.classList.add('active');
+
+    if (tabId === 'attacks') {
+        if (typeof renderAttackFeed === 'function') renderAttackFeed();
+        if (typeof updateAttackButtons === 'function') updateAttackButtons();
+    }
 }
 
 function closeModal(id) {
@@ -2130,6 +2137,48 @@ async function sendScoreToBackend(log, finalScore) {
     }
 
     loadLeaderboard();
+    syncWeeklyTracker(finalScore);
+}
+
+// ---------- Weekly Tracker (puntaje semanal modificable) ----------
+async function syncWeeklyTracker(finalScore) {
+    if (!currentUser) return;
+    const uid = currentUser.id;
+    const username = currentUser.user_metadata?.name || currentUser.user_metadata?.full_name || currentUser.email || 'jugador';
+    const weekStart = getWeekStart();
+    const weekStartStr = weekStart.toISOString().split('T')[0];
+
+    const { data: existing } = await sb
+        .from('weekly_tracker')
+        .select('raw_score, deducted')
+        .eq('twitch_user_id', uid)
+        .eq('week_start', weekStartStr)
+        .single();
+
+    const newRaw = Math.max(finalScore, existing?.raw_score || 0);
+
+    if (!existing) {
+        await sb.from('weekly_tracker').insert({
+            twitch_user_id: uid,
+            twitch_username: username,
+            raw_score: newRaw,
+            deducted: 0,
+            week_start: weekStartStr
+        });
+    } else if (finalScore > existing.raw_score) {
+        await sb.from('weekly_tracker').update({ raw_score: newRaw, updated_at: new Date().toISOString() })
+            .eq('twitch_user_id', uid)
+            .eq('week_start', weekStartStr);
+    }
+}
+
+function getWeekStart() {
+    const now = new Date();
+    const day = (now.getDay() + 6) % 7;
+    const monday = new Date(now);
+    monday.setDate(now.getDate() - day);
+    monday.setHours(0, 0, 0, 0);
+    return monday;
 }
 
 // ---------- Monedas y Tienda ----------
@@ -2159,6 +2208,10 @@ async function loadWallet() {
         // Cargar inventario
         if (walletData.inventory) {
             playerInventory = { ...playerInventory, ...walletData.inventory };
+            // Asegurar que los items de ataque/protección existan
+            ['attack_top1','attack_top3','attack_top10','protection_1h','protection_3h','protection_8h'].forEach(k => {
+                if (playerInventory[k] === undefined) playerInventory[k] = 0;
+            });
         }
 
         // Cargar XP y nivel
@@ -2177,6 +2230,38 @@ async function loadWallet() {
 
         updateInventoryHud();
     }
+
+    loadMyWeeklyTracker();
+    loadMyProtection();
+}
+
+async function loadMyWeeklyTracker() {
+    if (!currentUser) return;
+    const weekStartStr = getWeekStart().toISOString().split('T')[0];
+    const { data } = await sb.from('weekly_tracker')
+        .select('raw_score, deducted')
+        .eq('twitch_user_id', currentUser.id)
+        .eq('week_start', weekStartStr)
+        .single();
+    if (data) {
+        window.myTracker = data;
+    }
+}
+
+async function loadMyProtection() {
+    if (!currentUser) return;
+    const { data } = await sb.from('player_protections')
+        .select('expires_at, duration_hours')
+        .eq('twitch_user_id', currentUser.id)
+        .single();
+    if (data && new Date(data.expires_at) > new Date()) {
+        myProtection = { expires_at: data.expires_at, duration_hours: data.duration_hours };
+        startProtectionTimer();
+    } else {
+        myProtection = null;
+        if (protectionInterval) { clearInterval(protectionInterval); protectionInterval = null; }
+    }
+    updateProtectionUI();
 }
 
 // Guarda los datos del jugador en Supabase (solo escritura)
@@ -2491,10 +2576,11 @@ async function loadLeaderboard() {
     const { monday, prevMonday } = updateWeekRange();
     loadPreviousWeekWinner(prevMonday, monday);
     const body = document.getElementById('lbBody');
+
+    // Cargar desde la vista adjusted_leaderboard
     const { data, error } = await sb
-        .from('current_week_leaderboard')
-        .select('twitch_username, twitch_user_id, best_score')
-        .order('best_score', { ascending: false })
+        .from('adjusted_leaderboard')
+        .select('twitch_user_id, twitch_username, raw_score, deducted, adjusted_score, total_lost')
         .limit(10);
 
     if (error) {
@@ -2508,6 +2594,22 @@ async function loadLeaderboard() {
         return;
     }
 
+    // Cargar protections activas para mostrar escudos
+    const { data: protections } = await sb
+        .from('player_protections')
+        .select('twitch_user_id')
+        .gte('expires_at', new Date().toISOString());
+
+    const protectedIds = new Set((protections || []).map(p => p.twitch_user_id));
+
+    // Cargar ataques recientes (últimos 5 min) para mostrar indicadores
+    const fiveMinAgo = new Date(Date.now() - 300000).toISOString();
+    const { data: recentAttacks } = await sb
+        .from('attack_log')
+        .select('target_id, target_name, points_reduced, created_at, attacker_name')
+        .gte('created_at', fiveMinAgo)
+        .order('created_at', { ascending: false });
+
     const ownSkinId = skinState.selectedSkinId;
     const ownFrontal = (SKIN_REGISTRY.find(s => s.id === ownSkinId) || SKIN_REGISTRY[0]).frontal;
 
@@ -2517,9 +2619,77 @@ async function loadLeaderboard() {
     body.innerHTML = data.map((row, i) => {
         const r = i + 1;
         const frontal = currentUser && row.twitch_user_id === currentUser.id ? ownFrontal : 'assets/frontalcapibara.png';
-        return `<div class="lb-row ${rowClass(r)}"><span class="lb-rank-badge ${rankClass(r)}">${r}</span><img class="lb-icon" src="${frontal}" alt=""><div class="lb-player-name-wrap"><span class="lb-player">${row.twitch_username}</span><span class="lb-player-label">Jugador</span></div><span class="lb-pts">${row.best_score}</span></div>`;
+
+        // Indicador de ataque reciente
+        const attack = (recentAttacks || []).find(a => a.target_id === row.twitch_user_id);
+        const attackHtml = attack
+            ? `<span class="lb-attack-indicator" title="${attack.attacker_name} atacó">-${attack.points_reduced}</span>`
+            : '';
+
+        // Badge de protección
+        const shieldHtml = protectedIds.has(row.twitch_user_id)
+            ? `<span class="lb-shield-badge" title="Protegido">&#x1F6E1;</span>`
+            : '';
+
+        return `<div class="lb-row ${rowClass(r)}">
+            <span class="lb-rank-badge ${rankClass(r)}">${r}</span>
+            <img class="lb-icon" src="${frontal}" alt="">
+            <div class="lb-player-name-wrap">
+                <span class="lb-player">${row.twitch_username}</span>
+                <span class="lb-player-label">Jugador</span>
+            </div>
+            <span class="lb-pts">${row.adjusted_score}</span>
+            ${shieldHtml}
+            ${attackHtml}
+        </div>`;
     }).join('');
 
+    renderAttackFeed();
+    updateAttackButtons();
+}
+
+function updateAttackButtons() {
+    ['top1', 'top3', 'top10'].forEach(type => {
+        const el = document.getElementById('aab-' + type);
+        if (el) el.textContent = 'x' + (playerInventory['attack_' + type] || 0);
+    });
+}
+
+async function renderAttackFeed() {
+    const feed = document.getElementById('attackFeedBody');
+    if (!feed) return;
+
+    const { data } = await sb
+        .from('attack_log')
+        .select('attacker_name, target_name, points_reduced, attack_type, created_at')
+        .order('created_at', { ascending: false })
+        .limit(20);
+
+    if (!data || data.length === 0) {
+        feed.innerHTML = '<div class="lb-empty">No hay ataques registrados</div>';
+        return;
+    }
+
+    const typeLabel = { top1: 'Top 1', top3: 'Top 3', top10: 'Top 10' };
+    feed.innerHTML = data.map(a => `
+        <div class="attack-feed-item">
+            <span class="af-attacker">${a.attacker_name}</span>
+            <span class="af-arrow">→</span>
+            <span class="af-target">${a.target_name}</span>
+            <span class="af-pts">-${a.points_reduced}</span>
+            <span class="af-type">[${typeLabel[a.attack_type] || a.attack_type}]</span>
+            <span class="af-time">${timeAgo(a.created_at)}</span>
+        </div>
+    `).join('');
+}
+
+function timeAgo(iso) {
+    const diff = Date.now() - new Date(iso).getTime();
+    const mins = Math.floor(diff / 60000);
+    if (mins < 1) return 'ahora';
+    if (mins < 60) return mins + 'm';
+    const hrs = Math.floor(mins / 60);
+    return hrs + 'h ' + (mins % 60) + 'm';
 }
 
 async function loadPreviousWeekWinner(prevMonday, monday) {
@@ -3363,7 +3533,13 @@ function renderInventoryModal() {
         magnet: { name: 'Imán 15s', img: 'assets/iman.png' },
         multi: { name: 'x2 Puntos', img: 'assets/x2.png' },
         multi4: { name: 'x4 Puntos', img: 'assets/x4.png' },
-        multi6: { name: 'x6 Puntos', img: 'assets/x6.png' }
+        multi6: { name: 'x6 Puntos', img: 'assets/x6.png' },
+        attack_top1: { name: 'Ataque Top 1', img: 'assets/x2.png' },
+        attack_top3: { name: 'Ataque Top 3', img: 'assets/x4.png' },
+        attack_top10: { name: 'Ataque Top 10', img: 'assets/x6.png' },
+        protection_1h: { name: 'Protección 1h', img: 'assets/inmortal.png' },
+        protection_3h: { name: 'Protección 3h', img: 'assets/inmortal.png' },
+        protection_8h: { name: 'Protección 8h', img: 'assets/inmortal.png' }
     };
 
     let html = '';
@@ -3923,3 +4099,180 @@ function updateMissionsCountdown() {
 
     el.innerText = label + formatCountdown(msLeft);
 }
+
+/* ============================================================
+   SISTEMA DE ATAQUE Y PROTECCIÓN (LEADERBOARD DINÁMICO)
+   ============================================================ */
+
+// ---------- Comprar ítems de ataque / protección ----------
+async function buyAttackItem(type, cost) {
+    if (!currentUser) return showGameAlert('Debes iniciar sesión primero.');
+    if (totalCoins < cost) return showGameAlert('No tienes monedas suficientes.');
+    if (!['attack_top1', 'attack_top3', 'attack_top10'].includes(type)) return;
+
+    const labels = {
+        attack_top1: 'Ataque Top 1 (-3% al #1)',
+        attack_top3: 'Ataque Top 3 (-1% al #3)',
+        attack_top10: 'Ataque Top 10 (riesgo: -8% a ti o -2% al #10)'
+    };
+
+    const confirmed = await showGameConfirm(`¿Comprar ${labels[type]} por ${cost} monedas?`);
+    if (!confirmed) return;
+
+    totalCoins -= cost;
+    document.getElementById('coinBalanceDisplay').textContent = totalCoins;
+    playerInventory[type] = (playerInventory[type] || 0) + 1;
+    await syncWallet(-cost, true);
+    updateAttackButtons();
+    showGameAlert(`¡${labels[type]} añadido a tu inventario! Úsalo desde el leaderboard.`, '¡COMPRA EXITOSA!');
+}
+
+async function buyProtectionItem(type, cost, hours) {
+    if (!currentUser) return showGameAlert('Debes iniciar sesión primero.');
+    if (totalCoins < cost) return showGameAlert('No tienes monedas suficientes.');
+
+    const labels = { protection_1h: '1 hora', protection_3h: '3 horas', protection_8h: '8 horas' };
+
+    const confirmed = await showGameConfirm(`¿Comprar protección de ${labels[type]} por ${cost} monedas? Se activa al comprar.`);
+    if (!confirmed) return;
+
+    totalCoins -= cost;
+    document.getElementById('coinBalanceDisplay').textContent = totalCoins;
+
+    // Llamar a la RPC para activar protección inmediatamente
+    const { data, error } = await sb.rpc('apply_protection_rpc', {
+        p_user_id: currentUser.id,
+        p_hours: hours
+    });
+
+    if (error) {
+        totalCoins += cost;
+        document.getElementById('coinBalanceDisplay').textContent = totalCoins;
+        return showGameAlert('Error al activar protección: ' + error.message);
+    }
+
+    if (!data.success) return showGameAlert(data.error);
+
+    await syncWallet(-cost, true);
+    myProtection = { expires_at: data.expires_at, duration_hours: hours };
+    startProtectionTimer();
+    updateProtectionUI();
+    showGameAlert(`¡Protección de ${labels[type]} activada!`, '¡PROTEGIDO!');
+}
+
+// ---------- Usar ataque (llama a RPC/Edge Function) ----------
+async function useAttack(type) {
+    if (!currentUser) return showGameAlert('Debes iniciar sesión.');
+    const key = 'attack_' + type;
+    if (!playerInventory[key] || playerInventory[key] < 1) {
+        return showGameAlert('No tienes ese ataque en tu inventario. Cómpralo en la tienda.');
+    }
+
+    const labels = {
+        top1: 'aTop 1',
+        top3: 'al Top 3',
+        top10: 'Top 10 (riesgo)'
+    };
+
+    const confirmed = await showGameConfirm(`¿Usar ataque ${labels[type]}?`);
+    if (!confirmed) return;
+
+    try {
+        const { data, error } = await sb.rpc('apply_attack_rpc', {
+            p_attacker_id: currentUser.id,
+            p_attack_type: type
+        });
+
+        if (error) throw new Error(error.message);
+        if (!data.success) {
+            if (data.error === 'protegido') {
+                return showGameAlert(`¡${data.target_name} está protegido! El ataque falló.`);
+            }
+            return showGameAlert(data.error);
+        }
+
+        // Consumir del inventario local
+        playerInventory[key] = Math.max(0, (playerInventory[key] || 0) - 1);
+        await syncWallet(0, true);
+
+        if (type === 'top10' && data.target_id === currentUser.id) {
+            showGameAlert(`¡El ataque Top 10 te salió mal! Perdiste ${data.points} puntos (-${data.pct}%).`, '¡TE AUTODESTRUISTE!');
+        } else {
+            showGameAlert(`¡Ataque exitoso! ${data.target_name} perdió ${data.points} puntos (-${data.pct}%).`, '¡ATAQUE EXITOSO!');
+        }
+
+        loadLeaderboard();
+        loadMyWeeklyTracker();
+
+    } catch (e) {
+        showGameAlert('Error al ejecutar ataque: ' + e.message);
+    }
+}
+
+// ---------- Protección UI ----------
+function startProtectionTimer() {
+    if (protectionInterval) clearInterval(protectionInterval);
+    protectionInterval = setInterval(updateProtectionUI, 1000);
+}
+
+function updateProtectionUI() {
+    const badge = document.getElementById('protectionBadge');
+    const timer = document.getElementById('protectionTimer');
+    if (!badge || !timer) return;
+
+    if (!myProtection || new Date(myProtection.expires_at) <= new Date()) {
+        myProtection = null;
+        badge.style.display = 'none';
+        timer.textContent = '';
+        if (protectionInterval) { clearInterval(protectionInterval); protectionInterval = null; }
+        return;
+    }
+
+    badge.style.display = 'inline-flex';
+    const remaining = new Date(myProtection.expires_at).getTime() - Date.now();
+    const h = Math.floor(remaining / 3600000);
+    const m = Math.floor((remaining % 3600000) / 60000);
+    const s = Math.floor((remaining % 60000) / 1000);
+    timer.textContent = `${h}h ${m}m ${s}s`;
+}
+
+// ---------- Suscripción en tiempo real a ataques ----------
+function subscribeToAttacks() {
+    const channel = sb.channel('attack_log_changes');
+    channel.on('postgres_changes',
+        { event: 'INSERT', schema: 'public', table: 'attack_log' },
+        (payload) => {
+            const attack = payload.new;
+            if (currentUser && attack.target_id === currentUser.id) {
+                showAttackNotification(attack);
+                loadLeaderboard();
+                loadMyWeeklyTracker();
+            }
+        }
+    ).subscribe();
+}
+
+function showAttackNotification(attack) {
+    const toast = document.createElement('div');
+    toast.className = 'attack-toast';
+    toast.innerHTML = `
+        <div class="attack-toast-icon">&#x2694;</div>
+        <div class="attack-toast-body">
+            <div class="attack-toast-title">¡TE ATACARON!</div>
+            <div class="attack-toast-detail">${attack.attacker_name} te quitó <b>${attack.points_reduced}</b> pts</div>
+        </div>
+    `;
+    document.body.appendChild(toast);
+    requestAnimationFrame(() => toast.classList.add('attack-toast-visible'));
+    setTimeout(() => {
+        toast.classList.remove('attack-toast-visible');
+        setTimeout(() => toast.remove(), 400);
+    }, 5000);
+}
+
+// Iniciar suscripción después de login (segundo listener, el primero ya existe arriba)
+sb.auth.onAuthStateChange((_event, session) => {
+    if (session?.user) {
+        setTimeout(subscribeToAttacks, 1000);
+    }
+});

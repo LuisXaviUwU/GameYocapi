@@ -110,6 +110,11 @@
             <img src="assets/coin.png" class="corner-btn-icon"> <!-- Temporal icon until an asset is provided -->
             <span id="missionsBadge" class="missions-badge" style="display:none;">!</span>
           </button>
+          <!-- Protección activa -->
+          <div id="protectionBadge" class="protection-corner-badge" style="display:none;" title="Protección activa">
+            <span class="protection-icon">&#x1F6E1;</span>
+            <span id="protectionTimer" class="protection-timer"></span>
+          </div>
           <!-- Botón Inventario -->
           <button id="inventoryBtn" class="inventory-corner-btn" onclick="openInventoryModal()" title="Inventario">
             <img src="assets/mochila.png" class="corner-btn-icon">
@@ -172,6 +177,10 @@
               <div class="store-sidebar">
                 <button id="tabBtn-inmortal" class="store-tab active" onclick="showStoreTab('inmortal')">Escudos
                 </button>
+                <button id="tabBtn-ataques" class="store-tab" onclick="showStoreTab('ataques')">Ataques
+                </button>
+                <button id="tabBtn-proteccion" class="store-tab" onclick="showStoreTab('proteccion')">Protección
+                </button>
                 <button id="tabBtn-movilidad" class="store-tab" onclick="showStoreTab('movilidad')">Movilidad
                 </button>
                 <button id="tabBtn-utilidad" class="store-tab" onclick="showStoreTab('utilidad')">Utilidad
@@ -213,6 +222,68 @@
                       <span>1 Minuto</span>
                     </div>
                     <button onclick="buyBuff('shield60', 1000, 60)">1000</button>
+                  </div>
+                </div>
+                <!-- ATAQUES -->
+                <div id="tab-ataques" class="store-tab-content">
+                  <div class="store-category-hero">
+                    <img src="assets/x2.png" alt="Ataques">
+                    <div>
+                      <div class="store-category-title">ATAQUES AL LEADERBOARD</div>
+                      <div class="store-category-description">Reduce los puntos de otros jugadores en el top semanal</div>
+                    </div>
+                  </div>
+                  <div class="store-item">
+                    <div class="store-item-main">
+                      <img src="assets/x2.png" class="store-item-img" alt="">
+                      <span>Ataque Top 1 - Quita 3% al #1</span>
+                    </div>
+                    <button onclick="buyAttackItem('attack_top1', 1500)">1500</button>
+                  </div>
+                  <div class="store-item">
+                    <div class="store-item-main">
+                      <img src="assets/x4.png" class="store-item-img" alt="">
+                      <span>Ataque Top 3 - Quita 1% al #3</span>
+                    </div>
+                    <button onclick="buyAttackItem('attack_top3', 1000)">1000</button>
+                  </div>
+                  <div class="store-item">
+                    <div class="store-item-main">
+                      <img src="assets/x6.png" class="store-item-img" alt="">
+                      <span>Ataque Top 10 - ¡Riesgo! Te puede dañar a ti</span>
+                    </div>
+                    <button onclick="buyAttackItem('attack_top10', 800)">800</button>
+                  </div>
+                </div>
+                <!-- PROTECCIÓN -->
+                <div id="tab-proteccion" class="store-tab-content">
+                  <div class="store-category-hero">
+                    <img src="assets/inmortal.png" alt="Protección">
+                    <div>
+                      <div class="store-category-title">PROTECCIÓN DEL LEADERBOARD</div>
+                      <div class="store-category-description">Bloquea todos los ataques de otros jugadores por un tiempo</div>
+                    </div>
+                  </div>
+                  <div class="store-item">
+                    <div class="store-item-main">
+                      <img src="assets/inmortal.png" class="store-item-img" alt="">
+                      <span>Protección 1 hora</span>
+                    </div>
+                    <button onclick="buyProtectionItem('protection_1h', 500, 1)">500</button>
+                  </div>
+                  <div class="store-item">
+                    <div class="store-item-main">
+                      <img src="assets/inmortal.png" class="store-item-img" alt="">
+                      <span>Protección 3 horas</span>
+                    </div>
+                    <button onclick="buyProtectionItem('protection_3h', 1200, 3)">1200</button>
+                  </div>
+                  <div class="store-item">
+                    <div class="store-item-main">
+                      <img src="assets/inmortal.png" class="store-item-img" alt="">
+                      <span>Protección 8 horas</span>
+                    </div>
+                    <button onclick="buyProtectionItem('protection_8h', 2500, 8)">2500</button>
                   </div>
                 </div>
                 <!-- MOVILIDAD -->
@@ -500,6 +571,7 @@
             <div class="lb-nav">
               <button id="lbTabBtn-current" class="lb-nav-btn active" onclick="showLeaderboardTab('current')">SEMANA ACTUAL</button>
               <button id="lbTabBtn-past" class="lb-nav-btn" onclick="showLeaderboardTab('past')">GANADOR ANTERIOR</button>
+              <button id="lbTabBtn-attacks" class="lb-nav-btn" onclick="showLeaderboardTab('attacks')">ATAQUES</button>
             </div>
 
             <div id="lbTab-current" class="lb-tab active">
@@ -520,6 +592,34 @@
                 <div id="pastWinnerName" class="past-winner-name">---</div>
                 <div id="pastWinnerScore" class="past-winner-score">0 PTS</div>
               </div>
+            </div>
+
+            <div id="lbTab-attacks" class="lb-tab">
+              <div class="lb-period">Tus ataques disponibles</div>
+              <div class="attack-actions">
+                <button class="attack-action-btn" onclick="useAttack('top1')" title="Quita 3% al #1">
+                  <span class="aab-icon">&#x2694;</span>
+                  <span class="aab-label">Top 1 (-3%)</span>
+                  <span class="aab-qty" id="aab-top1">x0</span>
+                </button>
+                <button class="attack-action-btn" onclick="useAttack('top3')" title="Quita 1% al #3">
+                  <span class="aab-icon">&#x2694;</span>
+                  <span class="aab-label">Top 3 (-1%)</span>
+                  <span class="aab-qty" id="aab-top3">x0</span>
+                </button>
+                <button class="attack-action-btn attack-action-btn-danger" onclick="useAttack('top10')" title="Riesgo: te daña si estás en top 10">
+                  <span class="aab-icon">&#x2620;</span>
+                  <span class="aab-label">Top 10 (riesgo)</span>
+                  <span class="aab-qty" id="aab-top10">x0</span>
+                </button>
+              </div>
+              <div class="lb-period">&Uacute;ltimos ataques</div>
+              <div class="lb-table">
+                <div id="attackFeedBody" class="lb-body attack-feed-body">
+                  <div class="lb-empty">No hay ataques registrados</div>
+                </div>
+              </div>
+              <div class="week-note">Los ataques son p&uacute;blicos. &iexcl;Cuidado con las represalias!</div>
             </div>
 
           </div>
