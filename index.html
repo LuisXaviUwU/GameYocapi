@@ -526,72 +526,40 @@
         </div>
         <div id="authModal" class="modal-overlay">
           <div class="modal-box settings-modal-box">
-            <button class="modal-close" onclick="closeModal('authModal')">X
-            </button>
-            <h3>SETTINGS
-            </h3>
-            <span id="userInfo">
-            </span>
-            <button id="twitchLoginBtn">CONECTAR CON TWITCH
-            </button>
-            <div class="settings-grid">
-              <section class="settings-section settings-difficulty">
-                <h4
-                  style="font-family: 'Press Start 2P', monospace; font-size: 12px; color: var(--gold); margin-top: 0; margin-bottom: 12px;">
-                  DIFICULTAD
-                </h4>
+            <button class="modal-close" onclick="closeModal('authModal')">X</button>
+            <div class="settings-header">
+              <h3>SETTINGS</h3>
+              <span id="userInfo"></span>
+              <button id="twitchLoginBtn" class="settings-twitch-btn">CONECTAR CON TWITCH</button>
+            </div>
+            <div class="settings-tabs">
+              <button class="settings-tab active" data-tab="difficulty">DIFICULTAD</button>
+              <button class="settings-tab" data-tab="volume">VOLUMEN</button>
+              <button class="settings-tab" data-tab="display">PANTALLA</button>
+              <button class="settings-tab" data-tab="controls">CONTROLES</button>
+            </div>
+            <div class="settings-panels">
+              <div class="settings-panel active" id="panel-difficulty">
                 <div class="difficulty-grid">
-                  <button id="diff-easy" class="diff-btn active" onclick="setDifficulty('easy')">FÁCIL<br>
-                    <span style="font-size:8px;font-family:monospace">10 monedas</span>
-                  </button>
-                  <button id="diff-medium" class="diff-btn" onclick="setDifficulty('medium')">MEDIO<br>
-                    <span style="font-size:8px;font-family:monospace">30 monedas</span>
-                  </button>
-                  <button id="diff-hard" class="diff-btn" onclick="setDifficulty('hard')">DIFÍCIL<br>
-                    <span style="font-size:8px;font-family:monospace">50 monedas</span>
-                  </button>
-                  <button id="diff-extreme" class="diff-btn" onclick="setDifficulty('extreme')">EXTREMO<br>
-                    <span style="font-size:8px;font-family:monospace">100 monedas</span>
-                  </button>
+                  <button id="diff-easy" class="diff-btn active" onclick="setDifficulty('easy')">FÁCIL<br><span class="diff-sub">10 monedas</span></button>
+                  <button id="diff-medium" class="diff-btn" onclick="setDifficulty('medium')">MEDIO<br><span class="diff-sub">30 monedas</span></button>
+                  <button id="diff-hard" class="diff-btn" onclick="setDifficulty('hard')">DIFÍCIL<br><span class="diff-sub">50 monedas</span></button>
+                  <button id="diff-extreme" class="diff-btn" onclick="setDifficulty('extreme')">EXTREMO<br><span class="diff-sub">100 monedas</span></button>
                 </div>
-              </section>
-              <section class="settings-section settings-volume">
-                <h4
-                  style="font-family: 'Press Start 2P', monospace; font-size: 12px; color: var(--gold); margin-top: 0; margin-bottom: 15px;">
-                  VOLUMEN
-                </h4>
-                <div class="vol-row" style="margin-bottom: 15px; justify-content: space-between;">
-                  <span>MENÚ</span>
-                  <input type="range" id="volMenu" min="0" max="100" value="45" title="Volumen música menú">
-                </div>
-                <div class="vol-row" style="justify-content: space-between;">
-                  <span>JUEGO</span>
-                  <input type="range" id="volGame" min="0" max="100" value="45" title="Volumen música juego">
-                </div>
-              </section>
-              <section class="settings-section settings-fullscreen">
-                <h4
-                  style="font-family: 'Press Start 2P', monospace; font-size: 12px; color: var(--gold); margin-top: 0; margin-bottom: 15px;">
-                  PANTALLA
-                </h4>
-                <button id="fullscreenBtn" style="width:100%; font-family:'Press Start 2P',monospace; font-size:9px; background:var(--capi-dark); color:#fff; border:none; border-bottom:3px solid #3a1e0a; padding:12px 14px; border-radius:8px; cursor:pointer; letter-spacing:1px;">PANTALLA COMPLETA</button>
-              </section>
-              <section class="settings-section settings-controlmode">
-                <h4
-                  style="font-family: 'Press Start 2P', monospace; font-size: 12px; color: var(--gold); margin-top: 0; margin-bottom: 15px;">
-                  CONTROLES MÓVIL
-                </h4>
+              </div>
+              <div class="settings-panel" id="panel-volume">
+                <div class="vol-row"><span>MENÚ</span><input type="range" id="volMenu" min="0" max="100" value="45"></div>
+                <div class="vol-row"><span>JUEGO</span><input type="range" id="volGame" min="0" max="100" value="45"></div>
+              </div>
+              <div class="settings-panel" id="panel-display">
+                <button id="fullscreenBtn" class="settings-fullscreen-btn">PANTALLA COMPLETA</button>
+              </div>
+              <div class="settings-panel" id="panel-controls">
                 <div class="difficulty-grid">
-                  <button id="ctrlBtn-buttons" class="diff-btn active" onclick="applyControlMode('buttons')">
-                    BOTONES
-                    <br><span style="font-size:8px;font-family:monospace">SALTAR / AGACHAR</span>
-                  </button>
-                  <button id="ctrlBtn-touch" class="diff-btn" onclick="applyControlMode('touch')">
-                    ZONAS
-                    <br><span style="font-size:8px;font-family:monospace">IZQ: saltar | DER: bajar</span>
-                  </button>
+                  <button id="ctrlBtn-buttons" class="diff-btn active" onclick="applyControlMode('buttons')">BOTONES<br><span class="diff-sub">SALTAR / AGACHAR</span></button>
+                  <button id="ctrlBtn-touch" class="diff-btn" onclick="applyControlMode('touch')">ZONAS<br><span class="diff-sub">IZQ: saltar | DER: bajar</span></button>
                 </div>
-              </section>
+              </div>
             </div>
           </div>
         </div>

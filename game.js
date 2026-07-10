@@ -10,6 +10,7 @@ const GROUND_Y = H - 80;
 const CAPI_IMG = new Image();
 CAPI_IMG.onload = () => {
     drawSkinPreview();
+    if (typeof draw === 'function') draw();
 };
 CAPI_IMG.src = typeof CAPI_IMG_DATA !== 'undefined' ? CAPI_IMG_DATA : 'assets/capibara.png';
 
@@ -59,8 +60,8 @@ const SKIN_FRAMES_MAP = {
 // =============================================================
 const SKIN_REGISTRY = [
     { id: 'capibara', name: 'CAPIBARA', src: 'assets/capibara.png', thumbnail: 'assets/capibara.png', frontal: 'assets/frontalcapibara.png', frames: 'base' },
-    { id: 'corona', name: 'CORONA', src: 'assets/skins/corona/corona.png', thumbnail: 'assets/skins/corona/coronaicon.png', frontal: 'assets/skins/corona/capicorona.png', frames: 'crown' },
-    { id: 'lentes', name: 'LENTES', src: 'assets/skins/lentes/lentes.png', thumbnail: 'assets/skins/lentes/lentesicon.png', frontal: 'assets/skins/lentes/capilentes.png', frames: 'base' },
+    { id: 'corona', name: 'CORONA', cost: 1000, src: 'assets/skins/corona/corona.png', thumbnail: 'assets/skins/corona/coronaicon.png', frontal: 'assets/skins/corona/capicorona.png', frames: 'crown' },
+    { id: 'lentes', name: 'LENTES', cost: 2000, src: 'assets/skins/lentes/lentes.png', thumbnail: 'assets/skins/lentes/lentesicon.png', frontal: 'assets/skins/lentes/capilentes.png', frames: 'base' },
 ];
 
 const SKIN_PRESETS = [
@@ -700,6 +701,17 @@ function applyControlMode(mode) {
 
 // Aplicar al cargar
 applyControlMode(controlMode);
+
+// --- Tabs de settings ---
+document.querySelectorAll('.settings-tab').forEach(tab => {
+    tab.addEventListener('click', function () {
+        document.querySelectorAll('.settings-tab').forEach(t => t.classList.remove('active'));
+        document.querySelectorAll('.settings-panel').forEach(p => p.classList.remove('active'));
+        this.classList.add('active');
+        const panel = document.getElementById('panel-' + this.dataset.tab);
+        if (panel) panel.classList.add('active');
+    });
+});
 
 let bgProps = [];
 let stars = [];
@@ -2328,7 +2340,11 @@ function updateAspectosTab() {
         const key = 'skin_' + skin.id;
         const btn = document.getElementById('btn-buy-' + skin.id);
         const card = document.getElementById('aspecto-card-' + skin.id);
+        const priceEl = card && card.querySelector('.aspecto-price span');
         if (!btn || !card) return;
+
+        // Sincronizar precio visual desde SKIN_REGISTRY
+        if (priceEl && skin.cost) priceEl.textContent = skin.cost;
 
         const owned = !!playerInventory[key];
         if (owned) {
@@ -2342,7 +2358,7 @@ function updateAspectosTab() {
         } else {
             btn.textContent = 'COMPRAR';
             btn.classList.remove('aspecto-owned');
-            btn.onclick = () => buySkin(skin.id, skin.cost || 1000);
+            btn.onclick = () => buySkin(skin.id, skin.cost);
             card.classList.remove('aspecto-card-owned');
         }
     });
