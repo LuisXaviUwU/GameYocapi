@@ -1682,70 +1682,69 @@ function drawCapibara() {
     const spriteReady = sprite && sprite.width > 0;
     const imgReady = CAPI_IMG.complete && CAPI_IMG.naturalWidth > 0;
 
-    if (spriteReady || imgReady) {
-        let row = 0;
-        let col = 0;
-
-        if (ducking) {
-            row = 2;
-            col = 2 + Math.floor(frame * 0.1) % 3;
-        } else if (jumping || player.vy !== 0) {
-            row = 1;
-            if (player.vy < -7) col = 1;
-            else if (player.vy < -2) col = 2;
-            else if (player.vy < 2) col = 3;
-            else if (player.vy < 7) col = 4;
-            else col = 5;
-        } else {
-            row = 0;
-            col = Math.floor(frame * speed * 0.055) % 8;
-        }
-
-        const frames = SKIN_FRAMES_MAP[skin.frames] || SKIN_FRAMES_BASE;
-        const fData = frames[row][col];
-
-        const scale = (w * 1.5) / fData.w;
-        const drawW = fData.w * scale;
-        const drawH = fData.h * scale;
-
-        const dx = x - (drawW - w) / 2;
-        const dy = (by + bodyH) - drawH;
-
-        let drawShield = false;
-        let shieldColor = PALETTE.shield;
-
-        if (activeBuffs.shield) {
-            const shieldFrames = activeBuffs.shield;
-            let shieldVisible = true;
-            if (shieldFrames <= 60) {
-                shieldVisible = Math.floor(frame / 4) % 2 === 0;
-            } else if (shieldFrames <= 180) {
-                shieldVisible = Math.floor(frame / 15) % 2 === 0;
-            }
-            if (shieldVisible) {
-                drawShield = true;
-                shieldColor = shieldFrames <= 180 ? '#ff4444' : PALETTE.shield;
-            }
-        }
-
-        const capiSprite = getTintedSpriteImage();
-
-        if (drawShield) {
-            const shieldPulse = 10 + Math.sin(frame * 0.2) * 8;
-            ctx.shadowColor = shieldColor;
-            ctx.shadowBlur = shieldPulse;
-            ctx.drawImage(capiSprite, fData.x, fData.y, fData.w, fData.h, dx, dy, drawW, drawH);
-            ctx.drawImage(capiSprite, fData.x, fData.y, fData.w, fData.h, dx, dy, drawW, drawH);
-            ctx.drawImage(capiSprite, fData.x, fData.y, fData.w, fData.h, dx, dy, drawW, drawH);
-            ctx.shadowBlur = 0;
-        }
-
-        ctx.drawImage(capiSprite, fData.x, fData.y, fData.w, fData.h, dx, dy, drawW, drawH);
-
-    } else {
-        ctx.fillStyle = '#6e4a28';
-        ctx.fillRect(x, by, w, bodyH);
+    if (!spriteReady && !imgReady) {
+        ctx.restore();
+        return;
     }
+
+    let row = 0;
+    let col = 0;
+
+    if (ducking) {
+        row = 2;
+        col = 2 + Math.floor(frame * 0.1) % 3;
+    } else if (jumping || player.vy !== 0) {
+        row = 1;
+        if (player.vy < -7) col = 1;
+        else if (player.vy < -2) col = 2;
+        else if (player.vy < 2) col = 3;
+        else if (player.vy < 7) col = 4;
+        else col = 5;
+    } else {
+        row = 0;
+        col = Math.floor(frame * speed * 0.055) % 8;
+    }
+
+    const frames = SKIN_FRAMES_MAP[skin.frames] || SKIN_FRAMES_BASE;
+    const fData = frames[row][col];
+
+    const scale = (w * 1.5) / fData.w;
+    const drawW = fData.w * scale;
+    const drawH = fData.h * scale;
+
+    const dx = x - (drawW - w) / 2;
+    const dy = (by + bodyH) - drawH;
+
+    let drawShield = false;
+    let shieldColor = PALETTE.shield;
+
+    if (activeBuffs.shield) {
+        const shieldFrames = activeBuffs.shield;
+        let shieldVisible = true;
+        if (shieldFrames <= 60) {
+            shieldVisible = Math.floor(frame / 4) % 2 === 0;
+        } else if (shieldFrames <= 180) {
+            shieldVisible = Math.floor(frame / 15) % 2 === 0;
+        }
+        if (shieldVisible) {
+            drawShield = true;
+            shieldColor = shieldFrames <= 180 ? '#ff4444' : PALETTE.shield;
+        }
+    }
+
+    const capiSprite = getTintedSpriteImage();
+
+    if (drawShield) {
+        const shieldPulse = 10 + Math.sin(frame * 0.2) * 8;
+        ctx.shadowColor = shieldColor;
+        ctx.shadowBlur = shieldPulse;
+        ctx.drawImage(capiSprite, fData.x, fData.y, fData.w, fData.h, dx, dy, drawW, drawH);
+        ctx.drawImage(capiSprite, fData.x, fData.y, fData.w, fData.h, dx, dy, drawW, drawH);
+        ctx.drawImage(capiSprite, fData.x, fData.y, fData.w, fData.h, dx, dy, drawW, drawH);
+        ctx.shadowBlur = 0;
+    }
+
+    ctx.drawImage(capiSprite, fData.x, fData.y, fData.w, fData.h, dx, dy, drawW, drawH);
 
     ctx.restore();
 }
