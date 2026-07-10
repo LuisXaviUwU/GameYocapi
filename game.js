@@ -2238,23 +2238,25 @@ async function loadWallet() {
 async function loadMyWeeklyTracker() {
     if (!currentUser) return;
     const weekStartStr = getWeekStart().toISOString().split('T')[0];
-    const { data } = await sb.from('weekly_tracker')
+    const { data, error } = await sb.from('weekly_tracker')
         .select('raw_score, deducted')
         .eq('twitch_user_id', currentUser.id)
         .eq('week_start', weekStartStr)
-        .single();
-    if (data) {
+        .maybeSingle();
+    if (!error && data) {
         window.myTracker = data;
+    } else {
+        window.myTracker = null;
     }
 }
 
 async function loadMyProtection() {
     if (!currentUser) return;
-    const { data } = await sb.from('player_protections')
+    const { data, error } = await sb.from('player_protections')
         .select('expires_at, duration_hours')
         .eq('twitch_user_id', currentUser.id)
-        .single();
-    if (data && new Date(data.expires_at) > new Date()) {
+        .maybeSingle();
+    if (!error && data && new Date(data.expires_at) > new Date()) {
         myProtection = { expires_at: data.expires_at, duration_hours: data.duration_hours };
         startProtectionTimer();
     } else {
@@ -4237,9 +4239,15 @@ function updateProtectionUI() {
 }
 
 // ---------- Suscripción en tiempo real a ataques ----------
+let attackChannel = null;
+
 function subscribeToAttacks() {
-    const channel = sb.channel('attack_log_changes');
-    channel.on('postgres_changes',
+    if (attackChannel) {
+        try { sb.removeChannel(attackChannel); } catch(e) {}
+        attackChannel = null;
+    }
+    attackChannel = sb.channel('attack_log_changes');
+    attackChannel.on('postgres_changes',
         { event: 'INSERT', schema: 'public', table: 'attack_log' },
         (payload) => {
             const attack = payload.new;
